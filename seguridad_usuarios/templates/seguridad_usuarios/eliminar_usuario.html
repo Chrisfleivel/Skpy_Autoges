@@ -1,0 +1,15 @@
+{% extends 'base2.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Eliminar usuario</h2>
+    <div class="alert alert-warning">
+        <strong>¿Está seguro que desea eliminar el usuario <b>{{ usuario.username }}</b>?</strong>
+    </div>
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Eliminar usuario</button>
+        <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{%  endblock %}

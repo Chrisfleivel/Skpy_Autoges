@@ -1,0 +1,28 @@
+{% extends 'base2.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar usuario: {{ usuario.username }}</h2>
+    {% if messages %}
+        <div class="alert alert-info">
+            {% for message in messages %}
+                <div>{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="POST" class="mb-3">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        <a href="{% url 'lista_usuarios' %}" class="btn btn-secondary">Volver a la lista</a>
+    </form>
+
+    <hr>
+    <h4>Eliminar usuario</h4>
+    <form action="{% url 'eliminar_usuario' usuario.pk %}" method="POST" onsubmit="return confirm('¿Está seguro que desea eliminar este usuario?');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Eliminar usuario</button>
+    </form>
+</div>
+{% endblock %}
