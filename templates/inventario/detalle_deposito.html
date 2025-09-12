@@ -1,0 +1,17 @@
+# # 
+# detalle_deposito.html
+# # Template para mostrar los detalles de un depósito específico.
+# # Incluye un enlace para eliminar el depósito con confirmación.  
+
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Detalle del Depósito</h1>
+  <p><strong>ID:</strong> {{ deposito.id }}</p>
+  <p><strong>Nombre:</strong> {{ deposito.nombre }}</p>
+  <p><strong>Ubicación:</strong> {{ deposito.ubicacion }}</p>
+  <p><strong>Capacidad:</strong> {{ deposito.capacidad }}</p>
+
+  <a href="{% url 'eliminar_deposito' deposito.id %}" onclick="return confirm('¿Está seguro de que desea eliminar este depósito?');">Eliminar Depósito</a>
+{% endblock %}
+

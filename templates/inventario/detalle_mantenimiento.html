@@ -1,0 +1,14 @@
+# inventario/detalle_mantenimiento.html
+
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Detalle del Mantenimiento</h2>
+  <p><strong>Vehículo:</strong> {{ mantenimiento.vehiculo.marca }} {{ mantenimiento.vehiculo.modelo }} ({{ mantenimiento.vehiculo.año }})</p>
+  <p><strong>Fecha de Mantenimiento:</strong> {{ mantenimiento.fecha_mantenimiento }}</p>
+  <p><strong>Descripción:</strong> {{ mantenimiento.descripcion }}</p>
+  <p><strong>Costo:</strong> ${{ mantenimiento.costo }}</p>
+  <a href="{% url 'lista_mantenimientos' %}">Volver a la lista de mantenimientos</a>
+  <a href="{% url 'editar_mantenimiento' mantenimiento.id %}">Editar Mantenimiento</a>
+  <a href="{% url 'eliminar_mantenimiento' mantenimiento.id %}" onclick="return confirm('¿Está seguro de que desea eliminar este mantenimiento?');">Eliminar Mantenimiento</a>
+{% endblock %}

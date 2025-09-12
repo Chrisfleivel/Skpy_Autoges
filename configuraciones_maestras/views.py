@@ -57,6 +57,10 @@ def eliminar_proveedor(request, pk):
         return redirect('lista_proveedores')
     return render(request, 'configuraciones_maestras/eliminar_proveedor.html', {'proveedor': proveedor})
 
+def detalle_proveedor(request, pk):
+    proveedor = get_object_or_404(Proveedor, pk=pk)
+    return render(request, 'configuraciones_maestras/detalle_proveedor.html', {'proveedor': proveedor})
+
 # CRUD AgenteTransporte
 def agregar_agente_transporte(request):
     if request.method == 'POST':
@@ -85,6 +89,10 @@ def eliminar_agente_transporte(request, pk):
         agente.delete()
         return redirect('lista_agentes_transporte')
     return render(request, 'configuraciones_maestras/eliminar_agente_transporte.html', {'agente': agente})
+
+def detalle_agente_transporte(request, pk):
+    agente = get_object_or_404(AgenteTransporte, pk=pk)
+    return render(request, 'configuraciones_maestras/detalle_agente_transporte.html', {'agente': agente})
 
 # CRUD DespachanteAduana
 def agregar_despachante_aduana(request):
@@ -115,6 +123,10 @@ def eliminar_despachante_aduana(request, pk):
         return redirect('lista_despachantes_aduana')
     return render(request, 'configuraciones_maestras/eliminar_despachante_aduana.html', {'despachante': despachante})
 
+def detalle_despachante_aduana(request, pk):
+    despachante = get_object_or_404(DespachanteAduana, pk=pk)
+    return render(request, 'configuraciones_maestras/detalle_despachante_aduana.html', {'despachante': despachante})
+
 # CRUD TasaCambio
 def agregar_tasa_cambio(request):
     if request.method == 'POST':
@@ -143,3 +155,8 @@ def eliminar_tasa_cambio(request, pk):
         tasa.delete()
         return redirect('lista_tasas_cambio')
     return render(request, 'configuraciones_maestras/eliminar_tasa_cambio.html', {'tasa': tasa})
+
+def detalle_tasa_cambio(request, pk):
+    tasa = get_object_or_404(TasaCambio, pk=pk)
+    return render(request, 'configuraciones_maestras/detalle_tasa_cambio.html', {'tasa': tasa})
+

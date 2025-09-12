@@ -1,0 +1,30 @@
+# lista_unidades_medida.html 
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Lista de Unidades de Medida</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Símbolo</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for unidad in unidades_medida %}
+      <tr>
+        <td>{{ unidad.id }}</td>
+        <td>{{ unidad.nombre }}</td>
+        <td>{{ unidad.simbolo }}</td>
+        <td>
+          <a href="{% url 'editar_unidad_medida' unidad.id %}">Editar</a> |
+          <a href="{% url 'eliminar_unidad_medida' unidad.id %}" onclick="return confirm('¿Está seguro de que desea eliminar esta unidad de medida?');">Eliminar</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'agregar_unidad_medida' %}">Agregar Nueva Unidad de Medida</a>
+{% endblock %}

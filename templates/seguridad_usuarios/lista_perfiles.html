@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div style="width: 100%; max-width: 900px;">
+      <h2 class="text-center mb-4">Lista de Perfiles de Usuario</h2>
+      <div class="filters mb-4">
+        <form method="post" class="d-flex flex-wrap justify-content-center gap-2">
+          {% csrf_token %}
+          <input type="text" name="username" placeholder="Buscar por usuario" value="{{ request.POST.username }}" class="form-control" style="max-width: 200px;">
+          <input type="text" name="documento_identidad" placeholder="Documento Identidad" value="{{ request.POST.documento_identidad }}" class="form-control" style="max-width: 200px;">
+          <button type="submit" class="btn btn-success">Buscar</button>
+          <a href="{% url 'lista_perfiles' %}" class="btn btn-secondary">Limpiar</a>
+        </form>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle text-center">
+          <thead class="table-dark">
+            <tr>
+              <th>Foto</th>
+              <th>Usuario</th>
+              <th>Empleado</th>
+              <th>Documento Identidad</th>
+              <th>Roles</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for perfil in perfiles %}
+              <tr>
+                <td>
+                  {% if perfil.foto_perfil %}
+                    <img src="{{ perfil.foto_perfil.url }}" alt="Foto" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                  {% else %}
+                    <img src="https://ui-avatars.com/api/?name={{ perfil.user.username }}&size=40" alt="Avatar" class="rounded-circle">
+                  {% endif %}
+                </td>
+                <td>{{ perfil.user.username }}</td>
+                <td>
+                  {% if perfil.empleado %}
+                    {{ perfil.empleado.nombre }} {{ perfil.empleado.apellidos }}
+                  {% else %}
+                    <span class="text-muted">Sin empleado</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if perfil.empleado %}
+                    {{ perfil.empleado.documento_identidad }}
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% for rol in perfil.roles.all %}
+                    <span class="badge bg-primary">{{ rol.nombre }}</span>
+                  {% empty %}
+                    <span class="text-muted">Sin roles</span>
+                  {% endfor %}
+                </td>
+                <td>
+                  <a href="{% url 'perfil_usuario' perfil.empleado.id %}" class="btn btn-info btn-sm">Ver Perfil</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6">No se encontraron perfiles.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

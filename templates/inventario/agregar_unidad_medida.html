@@ -1,0 +1,12 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Agregar Unidad de Medida</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Agregar Unidad</button>
+  </form>
+  <a href="{% url 'lista_unidades_medida' %}">Cancelar</a>
+{% endblock %}

@@ -1,0 +1,42 @@
+# clientes_pedidos/lista_clientes.html
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Lista de Clientes</h2>
+  <a href="{% url 'agregar_cliente' %}">Crear Nuevo Cliente</a>
+  
+  <form method="post">
+    {% csrf_token %}
+    <input type="text" name="ruc" placeholder="RUC">
+    <input type="text" name="documento_identidad" placeholder="Documento de Identidad">
+    <button type="submit">Buscar</button>
+  </form>
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre / Razón Social</th>
+        <th>Teléfono</th>
+        <th>Dirección</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cliente in clientes %}
+      <tr>
+        {% if cliente.nombre %}
+        <td>{{ cliente.nombre }}</td>
+        {% else %}
+        <td>{{ cliente.razon_social }}</td>
+        {% endif %}
+        <td>{{ cliente.telefono }}</td>
+        <td>{{ cliente.direccion }}</td>
+        <!--
+        <td>
+          <a href="{% url 'editar_cliente' cliente.id %}">Editar</a>
+          <a href="{% url 'detalle_cliente' cliente.id %}">Ver Detalle</a> 
+        </td>
+        -->
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

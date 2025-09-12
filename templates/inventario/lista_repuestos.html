@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container py-4" style="background-color: #fff; border-radius: 12px;">
+    <h2 class="text-center mb-4 text-dark">Lista de Repuestos</h2>
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <ul class="list-group">
+          {% for repuesto in repuestos %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <a href="{% url 'detalle_repuesto' repuesto.id %}" class="text-primary">{{ repuesto.nombre }}</a>
+              <span class="badge bg-success">${{ repuesto.precio }}</span>
+            </li>
+          {% empty %}
+            <li class="list-group-item text-center text-muted">No hay repuestos en el inventario.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div class="text-end">
+      <a href="{% url 'agregar_repuesto' %}" class="btn btn-primary">Agregar Repuesto</a>
+    </div>
+  </div>
+{% endblock %}

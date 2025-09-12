@@ -1,0 +1,12 @@
+# editar_deposito.html
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Editar Depósito</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar Cambios</button>
+  </form>
+  <a href="{% url 'detalle_deposito' deposito.id %}">Cancelar</a>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow p-4" style="width: 100%; max-width: 500px; background-color: #fff;">
+      <h2 class="mb-4 text-center text-dark">Detalles del Vehículo</h2>
+      <ul class="list-group mb-3">
+        <li class="list-group-item"><strong>ID:</strong> {{ vehiculo.id }}</li>
+        <li class="list-group-item"><strong>Marca:</strong> {{ vehiculo.marca }}</li>
+        <li class="list-group-item"><strong>Modelo:</strong> {{ vehiculo.modelo }}</li>
+        <li class="list-group-item"><strong>Año:</strong> {{ vehiculo.año }}</li>
+        <li class="list-group-item"><strong>Precio:</strong> ${{ vehiculo.costo_compra }}</li>
+      </ul>
+      <div class="text-center">
+        <a href="{% url 'lista_vehiculos' %}" class="btn btn-secondary">Volver a la lista</a>
+        <a href="{% url 'editar_vehiculo' vehiculo.id %}" class="btn btn-warning ms-2">Editar</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

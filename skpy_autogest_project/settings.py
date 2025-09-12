@@ -40,6 +40,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'seguridad_usuarios',
     'configuraciones_maestras',
+    'inventario',
+    #'clientes_pedidos',
+    #'cobranza',
+    #'documentos_financieros',
+    #'importaciones',
+    #'reportes',
+    #'reposicion_stock',
 ]
 
 MIDDLEWARE = [
@@ -57,7 +64,7 @@ ROOT_URLCONF = 'skpy_autogest_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -129,3 +136,12 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuración del sistema de correo electrónico
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com' # Servidor SMTP de Gmail
+EMAIL_PORT = 587 # Puerto SMTP de Gmail
+EMAIL_USE_TLS = True # Usar TLS para seguridad
+EMAIL_HOST_USER = 'christianfleitas97@gmail.com' # Tu correo electrónico de Gmail
+EMAIL_HOST_PASSWORD = 'qvou sdes ptrs xxcw' # Tu contraseña de aplicacion Gmail
+DEFAULT_FROM_EMAIL = 'christianfleitas97@gmail.com' # Correo electrónico por defecto para el remitente

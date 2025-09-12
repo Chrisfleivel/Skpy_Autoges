@@ -1,0 +1,16 @@
+# clientes_pedidos/templates/clientes_pedidos/detalle_cliente.html
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Detalle del Cliente</h2>
+  <p><strong>Nombre:</strong> {{ cliente.nombre }}</p>
+  <p><strong>Razón Social:</strong> {{ cliente.razon_social }}</p>
+  <p><strong>RUC:</strong> {{ cliente.ruc }}</p>
+  <p><strong>Documento de Identidad:</strong> {{ cliente.documento_identidad }}</p>
+  <h3>Pedidos del Cliente</h3>
+  <ul>
+    {% for pedido in pedidos %}
+      <li><a href="{% url 'detalle_pedido' pedido.id %}">Pedido #{{ pedido.id }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card shadow p-4" style="width: 100%; max-width: 600px;">
+      <div class="text-center mb-4">
+        {% if usuario_perfil and usuario_perfil.foto_perfil %}
+          <img src="{{ usuario_perfil.foto_perfil.url }}" alt="Foto de perfil" class="rounded-circle mb-2" style="width: 120px; height: 120px; object-fit: cover;">
+        {% else %}
+          <img src="https://ui-avatars.com/api/?name={{ empleado.nombre }}+{{ empleado.apellidos }}&size=120" alt="Avatar" class="rounded-circle mb-2">
+        {% endif %}
+        <h3 class="mt-2">{{ empleado.nombre }} {{ empleado.apellidos }}</h3>
+        <p class="text-muted mb-1">{{ empleado.cargo }}</p>
+        <span class="badge {% if empleado.estado %}bg-success{% else %}bg-danger{% endif %}">
+          {% if empleado.estado %}Activo{% else %}Inactivo{% endif %}
+        </span>
+      </div>
+      <hr>
+      <div>
+        <p><strong>Email:</strong> {{ empleado.email }}</p>
+        <p><strong>Documento Identidad:</strong> {{ empleado.documento_identidad }}</p>
+        <p><strong>Departamento:</strong> {{ empleado.departamento }}</p>
+        <p><strong>Teléfono:</strong> {{ empleado.telefono }}</p>
+        <p><strong>Dirección:</strong> {{ empleado.direccion }}</p>
+        {% if usuario %}
+          <p><strong>Usuario:</strong> {{ usuario.username }}</p>
+        {% endif %}
+        {% if usuario_perfil %}
+          <p><strong>Roles:</strong> 
+            {% for rol in usuario_perfil.roles.all %}
+              <span class="badge bg-info text-dark">{{ rol.nombre }}</span>
+            {% empty %}
+              <span class="text-muted">No asignado</span>
+            {% endfor %}
+            
+          </p>
+        {% endif %}
+      </div>
+      <div class="mt-3 text-center">
+        <a href="{% url 'detalle_empleado' empleado.id %}" class="btn btn-warning btn-sm">Detalle Empleado</a>
+      </div>
+      <div class="mt-3 text-center">
+        <a href="{% url 'cambiar_contrasena' %}" class="btn btn-secondary btn-sm">Cambiar Contraseña</a>
+    </div>
+  </div>
+{% endblock %}

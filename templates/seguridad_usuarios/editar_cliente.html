@@ -1,0 +1,12 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Editar Cliente</h2>
+  <form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Guardar</button>
+  </form>
+  <a href="{% url 'lista_clientes' %}" class="btn btn-secondary">Cancelar</a>
+{% endblock %}

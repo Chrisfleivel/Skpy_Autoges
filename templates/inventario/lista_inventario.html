@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container py-4">
+    <h1 class="text-center mb-4">Inventario</h1>
+
+    <div class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <form method="POST" action="{% url 'lista_inventario' %}" class="row g-2 justify-content-center">
+          {% csrf_token %}
+          <div class="col-md-4">
+            <input type="text" name="search_query" class="form-control" placeholder="Buscar por nombre, código, modelo..." value="{{ request.POST.search_query }}">
+          </div>
+          <div class="col-md-2">
+            <select name="tipo" class="form-select">
+              <option value="">Todos</option>
+              <option value="vehiculo">Vehículos</option>
+              <option value="repuesto">Repuestos</option>
+              <option value="mantenimiento">Mantenimientos</option>
+              <option value="deposito">Depósitos</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-success w-100">Buscar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white">Vehículos</div>
+          <div class="card-body">
+            {% if vehiculos %}
+              <ul class="list-group mb-2">
+                {% for vehiculo in vehiculos %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ vehiculo.modelo }} - {{ vehiculo.marca }}</span>
+                    <span>
+                      <a href="{% url 'detalle_vehiculo' vehiculo.id %}" class="btn btn-info btn-sm">Ver</a>
+                      <a href="{% url 'editar_vehiculo' vehiculo.id %}" class="btn btn-warning btn-sm">Editar</a>
+                    </span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="text-muted">No hay vehículos en el inventario.</div>
+            {% endif %}
+            <a href="{% url 'agregar_vehiculo' %}" class="btn btn-primary btn-sm">Agregar Vehículo</a>
+            <a href="{% url 'lista_vehiculos' %}" class="btn btn-secondary btn-sm">Lista de Vehículos</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-success text-white">Repuestos</div>
+          <div class="card-body">
+            {% if repuestos %}
+              <ul class="list-group mb-2">
+                {% for repuesto in repuestos %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ repuesto.nombre }} - {{ repuesto.codigo }}</span>
+                    <span>
+                      <a href="{% url 'detalle_repuesto' repuesto.id %}" class="btn btn-info btn-sm">Ver</a>
+                      <a href="{% url 'editar_repuesto' repuesto.id %}" class="btn btn-warning btn-sm">Editar</a>
+                    </span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="text-muted">No hay repuestos en el inventario.</div>
+            {% endif %}
+            <a href="{% url 'agregar_repuesto' %}" class="btn btn-primary btn-sm">Agregar Repuesto</a>
+            <a href="{% url 'lista_repuestos' %}" class="btn btn-secondary btn-sm">Lista de Repuestos</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-warning text-dark">Mantenimientos</div>
+          <div class="card-body">
+            {% if mantenimientos %}
+              <ul class="list-group mb-2">
+                {% for mantenimiento in mantenimientos %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ mantenimiento.descripcion }}</span>
+                    <span>
+                      <a href="{% url 'detalle_mantenimiento' mantenimiento.id %}" class="btn btn-info btn-sm">Ver</a>
+                      <a href="{% url 'editar_mantenimiento' mantenimiento.id %}" class="btn btn-warning btn-sm">Editar</a>
+                    </span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="text-muted">No hay mantenimientos en el inventario.</div>
+            {% endif %}
+            <a href="{% url 'agregar_mantenimiento' %}" class="btn btn-primary btn-sm">Agregar Mantenimiento</a>
+            <a href="{% url 'lista_mantenimientos' %}" class="btn btn-secondary btn-sm">Lista de Mantenimientos</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-secondary text-white">Depósitos</div>
+          <div class="card-body">
+            {% if depositos %}
+              <ul class="list-group mb-2">
+                {% for deposito in depositos %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ deposito.nombre }}</span>
+                    <span>
+                      <a href="{% url 'detalle_deposito' deposito.id %}" class="btn btn-info btn-sm">Ver</a>
+                    </span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="text-muted">No hay depósitos en el inventario.</div>
+            {% endif %}
+            <a href="{% url 'agregar_deposito' %}" class="btn btn-primary btn-sm">Agregar Depósito</a>
+            <a href="{% url 'lista_depositos' %}" class="btn btn-secondary btn-sm">Lista de Depósitos</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

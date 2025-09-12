@@ -1,0 +1,13 @@
+# clientes_pedidos/templates/clientes_pedidos/editar_cliente.html
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Editar Cliente</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar Cambios</button>
+  </form>
+  <a href="{% url 'detalle_cliente' cliente.id %}">Cancelar</a>
+  <a href="{% url 'lista_clientes' %}">Volver a la lista de clientes</a>
+{% endblock %}

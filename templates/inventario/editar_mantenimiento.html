@@ -1,0 +1,13 @@
+# inventario/editar_mantenimiento.html
+
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Editar Mantenimiento</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar Cambios</button>
+  </form>
+  <a href="{% url 'detalle_mantenimiento' mantenimiento.id %}">Cancelar</a>
+{% endblock %}

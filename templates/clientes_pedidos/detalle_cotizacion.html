@@ -1,0 +1,35 @@
+# clientes_pedidos/detalle_cotizacion.html 
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Detalle de Cotización</h2>
+  <p><strong>ID:</strong> {{ cotizacion.id }}</p>
+  <p><strong>Cliente:</strong> {{ cotizacion.cliente.nombre }} {{ cotizacion.cliente.apellidos }}</p>
+  <p><strong>Fecha:</strong> {{ cotizacion.fecha }}</p>
+  <p><strong>Total:</strong> {{ cotizacion.total }}</p>
+
+  <h3>Items de la Cotización</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        <th>Precio Unitario</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in cotizacion.items.all %}
+      <tr>
+        <td>{{ item.producto.nombre }}</td>
+        <td>{{ item.cantidad }}</td>
+        <td>{{ item.precio_unitario }}</td>
+        <td>{{ item.total }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <a href="{% url 'editar_cotizacion' cotizacion.id %}">Editar Cotización</a>
+  <a href="{% url 'lista_cotizaciones' %}">Volver a la Lista de Cotizaciones</a>
+{% endblock %}

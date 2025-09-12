@@ -1,0 +1,31 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Lista de Depósitos</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Ubicación</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for deposito in depositos %}
+        <tr>
+          <td>{{ deposito.id }}</td>
+          <td>{{ deposito.nombre }}</td>
+          <td>{{ deposito.ubicacion }}</td>
+          <td>
+            <a href="{% url 'detalle_deposito' deposito.id %}">Ver</a>
+            <a href="{% url 'editar_deposito' deposito.id %}">Editar</a>
+            <a href="{% url 'eliminar_deposito' deposito.id %}" onclick="return confirm('¿Está seguro de que desea eliminar este depósito?');">Eliminar</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'agregar_deposito' %}">Agregar Depósito</a>
+{% endblock %}

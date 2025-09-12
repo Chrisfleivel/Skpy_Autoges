@@ -1,0 +1,12 @@
+# clientes_pedidos/crear_cotizacion.html
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Crear Cotización</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar Cotización</button>
+  </form>
+  <a href="{% url 'lista_cotizaciones' %}">Cancelar</a>
+{% endblock %}

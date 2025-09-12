@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div style="width: 100%; max-width: 900px;">
+      <h2 class="text-center mb-4">Empleados</h2>
+      <div class="mb-3 text-center">
+        <a href="{% url 'agregar_empleado' %}" class="btn btn-primary">Agregar Empleado</a>
+      </div>
+      <div class="filters mb-4">
+        <form method="get" class="d-flex flex-wrap justify-content-center gap-2">
+          <input type="text" name="nombre" placeholder="Nombre" value="{{ nombre }}" class="form-control" style="max-width: 150px;">
+          <input type="text" name="apellido" placeholder="Apellido" value="{{ apellido }}" class="form-control" style="max-width: 150px;">
+          <input type="text" name="departamento" placeholder="Departamento" value="{{ departamento }}" class="form-control" style="max-width: 150px;">
+          <input type="text" name="email" placeholder="Email" value="{{ email }}" class="form-control" style="max-width: 150px;">
+          <button type="submit" class="btn btn-success">Buscar</button>
+          <a href="{% url 'lista_empleados' %}" class="btn btn-secondary">Limpiar</a>
+        </form>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle text-center">
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Apellido</th>
+              <th>Correo Electrónico</th>
+              <th>Cargo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for empleado in empleados %}
+              <tr>
+                <td>{{ empleado.id }}</td>
+                <td>{{ empleado.nombre }}</td>
+                <td>{{ empleado.apellidos }}</td>
+                <td>{{ empleado.email }}</td>
+                <td>{{ empleado.cargo }}</td>
+                <td>
+                  <a href="{% url 'detalle_empleado' empleado.id %}" class="btn btn-warning btn-sm">Detalles</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

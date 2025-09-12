@@ -64,6 +64,10 @@ class Factura(DocumentoFinanciero):
     # Referencia al cliente, si es de crédito
     cliente = models.ForeignKey('clientes_pedidos.Cliente', on_delete=models.SET_NULL, null=True, blank=True)
     
+    def imprimir(self):
+        # Lógica para generar e imprimir la factura
+        pass
+
     class Meta:
         verbose_name = "Factura"
         verbose_name_plural = "Facturas"

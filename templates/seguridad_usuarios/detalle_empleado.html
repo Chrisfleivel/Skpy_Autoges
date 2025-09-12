@@ -1,0 +1,27 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Detalle del Empleado</h2>
+  <a href="{% url 'editar_empleado' empleado.id %}" class="btn btn-warning">Editar Empleado</a>
+  <a href="{% url 'lista_empleados' %}" class="btn btn-secondary">Volver a la Lista</a>
+
+  <div class="employee-details">
+    <p><strong>ID:</strong> {{ empleado.id }}</p>
+    <p><strong>Nombre:</strong> {{ empleado.nombre }}</p>
+    <p><strong>Apellido:</strong> {{ empleado.apellidos }}</p>
+    <p><strong>Documento de Identidad:</strong> {{ empleado.documento_identidad }}</p>
+    <p><strong>Cargo:</strong> {{ empleado.cargo }}</p>
+    <p><strong>Departamento:</strong> {{ empleado.departamento }}</p>
+    <p><strong>Descripción del Trabajo:</strong> {{ empleado.descripcion_trabajo }}</p>
+    <p><strong>Email:</strong> {{ empleado.email }}</p>
+    <p><strong>Teléfono:</strong> {{ empleado.telefono }}</p>
+    <p><strong>Tiene Usuario:</strong> {{ empleado.tiene_usuario|yesno:"Sí,No" }}</p>
+    <p><strong>Fecha de Registro:</strong> {{ empleado.fecha_registro }}</p>
+  </div>
+  {% if not empleado.tiene_usuario %}
+    <a href="{% url 'crear_usuario_para_empleado' empleado.id %}" class="btn btn-primary">Crear Usuario para este Empleado</a>
+  {% else %}
+    <p>Ir a <a href="{% url 'perfil_usuario' empleado.id %}">Perfil Usuario</a></p>
+  {% endif %}
+{% endblock %}

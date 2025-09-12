@@ -1,19 +1,18 @@
 # configuraciones_maestras/models.py
 
 from django.db import models
+from seguridad_usuarios.models import Persona
+from django.contrib.auth.models import User
 
 # --------------------------------------------------------------------------
 # Modelo para representar un Proveedor
 # --------------------------------------------------------------------------
-class Proveedor(models.Model):
+class Proveedor(Persona):
     """
     Modelo que representa un Proveedor de SKPY.
     """
-    nombre = models.CharField(max_length=150, verbose_name="Nombre del Proveedor")
-    contacto = models.CharField(max_length=100, blank=True, null=True, verbose_name="Persona de Contacto")
-    telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
-    email = models.EmailField(max_length=254, blank=True, null=True, verbose_name="Correo Electrónico")
-    ruc = models.CharField(max_length=20, unique=True, verbose_name="RUC o Identificador Fiscal")
+    usuario_modifico = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='modificaciones_proveedor')
+    # ...otros campos y métodos...
 
     class Meta:
         verbose_name = "Proveedor"
@@ -26,15 +25,14 @@ class Proveedor(models.Model):
 # --------------------------------------------------------------------------
 # Modelo para representar un Agente de Transporte
 # --------------------------------------------------------------------------
-class AgenteTransporte(models.Model):
+class AgenteTransporte(Persona):
     """
     Modelo que representa un Agente de Transporte utilizado en las importaciones.
     """
-    nombre = models.CharField(max_length=150, verbose_name="Nombre del Agente")
-    contacto = models.CharField(max_length=100, blank=True, null=True, verbose_name="Persona de Contacto")
-    telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
-    email = models.EmailField(max_length=254, blank=True, null=True, verbose_name="Correo Electrónico")
-    ruc = models.CharField(max_length=20, unique=True, verbose_name="RUC o Identificador Fiscal")
+    usuario_modifico = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='modificaciones_agente_transporte')
+    # ...otros campos y métodos...
+    fecha_registro = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    
 
     class Meta:
         verbose_name = "Agente de Transporte"
@@ -47,14 +45,14 @@ class AgenteTransporte(models.Model):
 # --------------------------------------------------------------------------
 # Modelo para representar un Despachante de Aduana
 # --------------------------------------------------------------------------
-class DespachanteAduana(models.Model):
+class DespachanteAduana(Persona):
     """
     Modelo que representa un Despachante de Aduana.
     """
+    usuario_modifico = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='modificaciones_despachante_aduana')
+    # ...otros campos y métodos...
     nombre = models.CharField(max_length=150, verbose_name="Nombre del Despachante")
     contacto = models.CharField(max_length=100, blank=True, null=True, verbose_name="Persona de Contacto")
-    telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
-    email = models.EmailField(max_length=254, blank=True, null=True, verbose_name="Correo Electrónico")
     registro = models.CharField(max_length=50, unique=True, verbose_name="Número de Registro")
 
     class Meta:

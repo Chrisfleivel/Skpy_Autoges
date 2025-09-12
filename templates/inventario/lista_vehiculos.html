@@ -1,0 +1,56 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container py-4">
+    <h2 class="text-center mb-4">Lista de Vehículos</h2>
+    <div class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <form method="POST" action="{% url 'lista_vehiculos' %}" class="row g-2 justify-content-center">
+          {% csrf_token %}
+          <div class="col-md-4">
+            <input type="text" name="search_query" class="form-control" placeholder="Buscar por marca, modelo, año..." value="{{ request.POST.search_query }}">
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-success w-100">Buscar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped align-middle text-center">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Año</th>
+            <th>Precio</th>
+            <th>Detalles</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for vehiculo in vehiculos %}
+            <tr>
+              <td>{{ vehiculo.id }}</td>
+              <td>{{ vehiculo.marca }}</td>
+              <td>{{ vehiculo.modelo }}</td>
+              <td>{{ vehiculo.año }}</td>
+              <td>{{ vehiculo.costo_compra }}</td>
+              <td>
+                <a href="{% url 'detalle_vehiculo' vehiculo.id %}" class="btn btn-info btn-sm">Ver aquí</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6">No se encontraron vehículos.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-3 text-end">
+      <a href="{% url 'agregar_vehiculo' %}" class="btn btn-primary">Agregar Vehículo</a>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div style="width: 100%; max-width: 800px;">
+      <h2 class="text-center mb-4">Lista de Roles</h2>
+      <div class="mb-3 text-end">
+        <a href="{% url 'crear_rol' %}" class="btn btn-primary">Agregar Rol</a>
+      </div>
+      <div class="filters mb-4">
+        <form method="post" class="d-flex flex-wrap justify-content-center gap-2">
+          {% csrf_token %}
+          <input type="text" name="nombre" placeholder="Buscar por nombre" value="{{ request.POST.nombre }}" class="form-control" style="max-width: 200px;">
+          <button type="submit" class="btn btn-success">Buscar</button>
+          <a href="{% url 'lista_roles' %}" class="btn btn-secondary">Limpiar</a>
+        </form>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle text-center">
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rol in roles %}
+              <tr>
+                <td>{{ rol.id }}</td>
+                <td>{{ rol.nombre }}</td>
+                <td>{{ rol.descripcion }}</td>
+                <td>
+                  <a href="{% url 'editar_rol' rol.id %}" class="btn btn-warning btn-sm">Editar</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4">No se encontraron roles.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

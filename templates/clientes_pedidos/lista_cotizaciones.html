@@ -1,0 +1,58 @@
+# clientes_pedidos/lista_cotizaciones.html
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Lista de Cotizaciones</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Cliente</th>
+        <th>Fecha</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cotizacion in cotizaciones %}
+      <tr>
+        <td>{{ cotizacion.id }}</td>
+        <td>{{ cotizacion.cliente.nombre }}</td>
+        <td>{{ cotizacion.fecha }}</td>
+        <td>{{ cotizacion.total }}</td>
+        <td>
+          <a href="{% url 'editar_cotizacion' cotizacion.id %}">Editar</a>
+          <a href="{% url 'detalle_cotizacion' cotizacion.id %}">Ver Detalle</a>
+          <!-- Aquí puedes agregar más acciones como eliminar -->
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h3>Lista de Pedidos</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Cliente</th>
+        <th>Fecha</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pedido in pedidos %}
+      <tr>
+        <td>{{ pedido.id }}</td>
+        <td>{{ pedido.cliente.nombre }}</td>
+        <td>{{ pedido.fecha }}</td>
+        <td>{{ pedido.total }}</td>
+        <td>
+          <a href="{% url 'editar_pedido' pedido.id %}">Editar</a>
+          <a href="{% url 'detalle_pedido' pedido.id %}">Ver Detalle</a>
+          <a href="{% url 'crear_cotizacion' pedido.id %}">Crear Cotización</a>
+          <!-- Aquí puedes agregar más acciones como eliminar -->
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

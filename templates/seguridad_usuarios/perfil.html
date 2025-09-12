@@ -1,0 +1,13 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Perfil de Empleado</h1>
+    <p><strong>Nombre:</strong> {{ empleado.nombre }}</p>
+    <p><strong>Apellido:</strong> {{ empleado.apellidos }}</p>
+    <p><strong>Email:</strong> {{ empleado.email }}</p>
+    <p><strong>Teléfono:</strong> {{ empleado.telefono }}</p>
+    <p><strong>Rol:</strong> {{ empleado.rol_name }}</p>
+
+    <a href="{% url 'cambiar_contrasena' %}">Cambiar Contraseña</a>
+{% endblock %}

@@ -3,30 +3,36 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from inventario.models import Vehiculo, Repuesto
+from seguridad_usuarios.models import Persona, Empleado
 
-Usuario = get_user_model()
+
+
 
 # --------------------------------------------------------------------------
 # Modelo para representar a un Cliente
 # --------------------------------------------------------------------------
-class Cliente(models.Model):
+class Cliente(Persona):
     """
     Modelo que representa a un Cliente.
     """
-    nombre = models.CharField(max_length=100)
-    apellido = models.CharField(max_length=100)
-    documento_identidad = models.CharField(max_length=20, unique=True, verbose_name="Cédula/RUC")
-    telefono = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    direccion = models.CharField(max_length=255, blank=True, null=True)
-    fecha_registro = models.DateTimeField(auto_now_add=True)
+
+    pedidos = models.ManyToManyField('Pedido', through='ItemPedido', related_name='clientes')
+    compras_realizadas = models.PositiveIntegerField(default=0)
+    total_gastado = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     class Meta:
         verbose_name = "Cliente"
         verbose_name_plural = "Clientes"
+        ordering = ['nombre', 'razon_social']
+
+    def comprar_vehiculos(self, vehiculos, cantidad=1):
+        pass  # Lógica para comprar vehículos
 
     def __str__(self):
-        return f"{self.nombre} {self.apellido}"
+        if self.razon_social:
+            return f"{self.razon_social} ({self.ruc})"
+        return f"{self.nombre} ({self.documento_identidad})"
+
 
 # --------------------------------------------------------------------------
 # Modelo para representar un Pedido
@@ -50,12 +56,14 @@ class Pedido(models.Model):
     )
 
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='pedidos')
-    vendedor = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, related_name='pedidos_venta')
+    vendedor = models.ForeignKey(Empleado, on_delete=models.SET_NULL, null=True, related_name='pedidos_venta')
     fecha_pedido = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(max_length=20, choices=ESTADO_PEDIDO, default='pendiente')
     tipo = models.CharField(max_length=10, choices=TIPO_PEDIDO)
     observaciones = models.TextField(blank=True, null=True)
     monto_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    iva = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
 
     class Meta:
         verbose_name = "Pedido"
@@ -107,9 +115,7 @@ class Cotizacion(models.Model):
         ('aprobada', 'Aprobada por el Cliente'),
         ('rechazada', 'Rechazada por el Cliente'),
     )
-
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='cotizaciones')
-    vendedor = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, related_name='cotizaciones_venta')
+    pedido = models.OneToOneField(Pedido, on_delete=models.SET_NULL, null=True, blank=True, related_name='cotizacion')
     fecha_cotizacion = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(max_length=20, choices=ESTADO_COTIZACION, default='solicitada')
     descripcion_solicitud = models.TextField(verbose_name="Descripción del Producto Solicitado")

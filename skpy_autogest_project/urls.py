@@ -22,5 +22,6 @@ from skpy_autogest_project.views import home_view
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home_view, name='home'),  # Ruta para la página de inicio
-    path('segurida_usuarios/', include('seguridad_usuarios.urls')) # Incluir las URLs de la app seguridad_usuario
+    path('seguridad_usuarios/', include('seguridad_usuarios.urls')),  # Incluir las URLs de la app seguridad_usuario
+    path('inventario/', include('inventario.urls')) # Incluir las URLs de la app inventario
 ]
