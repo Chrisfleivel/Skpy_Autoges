@@ -1,0 +1,33 @@
+# Detalle de la Solicitud de Reposición de Stock
+
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Detalle de la Solicitud de Reposición de Stock</h1>
+<table>
+    <tr>
+        <th>ID</th>
+        <td>{{ solicitud.id }}</td>
+    </tr>
+    <tr>
+        <th>Fecha de Creación</th>
+        <td>{{ solicitud.fecha_creacion }}</td>
+    </tr>
+    <tr>
+        <th>Creador</th>
+        <td>{{ solicitud.creador }}</td>
+    </tr>
+    <tr>
+        <th>Estado</th>
+        <td>{{ solicitud.estado }}</td>
+    </tr>
+    <tr>
+        <th>Observaciones</th>
+        <td>{{ solicitud.observaciones }}</td>
+    </tr>
+    <tr>
+        <th>Total de Ítems</th>
+        <td>{{ solicitud.total_items }}</td>
+    </tr>
+</table>
+{% endblock %}

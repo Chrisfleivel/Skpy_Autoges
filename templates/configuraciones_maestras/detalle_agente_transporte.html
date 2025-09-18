@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+  <div class="card shadow p-4" style="width: 100%; max-width: 600px; background-color: #fff;">
+    <h2 class="mb-4 text-center text-dark">Detalle de Agente de Transporte</h2>
+    <table class="table table-bordered table-striped mb-4">
+      <tr>
+        <th class="bg-light">Nombre</th>
+        <td>{{ agente.nombre }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Teléfono</th>
+        <td>{{ agente.telefono }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Email</th>
+        <td>{{ agente.email }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Dirección</th>
+        <td>{{ agente.direccion }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Persona de Contacto</th>
+        <td>{{ agente.contacto }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Fecha de Registro</th>
+        <td>{{ agente.fecha_registro|date:"d/m/Y H:i" }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Estado</th>
+        <td>
+          {% if agente.estado %}
+            <span class="badge bg-success">Activo</span>
+          {% else %}
+            <span class="badge bg-danger">Inactivo</span>
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+    <div class="text-center">
+      <a href="{% url 'editar_agente_transporte' agente.id %}" class="btn btn-warning">Editar</a>
+      <a href="{% url 'lista_agentes_transporte' %}" class="btn btn-secondary ms-2">Volver</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

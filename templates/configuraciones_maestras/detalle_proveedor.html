@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+  <div class="card shadow p-4" style="width: 100%; max-width: 600px; background-color: #fff;">
+    <h2 class="mb-4 text-center text-dark">Detalle del Proveedor</h2>
+    <table class="table table-bordered table-striped">
+      <tr>
+        <th class="bg-light">Nombre</th>
+        <td>{{ proveedor.nombre }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Dirección</th>
+        <td>{{ proveedor.direccion }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Teléfono</th>
+        <td>{{ proveedor.telefono }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Email</th>
+        <td>{{ proveedor.email }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Contacto</th>
+        <td>{{ proveedor.contacto }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Fecha de Creación</th>
+        <td>{{ proveedor.fecha_creacion|date:"d/m/Y H:i" }}</td>
+      </tr>
+      <tr>
+        <th class="bg-light">Última Modificación</th>
+        <td>{{ proveedor.ultima_modificacion|date:"d/m/Y H:i" }}</td>
+      </tr>
+    </table>
+    <div class="d-flex justify-content-between mt-4">
+      <a href="{% url 'editar_proveedor' proveedor.id %}" class="btn btn-primary">Editar</a>
+      {% if proveedor.estado %}
+      <form method="post" action="{% url 'inactivar_proveedor' proveedor.id %}" onsubmit="return confirm('¿Estás seguro de que deseas inactivar este proveedor?');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Inactivar</button>
+      </form>
+      {% else %}
+      <span class="badge bg-secondary align-self-center">Proveedor Inactivo</span>
+      {% endif %}
+    <div class="text-center mt-3">
+      <a href="{% url 'lista_proveedores' %}" class="btn btn-secondary">Volver a la lista</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

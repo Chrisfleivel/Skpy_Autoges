@@ -552,15 +552,36 @@ def lista_perfiles(request):
     Vista para listar todos los perfiles de usuario.
     """
     perfiles = UsuarioPerfil.objects.all()
-    if request.method == 'POST':
-        # filtrar por usuario
-        username = request.POST.get('username')
-        if username:
-            perfiles = UsuarioPerfil.objects.filter(usuario__username__icontains=username)
-        documento_identidad = request.POST.get('documento_identidad')
-        if documento_identidad:
-            perfiles = perfiles.filter(documento_identidad__icontains=documento_identidad)
+    username = request.GET.get('username', '').strip()
+    documento_identidad = request.GET.get('documento_identidad', '').strip()
+    estado = request.GET.get('estado', '')
 
+    if request.method == 'GET':
+
+        if username:
+            if request.GET['estado'] == 'ACTIVO':
+
+                perfiles = perfiles.filter(user__is_active=True, user__username__icontains=username)
+            else:
+                if request.GET['estado'] == 'INACTIVO':
+                    perfiles = perfiles.filter(user__is_active=False, user__username__icontains=username)
+                else:
+                    perfiles = perfiles.filter(user__username__icontains=username)
+        documento_identidad = request.GET.get('documento_identidad')
+        if documento_identidad:
+            
+            if request.GET['estado'] == 'ACTIVO':
+
+                perfiles = perfiles.filter(user__is_active=True, empleado__documento_identidad__icontains=documento_identidad)
+            else:
+                if request.GET['estado'] == 'INACTIVO':
+                    perfiles = perfiles.filter(user__is_active=False, empleado__documento_identidad__icontains=documento_identidad)
+                else:
+                    perfiles = perfiles.filter(empleado__documento_identidad__icontains=documento_identidad)
+        if estado == 'True':
+            perfiles = perfiles.filter(user__is_active=True)
+        elif estado == 'False':
+            perfiles = perfiles.filter(user__is_active=False)
     return render(request, 'seguridad_usuarios/lista_perfiles.html', {'perfiles': perfiles})
 
 @revisar_permiso('seguridad_usuarios.crear_usuario_para_empleado')

@@ -2,16 +2,35 @@
 
 {% block content %}
   <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-    <div style="width: 100%; max-width: 900px;">
+    <div style="width: 100%; max-width: 1000px;">
       <h2 class="text-center mb-4">Lista de Perfiles de Usuario</h2>
-      <div class="filters mb-4">
-        <form method="post" class="d-flex flex-wrap justify-content-center gap-2">
-          {% csrf_token %}
-          <input type="text" name="username" placeholder="Buscar por usuario" value="{{ request.POST.username }}" class="form-control" style="max-width: 200px;">
-          <input type="text" name="documento_identidad" placeholder="Documento Identidad" value="{{ request.POST.documento_identidad }}" class="form-control" style="max-width: 200px;">
-          <button type="submit" class="btn btn-success">Buscar</button>
-          <a href="{% url 'lista_perfiles' %}" class="btn btn-secondary">Limpiar</a>
-        </form>
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <form method="get" class="row g-2 justify-content-center align-items-end">
+            <div class="col-md-4">
+              <label for="username" class="form-label mb-0">Usuario</label>
+              <input type="text" name="username" id="username" placeholder="Buscar por usuario" value="{{ request.GET.username }}" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label for="documento_identidad" class="form-label mb-0">Documento Identidad</label>
+              <input type="text" name="documento_identidad" id="documento_identidad" placeholder="Buscar por documento identidad" value="{{ request.GET.documento_identidad }}" class="form-control">
+            </div>
+            <div class="col-md-2">
+              <label for="estado" class="form-label mb-0">Estado</label>
+              <select name="estado" id="estado" class="form-select">
+                <option value="">Todos</option>
+                <option value="True" {% if request.GET.estado == 'True' %}selected{% endif %}>Activo</option>
+                <option value="False" {% if request.GET.estado == 'False' %}selected{% endif %}>Inactivo</option>
+              </select>
+            </div>
+            <div class="col-md-1 d-grid">
+              <button type="submit" class="btn btn-success">Buscar</button>
+            </div>
+            <div class="col-md-1 d-grid">
+              <a href="{% url 'lista_perfiles' %}" class="btn btn-secondary">Limpiar</a>
+            </div>
+          </form>
+        </div>
       </div>
       <div class="table-responsive">
         <table class="table table-bordered table-striped align-middle text-center">
@@ -21,6 +40,7 @@
               <th>Usuario</th>
               <th>Empleado</th>
               <th>Documento Identidad</th>
+              <th>Estado</th>
               <th>Roles</th>
               <th>Acciones</th>
             </tr>
@@ -51,6 +71,13 @@
                   {% endif %}
                 </td>
                 <td>
+                  {% if perfil.user.is_active %}
+                    <span class="badge bg-success">Activo</span>
+                  {% else %}
+                    <span class="badge bg-danger">Inactivo</span>
+                  {% endif %}
+                </td>
+                <td>
                   {% for rol in perfil.roles.all %}
                     <span class="badge bg-primary">{{ rol.nombre }}</span>
                   {% empty %}
@@ -58,12 +85,16 @@
                   {% endfor %}
                 </td>
                 <td>
-                  <a href="{% url 'perfil_usuario' perfil.empleado.id %}" class="btn btn-info btn-sm">Ver Perfil</a>
+                  {% if perfil.empleado %}
+                    <a href="{% url 'perfil_usuario' perfil.empleado.id %}" class="btn btn-info btn-sm">Ver Perfil</a>
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
                 </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="6">No se encontraron perfiles.</td>
+                <td colspan="7" class="text-muted">No se encontraron perfiles.</td>
               </tr>
             {% endfor %}
           </tbody>

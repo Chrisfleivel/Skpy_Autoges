@@ -117,9 +117,12 @@ class PerfilUsuarioForm(forms.ModelForm):
     """
     Formulario para editar el perfil del usuario, incluyendo la foto de perfil.
     """
+    documento_identidad = forms.CharField(label='Documento de Identidad', max_length=20, required=False)
+    username = forms.CharField(label='Nombre de Usuario', max_length=150, required=True)
+    email = forms.EmailField(label='Correo Electrónico', required=True)
     class Meta: 
         model = UsuarioPerfil
-        fields = ['empleado', 'roles', 'foto_perfil']
+        fields = ['empleado', 'roles', 'foto_perfil', 'username', 'email', 'documento_identidad']
         widgets = {
             'roles': forms.CheckboxSelectMultiple(),
         }

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Agregar Proveedor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="text-center mb-4">Agregar Proveedor</h1>
+
+  <form method="post" action="{% url 'agregar_proveedor' %}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label for="tipo_persona" class="form-label">Tipo de Persona</label>
+      <select name="tipo_persona" id="tipo_persona" class="form-select" required>
+        <option value="juridica">Jurídica</option>
+        <option value="fisica">Física</option>
+      </select>
+    </div>
+
+    <div id="juridica-campos">
+      <div class="mb-3">
+        <label for="razon_social" class="form-label">Nombre/Razón Social</label>
+        <input type="text" name="razon_social" id="razon_social" class="form-control">
+      </div>
+      <div class="mb-3">
+        <label for="contacto" class="form-label">Contacto</label>
+        <input type="text" name="contacto" id="contacto" class="form-control">
+      </div>
+    </div>
+
+    <div id="fisica-campos" style="display: none;">
+      <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre</label>
+        <input type="text" name="nombre" id="nombre" class="form-control">
+      </div>
+      <div class="mb-3">
+        <label for="apellido" class="form-label">Apellido</label>
+        <input type="text" name="apellido" id="apellido" class="form-control">
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="ruc" class="form-label">RUC</label>
+      <input type="text" name="ruc" id="ruc" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input type="email" name="email" id="email" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label for="telefono" class="form-label">Teléfono</label>
+      <input type="text" name="telefono" id="telefono" class="form-control">
+    </div>
+
+    <div class="mb-3 text-end">
+      <button type="submit" class="btn btn-primary">Guardar Proveedor</button>
+    </div>
+  </form>
+  <div class="mb-3 text-end">
+    <a href="{% url 'lista_proveedores' %}" class="btn btn-secondary">Cancelar</a>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const tipoPersona = document.getElementById('tipo_persona');
+  const juridicaCampos = document.getElementById('juridica-campos');
+  const fisicaCampos = document.getElementById('fisica-campos');
+
+  function toggleCampos() {
+    if (tipoPersona.value === 'juridica') {
+      juridicaCampos.style.display = 'block';
+      fisicaCampos.style.display = 'none';
+    } else {
+      juridicaCampos.style.display = 'none';
+      fisicaCampos.style.display = 'block';
+    }
+  }
+
+  tipoPersona.addEventListener('change', toggleCampos);
+  toggleCampos(); // Inicializa al cargar
+});
+</script>
+{% endblock %}

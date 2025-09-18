@@ -1,0 +1,27 @@
+# Lista de Items del Pedido
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Items del Pedido #{{ pedido.id }}</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        <th>Precio Unitario</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in pedido.items.all %}
+      <tr>
+        <td>{{ item.producto.nombre }}</td>
+        <td>{{ item.cantidad }}</td>
+        <td>{{ item.precio_unitario }}</td>
+        <td>{{ item.total }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'detalle_pedido' pedido.id %}">Volver al Detalle del Pedido</a>
+{% endblock %}

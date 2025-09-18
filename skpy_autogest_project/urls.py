@@ -23,5 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home_view, name='home'),  # Ruta para la página de inicio
     path('seguridad_usuarios/', include('seguridad_usuarios.urls')),  # Incluir las URLs de la app seguridad_usuario
-    path('inventario/', include('inventario.urls')) # Incluir las URLs de la app inventario
+    path('inventario/', include('inventario.urls')),  # Incluir las URLs de la app inventario
+    path('configuraciones_maestras/', include('configuraciones_maestras.urls')),  # Incluir las URLs de la app configuraciones_maestras
 ]

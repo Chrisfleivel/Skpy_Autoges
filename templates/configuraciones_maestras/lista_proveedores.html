@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de Proveedores{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="text-center mb-4">Lista de Proveedores</h1>
+  <div class="mb-3 text-end">
+    <a href="{% url 'agregar_proveedor' %}" class="btn btn-primary">Agregar Nuevo Proveedor</a>
+  </div>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" action="{% url 'lista_proveedores' %}" class="row g-2 justify-content-center">
+        <div class="col-md-3">
+          <select name="estado" class="form-select">
+            <option value="">Todos</option>
+            <option value="ACTIVO" {% if request.GET.estado == 'ACTIVO' %}selected{% endif %}>Activos</option>
+            <option value="INACTIVO" {% if request.GET.estado == 'INACTIVO' %}selected{% endif %}>Inactivos</option>
+          </select>
+        </div>
+        <div class="col-md-5">
+          <input type="text" name="nombre" placeholder="Buscar por nombre" value="{{ request.GET.nombre }}" class="form-control">
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-success w-100">Buscar</button>
+        </div>
+        <div class="col-md-2">
+          <a href="{% url 'lista_proveedores' %}" class="btn btn-secondary w-100">Limpiar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped align-middle text-center">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Contacto</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for proveedor in proveedores %}
+        <tr>
+          <td>{{ proveedor.id }}</td>
+          <td>{{ proveedor.nombre }}</td>
+          <td>{{ proveedor.contacto }}</td>
+          <td>
+            <a href="{% url 'detalle_proveedor' proveedor.id %}" class="btn btn-info btn-sm">Ver Detalles</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-muted">No se encontraron proveedores.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

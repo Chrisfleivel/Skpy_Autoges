@@ -7,27 +7,6 @@ from .forms import ProveedorForm, AgenteTransporteForm, DespachanteAduanaForm, T
 def home_maestras(request):
     return render(request, 'configuraciones_maestras/home_maestras.html')
 
-# Listado de proveedores
-def lista_proveedores(request):
-    proveedores = Proveedor.objects.all()
-    return render(request, 'configuraciones_maestras/lista_proveedores.html', {'proveedores': proveedores})
-
-# Listado de agentes de transporte
-def lista_agentes_transporte(request):
-    agentes = AgenteTransporte.objects.all()
-    return render(request, 'configuraciones_maestras/lista_agentes_transporte.html', {'agentes': agentes})
-
-# Listado de despachantes de aduana
-def lista_despachantes_aduana(request):
-    despachantes = DespachanteAduana.objects.all()
-    return render(request, 'configuraciones_maestras/lista_despachantes_aduana.html', {'despachantes': despachantes})
-
-# Listado de tasas de cambio
-def lista_tasas_cambio(request):
-    tasas = TasaCambio.objects.all()
-    return render(request, 'configuraciones_maestras/lista_tasas_cambio.html', {'tasas': tasas})
-
-
 # CRUD Proveedor
 def agregar_proveedor(request):
     if request.method == 'POST':
@@ -50,6 +29,13 @@ def editar_proveedor(request, pk):
         form = ProveedorForm(instance=proveedor)
     return render(request, 'configuraciones_maestras/editar_proveedor.html', {'form': form, 'proveedor': proveedor})
 
+def inactivar_proveedor(request, pk):
+    proveedor = get_object_or_404(Proveedor, pk=pk)
+    if request.method == 'POST':
+        proveedor.inactivar()
+        return redirect('lista_proveedores')
+    return render(request, 'configuraciones_maestras/inactivar_proveedor.html', {'proveedor': proveedor})
+
 def eliminar_proveedor(request, pk):
     proveedor = get_object_or_404(Proveedor, pk=pk)
     if request.method == 'POST':
@@ -60,6 +46,27 @@ def eliminar_proveedor(request, pk):
 def detalle_proveedor(request, pk):
     proveedor = get_object_or_404(Proveedor, pk=pk)
     return render(request, 'configuraciones_maestras/detalle_proveedor.html', {'proveedor': proveedor})
+
+# Listado de proveedores
+def lista_proveedores(request):
+    proveedores = Proveedor.objects.all()
+    # filtro por estado y nombre
+    if 'estado' in request.GET: 
+        if request.GET['estado'] == 'ACTIVO':
+            if 'nombre' in request.GET and request.GET['nombre']:
+                proveedores = proveedores.filter(nombre__icontains=request.GET['nombre'], estado= True)
+            else:
+                proveedores = proveedores.filter(estado= True)
+        elif request.GET['estado'] == 'INACTIVO':
+            if 'nombre' in request.GET and request.GET['nombre']:
+                proveedores = proveedores.filter(nombre__icontains=request.GET['nombre'], estado= False)
+            else:
+                proveedores = proveedores.filter(estado= False)
+        else:
+            if 'nombre' in request.GET and request.GET['nombre']:
+                proveedores = proveedores.filter(nombre__icontains=request.GET['nombre'])
+            
+    return render(request, 'configuraciones_maestras/lista_proveedores.html', {'proveedores': proveedores})
 
 # CRUD AgenteTransporte
 def agregar_agente_transporte(request):
@@ -94,6 +101,27 @@ def detalle_agente_transporte(request, pk):
     agente = get_object_or_404(AgenteTransporte, pk=pk)
     return render(request, 'configuraciones_maestras/detalle_agente_transporte.html', {'agente': agente})
 
+# Listado de agentes de transporte
+def lista_agentes_transporte(request):
+    # filtro por estado y nombre
+    agentes = AgenteTransporte.objects.all()
+    if 'estado' in request.GET:
+        if request.GET['estado'] == 'ACTIVO':
+            if 'nombre' in request.GET and request.GET['nombre']:
+                agentes = agentes.filter(nombre__icontains=request.GET['nombre'], estado=True)
+            else:
+                agentes = agentes.filter(estado=True)
+        elif request.GET['estado'] == 'INACTIVO':
+            if 'nombre' in request.GET and request.GET['nombre']:
+                agentes = agentes.filter(nombre__icontains=request.GET['nombre'], estado=False)
+            else:
+                agentes = agentes.filter(estado=False)
+        else:
+            if 'nombre' in request.GET and request.GET['nombre']:
+                agentes = agentes.filter(nombre__icontains=request.GET['nombre'])
+
+    return render(request, 'configuraciones_maestras/lista_agentes_transporte.html', {'agentes': agentes})
+
 # CRUD DespachanteAduana
 def agregar_despachante_aduana(request):
     if request.method == 'POST':
@@ -127,6 +155,11 @@ def detalle_despachante_aduana(request, pk):
     despachante = get_object_or_404(DespachanteAduana, pk=pk)
     return render(request, 'configuraciones_maestras/detalle_despachante_aduana.html', {'despachante': despachante})
 
+# Listado de despachantes de aduana
+def lista_despachantes_aduana(request):
+    despachantes = DespachanteAduana.objects.all()
+    return render(request, 'configuraciones_maestras/lista_despachantes_aduana.html', {'despachantes': despachantes})
+
 # CRUD TasaCambio
 def agregar_tasa_cambio(request):
     if request.method == 'POST':
@@ -159,4 +192,9 @@ def eliminar_tasa_cambio(request, pk):
 def detalle_tasa_cambio(request, pk):
     tasa = get_object_or_404(TasaCambio, pk=pk)
     return render(request, 'configuraciones_maestras/detalle_tasa_cambio.html', {'tasa': tasa})
+
+# Listado de tasas de cambio
+def lista_tasas_cambio(request):
+    tasas = TasaCambio.objects.all()
+    return render(request, 'configuraciones_maestras/lista_tasas_cambio.html', {'tasas': tasas})
 

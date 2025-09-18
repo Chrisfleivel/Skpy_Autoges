@@ -1,0 +1,13 @@
+# Eliminar Tasa de Cambio
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Eliminar Tasa de Cambio</h2>
+  <p>¿Estás seguro de que deseas eliminar la tasa de cambio para {{ tasa.moneda }} con valor {{ tasa.valor }}?</p>
+  
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Confirmar Eliminación</button>
+    <a href="{% url 'lista_tasas_cambio' %}">Cancelar</a>
+  </form>
+{% endblock %}

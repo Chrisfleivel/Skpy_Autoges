@@ -1,0 +1,14 @@
+# Edición de despachante de aduana
+{% extends 'base.html' %}
+
+{% block title %}Editar Despachante de Aduana{% endblock %}
+
+{% block content %}
+    <h1>Editar Despachante de Aduana</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Guardar cambios</button>
+    </form>
+    <a href="{% url 'lista_despachantes_aduana' %}">Volver a la lista de despachantes de aduana</a>
+{% endblock %}

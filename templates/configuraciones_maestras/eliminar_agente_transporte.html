@@ -1,0 +1,14 @@
+# Eliminar agente de transporte
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Agente de Transporte{% endblock %}
+
+{% block content %}
+    <h1>Eliminar Agente de Transporte</h1>
+    <p>¿Estás seguro de que deseas eliminar al agente de transporte "{{ agente.nombre }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Confirmar eliminación</button>
+    </form>
+    <a href="{% url 'lista_agentes_transporte' %}">Volver a la lista de agentes de transporte</a>
+{% endblock %}

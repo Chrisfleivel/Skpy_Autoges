@@ -106,8 +106,22 @@ class Persona(models.Model):
     estado = models.BooleanField(default=True)  # True para activo, False para inactivo
     fecha_baja = models.DateTimeField(blank=True, null=True)
 
+    def cambiar_telefono(self, nuevo_telefono):
+        self.telefono = nuevo_telefono
+        self.save()
+
     def __str__(self):
         return f'{self.razon_social or self.nombre} ({self.documento_identidad or self.ruc})'
+
+    def inactivar(self):
+        self.estado = False
+        self.fecha_baja = timezone.now()
+        self.save()
+    
+    def reactivar(self):
+        self.estado = True
+        self.fecha_baja = None
+        self.save()
 
     class Meta:
         abstract = True

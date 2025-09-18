@@ -16,7 +16,6 @@ class Cliente(Persona):
     Modelo que representa a un Cliente.
     """
 
-    pedidos = models.ManyToManyField('Pedido', through='ItemPedido', related_name='clientes')
     compras_realizadas = models.PositiveIntegerField(default=0)
     total_gastado = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 

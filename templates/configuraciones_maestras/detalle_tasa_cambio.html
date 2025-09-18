@@ -1,0 +1,13 @@
+# Detalle de Tasa de Cambio
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Tasa de Cambio{% endblock %}
+
+{% block content %}
+    <h1>Detalle de Tasa de Cambio</h1>
+    <p><strong>Moneda:</strong> {{ tasa.moneda }}</p>
+    <p><strong>Tasa de Cambio:</strong> {{ tasa.tasa }}</p>
+    <a href="{% url 'editar_tasa_cambio' tasa.id %}">Editar</a>
+    <a href="{% url 'eliminar_tasa_cambio' tasa.id %}">Eliminar</a>
+    <a href="{% url 'lista_tasas_cambio' %}">Volver a la lista de tasas de cambio</a>
+{% endblock %}

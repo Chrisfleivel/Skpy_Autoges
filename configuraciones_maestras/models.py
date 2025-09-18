@@ -12,7 +12,9 @@ class Proveedor(Persona):
     Modelo que representa un Proveedor de SKPY.
     """
     usuario_modifico = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='modificaciones_proveedor')
+    contacto = models.CharField(max_length=100, blank=True, null=True, verbose_name="Persona de Contacto")
     # ...otros campos y métodos...
+
 
     class Meta:
         verbose_name = "Proveedor"
@@ -32,6 +34,7 @@ class AgenteTransporte(Persona):
     usuario_modifico = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='modificaciones_agente_transporte')
     # ...otros campos y métodos...
     fecha_registro = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    contacto = models.CharField(max_length=100, blank=True, null=True, verbose_name="Persona de Contacto")
     
 
     class Meta:

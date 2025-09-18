@@ -1,8 +1,8 @@
-# clientes_pedidos/crear_cotizacion.html
+# clientes_pedidos/agregar_cotizacion.html
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Crear Cotización</h2>
+  <h2>Agregar Cotización</h2>
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}

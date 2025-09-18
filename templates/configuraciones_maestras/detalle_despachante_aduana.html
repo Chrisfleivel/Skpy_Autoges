@@ -1,0 +1,14 @@
+# Detalle de despachante de aduana
+{% extends 'base.html' %}
+
+{% block title %}Detalle del Despachante de Aduana{% endblock %}
+
+{% block content %}
+    <h1>Detalle del Despachante de Aduana</h1>
+    <p><strong>Nombre:</strong> {{ despachante.nombre }}</p>
+    <p><strong>Teléfono:</strong> {{ despachante.telefono }}</p>
+    <p><strong>Email:</strong> {{ despachante.email }}</p>
+    <a href="{% url 'editar_despachante_aduana' despachante.id %}">Editar</a>
+    <a href="{% url 'eliminar_despachante_aduana' despachante.id %}">Eliminar</a>
+    <a href="{% url 'lista_despachantes_aduana' %}">Volver a la lista de despachantes de aduana</a>
+{% endblock %}

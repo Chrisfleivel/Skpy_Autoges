@@ -1,0 +1,33 @@
+# Listar Solicitudes de Reposición de Stock
+
+{% extends "base.html" %}
+
+{% block title %}Listar Solicitudes de Reposición de Stock{% endblock %}
+
+{% block content %}
+<h1>Listar Solicitudes de Reposición de Stock</h1>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Fecha de Creación</th>
+            <th>Creador</th>
+            <th>Estado</th>
+            <th>Observaciones</th>
+            <th>Total de Ítems</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for solicitud in solicitudes %}
+        <tr>
+            <td>{{ solicitud.id }}</td>
+            <td>{{ solicitud.fecha_creacion }}</td>
+            <td>{{ solicitud.creador }}</td>
+            <td>{{ solicitud.estado }}</td>
+            <td>{{ solicitud.observaciones }}</td>
+            <td>{{ solicitud.total_items }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

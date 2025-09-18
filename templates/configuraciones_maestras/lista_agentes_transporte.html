@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="text-center mb-4">Listado de Agentes de Transporte</h1>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-2 justify-content-center">
+        <div class="col-md-4">
+          <input type="text" name="nombre" class="form-control" placeholder="Buscar por nombre" value="{{ request.GET.nombre }}">
+        </div>
+        <div class="col-md-3">
+          <select name="estado" class="form-select">
+            <option value="">Todos</option>
+            <option value="True" {% if request.GET.estado == 'True' %}selected{% endif %}>Activo</option>
+            <option value="False" {% if request.GET.estado == 'False' %}selected{% endif %}>Inactivo</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-success w-100">Buscar</button>
+        </div>
+        <div class="col-md-2">
+          <a href="{% url 'lista_agentes_transporte' %}" class="btn btn-secondary w-100">Limpiar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="mb-3 text-end">
+    <a href="{% url 'agregar_agente_transporte' %}" class="btn btn-primary">Agregar Agente de Transporte</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped align-middle text-center">
+      <thead class="table-dark">
+        <tr>
+          <th>Nombre</th>
+          <th>Estado</th>
+          <th>Contacto</th>
+          <th>Fecha de Registro</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for agente in agentes %}
+        <tr>
+          <td>{{ agente.nombre }}</td>
+          <td>
+            {% if agente.estado %}
+              <span class="badge bg-success">Activo</span>
+            {% else %}
+              <span class="badge bg-danger">Inactivo</span>
+            {% endif %}
+          </td>
+          <td>{{ agente.contacto }}</td>
+          <td>{{ agente.fecha_registro|date:"d/m/Y H:i" }}</td>
+          <td>
+            <a href="{% url 'detalle_agente_transporte' agente.pk %}" class="btn btn-info btn-sm">Ver</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-muted">No hay agentes de transporte disponibles.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

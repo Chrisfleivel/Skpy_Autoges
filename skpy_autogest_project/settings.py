@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'seguridad_usuarios',
     'configuraciones_maestras',
     'inventario',
-    #'clientes_pedidos',
+    'clientes_pedidos',
     #'cobranza',
     #'documentos_financieros',
     #'importaciones',

@@ -1,0 +1,14 @@
+# Eliminar despachante de aduana
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Despachante de Aduana{% endblock %}
+
+{% block content %}
+    <h1>Eliminar Despachante de Aduana</h1>
+    <p>¿Estás seguro de que deseas eliminar al despachante de aduana "{{ despachante.nombre }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Confirmar eliminación</button>
+    </form>
+    <a href="{% url 'lista_despachantes_aduana' %}">Volver a la lista de despachantes de aduana</a>
+{% endblock %}

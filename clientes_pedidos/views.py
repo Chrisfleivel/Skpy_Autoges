@@ -27,7 +27,7 @@ def editar_pedido(request, pedido_id):
         'pedido': pedido
     })
 
-def crear_pedido(request):
+def agregar_pedido(request):
     if request.method == 'POST':
         pedido_form = PedidoCreateForm(request.POST)
         formset = ItemPedidoFormSet(request.POST)
@@ -42,18 +42,45 @@ def crear_pedido(request):
     else:
         pedido_form = PedidoCreateForm()
         formset = ItemPedidoFormSet()
-    return render(request, 'clientes_pedidos/crear_pedido.html', {
+    return render(request, 'clientes_pedidos/agregar_pedido.html', {
         'pedido_form': pedido_form,
         'formset': formset
     })
 
 def lista_pedidos(request):
     pedidos = Pedido.objects.all()
+    # filtrar por cliente, vendedor, estado, tipo, fecha_pedido
+    # Si se envían parámetros de búsqueda, aplicarlos
+    cliente = request.GET.get('cliente')
+    vendedor = request.GET.get('vendedor')
+    estado = request.GET.get('estado')
+    tipo = request.GET.get('tipo')
+    fecha_pedido = request.GET.get('fecha_pedido')
+
+
+    if cliente:
+        cliente_id = buscar_cliente_id_por_nombre(cliente)
+        if cliente_id:
+            pedidos = pedidos.filter(cliente__id=cliente_id)
+    if vendedor:
+        pedidos = pedidos.filter(vendedor__id=vendedor)
+    if estado:
+        pedidos = pedidos.filter(estado=estado)
+    if tipo:
+        pedidos = pedidos.filter(tipo=tipo)
+    if fecha_pedido:
+        pedidos = pedidos.filter(fecha_pedido=fecha_pedido)
+
     return render(request, 'clientes_pedidos/lista_pedidos.html', {'pedidos': pedidos})
+
+def buscar_cliente_id_por_nombre(nombre):
+    cliente = filter(Cliente, nombre__iexact=nombre).first()
+    # icontains
+    return cliente.id if cliente else None
 
 def lista_pedidos_cliente(request, cliente_id):
     cliente = get_object_or_404(Cliente, pk=cliente_id)
-    pedidos = cliente.pedidos.all()
+    pedidos = getattr(cliente, 'pedidos', None)
     return render(request, 'clientes_pedidos/lista_pedidos_cliente.html', {'cliente': cliente, 'pedidos': pedidos})
 
 def detalle_pedido(request, pedido_id):
@@ -110,7 +137,7 @@ def editar_cliente(request, cliente_id):
 # Vistas para la gestión de Pedidos 2
 # --------------------------------------------------------------------------
 
-def crear_pedido(request):
+def agregar_pedido(request):
     if request.method == 'POST':
         form = PedidoForm(request.POST)
         if form.is_valid():
@@ -118,7 +145,7 @@ def crear_pedido(request):
             return redirect('crear_item_pedido')
     else:
         form = PedidoForm()
-    return render(request, 'clientes_pedidos/crear_pedido.html', {'form': form})
+    return render(request, 'clientes_pedidos/agregar_pedido.html', {'form': form})
 
 def detalle_pedido(request, pedido_id):
     pedido = Pedido.objects.get(id=pedido_id)
@@ -136,12 +163,16 @@ def editar_pedido(request, pedido_id):
         form = PedidoForm(instance=pedido)
     return render(request, 'clientes_pedidos/editar_pedido.html', {'form': form, 'pedido': pedido})
 
+# --------------------------------------------------------------------------
+# Vistas para la gestión de Items de Pedido  
+# --------------------------------------------------------------------------
+
 def lista_items_pedido(request, pedido_id):
     pedido = get_object_or_404(Pedido, pk=pedido_id)
     items = ItemPedido.objects.filter(pedido=pedido)
     return render(request, 'clientes_pedidos/lista_items_pedido.html', {'pedido': pedido, 'items': items})
 
-def crear_item_pedido(request):
+def agregar_item_pedido(request):
     if request.method == 'POST':
         form = ItemPedidoForm(request.POST)
         if form.is_valid():
@@ -149,13 +180,28 @@ def crear_item_pedido(request):
             # Redirigir a la lista de pedidos o a otra página
     else:
         form = ItemPedidoForm()
-    return render(request, 'clientes_pedidos/crear_item_pedido.html', {'form': form})
+    return render(request, 'clientes_pedidos/agregar_item_pedido.html', {'form': form})
+
+def editar_item_pedido(request, item_id):
+    item = ItemPedido.objects.get(id=item_id)
+    if request.method == 'POST':
+        form = ItemPedidoForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            # Redirigir a la lista de pedidos o a otra página
+    else:
+        form = ItemPedidoForm(instance=item)
+    return render(request, 'clientes_pedidos/editar_item_pedido.html', {'form': form, 'item': item})    
+
+def detalle_item_pedido(request, item_id):
+    item = ItemPedido.objects.get(id=item_id)
+    return render(request, 'clientes_pedidos/detalle_item_pedido.html', {'item': item})
 
 # --------------------------------------------------------------------------
 # Vistas para la gestión de Cotizaciones    
 # --------------------------------------------------------------------------
 
-def crear_cotizacion(request):
+def agregar_cotizacion(request):
     if request.method == 'POST':
         form = CotizacionForm(request.POST)
         if form.is_valid():
@@ -163,9 +209,9 @@ def crear_cotizacion(request):
             # Redirigir a la lista de cotizaciones o a otra página
     else:
         form = CotizacionForm()
-    return render(request, 'clientes_pedidos/crear_cotizacion.html', {'form': form})
+    return render(request, 'clientes_pedidos/agregar_cotizacion.html', {'form': form})
 
-def crear_cotizacion(request, pedido_id):
+def agregar_cotizacion(request, pedido_id):
     if request.method == 'POST':
         form = CotizacionForm(request.POST)
         if form.is_valid():
@@ -176,7 +222,7 @@ def crear_cotizacion(request, pedido_id):
     else:
         form = CotizacionForm()
         form.fields['pedido'].initial = get_object_or_404(Pedido, id=pedido_id)
-    return render(request, 'clientes_pedidos/crear_cotizacion.html', {'form': form})
+    return render(request, 'clientes_pedidos/agregar_cotizacion.html', {'form': form})
 
 def lista_cotizaciones(request):
     pedidos = Pedido.objects.all()

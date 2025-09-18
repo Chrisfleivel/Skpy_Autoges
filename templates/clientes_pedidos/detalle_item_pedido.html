@@ -1,0 +1,8 @@
+# Detalle del Item de Pedido
+ <h2>Detalle del Item de Pedido</h2>
+ <p><strong>Producto:</strong> {{ item.producto.nombre }}</p>
+ <p><strong>Cantidad:</strong> {{ item.cantidad }}</p>
+ <p><strong>Precio Unitario:</strong> {{ item.precio_unitario }}</p>
+ <p><strong>Total:</strong> {{ item.total }}</p>
+ 
+ <a href="{% url 'lista_items_pedido' item.pedido.id %}">Volver a la lista de items</a>

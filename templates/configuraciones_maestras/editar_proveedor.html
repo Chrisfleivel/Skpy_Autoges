@@ -1,0 +1,86 @@
+# Editar Proveedor
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="text-center mb-4">Editar Proveedor</h1>
+
+  <form method="post" action="{% url 'editar_proveedor' proveedor.id %}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label for="tipo_persona" class="form-label">Tipo de Persona</label>
+      <select name="tipo_persona" id="tipo_persona" class="form-select" required>
+        <option value="juridica" {% if proveedor.tipo_persona == 'juridica' %}selected{% endif %}>Jurídica</option>
+        <option value="fisica" {% if proveedor.tipo_persona == 'fisica' %}selected{% endif %}>Física</option>
+      </select>
+    </div>
+
+    <div id="juridica-campos" {% if proveedor.tipo_persona == 'fisica' %}style="display: none;"{% endif %}>
+      <div class="mb-3">
+        <label for="razon_social" class="form-label">Nombre/Razón Social</label>
+        <input type="text" name="razon_social" id="razon_social" class="form-control" value="{{ proveedor.razon_social }}">
+      </div>
+      <div class="mb-3">
+        <label for="contacto" class="form-label">Contacto</label>
+        <input type="text" name="contacto" id="contacto" class="form-control" value="{{ proveedor.contacto }}">
+      </div>
+    </div>
+
+    <div id="fisica-campos" {% if proveedor.tipo_persona == 'juridica' %}style="display: none;"{% endif %}>
+      <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre</label>
+        <input type="text" name="nombre" id="nombre" class="form-control" value="{{ proveedor.nombre }}">
+      </div>
+      <div class="mb-3">
+        <label for="apellido" class="form-label">Apellido</label>
+        <input type="text" name="apellido" id="apellido" class="form-control" value="{{ proveedor.apellido }}">
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="ruc" class="form-label">RUC</label>
+      <input type="text" name="ruc" id="ruc" class="form-control" value="{{ proveedor.ruc }}">
+    </div>
+
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input type="email" name="email" id="email" class="form-control" value="{{ proveedor.email }}">
+    </div>
+
+    <div class="mb-3">
+      <label for="telefono" class="form-label">Teléfono</label>
+      <input type="text" name="telefono" id="telefono" class="form-control" value="{{ proveedor.telefono }}">
+    </div>
+
+    <div class="mb-3 text-end">
+      <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    </div>
+  </form>
+  <div class="mb-3 text-end">
+    <a href="{% url 'lista_proveedores' %}" class="btn btn-secondary">Cancelar</a>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const tipoPersona = document.getElementById('tipo_persona');
+  const juridicaCampos = document.getElementById('juridica-campos');
+  const fisicaCampos = document.getElementById('fisica-campos');
+
+  function toggleCampos() {
+    if (tipoPersona.value === 'juridica') {
+      juridicaCampos.style.display = 'block';
+      fisicaCampos.style.display = 'none';
+    } else {
+      juridicaCampos.style.display = 'none';
+      fisicaCampos.style.display = 'block';
+    }
+  }
+
+  tipoPersona.addEventListener('change', toggleCampos);
+  toggleCampos(); // Inicializa al cargar
+});
+</script>
+{% endblock %}

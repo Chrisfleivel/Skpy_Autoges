@@ -1,0 +1,31 @@
+# Lista de Despachantes de Aduana
+
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Lista de Despachantes de Aduana</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Contacto</th>
+        <th>Teléfono</th>
+        <th>Email</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for despachante in despachantes %}
+      <tr>
+        <td>{{ despachante.nombre }}</td>
+        <td>{{ despachante.contacto }}</td>
+        <td>{{ despachante.telefono }}</td>
+        <td>{{ despachante.email }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4">No hay despachantes de aduana registrados.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

@@ -1,0 +1,32 @@
+# Lista de tasas de cambio
+{% extends 'base.html' %}
+
+{% block title %}Lista de Tasas de Cambio{% endblock %}
+
+{% block content %}
+    <h1>Lista de Tasas de Cambio</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Moneda</th>
+                <th>Tasa de Cambio</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tasa in tasas %}
+            <tr>
+                <td>{{ tasa.moneda }}</td>
+                <td>{{ tasa.tasa }}</td>
+                <td>
+                    <a href="{% url 'editar_tasa_cambio' tasa.id %}">Editar</a>
+                    <a href="{% url 'eliminar_tasa_cambio' tasa.id %}">Eliminar</a>
+                    <a href="{% url 'detalle_tasa_cambio' tasa.id %}">Ver Detalles</a>
+                    <a href="{% url 'actualizar_tasa_cambio' tasa.id %}">Actualizar Automáticamente</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'agregar_tasa_cambio' %}">Agregar Tasa de Cambio</a>
+{% endblock %}

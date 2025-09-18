@@ -1,0 +1,14 @@
+# Agregar Tasa de Cambio
+{% extends 'base.html' %}
+
+{% block title %}Agregar Tasa de Cambio{% endblock %}
+
+{% block content %}
+    <h1>Agregar Tasa de Cambio</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Agregar</button>
+    </form>
+    <a href="{% url 'lista_tasas_cambio' %}">Volver a la lista de tasas de cambio</a>
+{% endblock %}

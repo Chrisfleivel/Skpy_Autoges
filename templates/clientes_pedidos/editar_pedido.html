@@ -1,0 +1,23 @@
+# Editar Pedido
+
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Editar Pedido #{{ pedido.id }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ pedido_form.as_p }}
+    {{ formset.management_form }}
+    <table>
+      {% for form in formset %}
+        <tr>
+          <td>{{ form.producto.label_tag }} {{ form.producto }}</td>
+          <td>{{ form.cantidad.label_tag }} {{ form.cantidad }}</td>
+          <td>{{ form.precio_unitario.label_tag }} {{ form.precio_unitario }}</td>
+          <td>{{ form.DELETE.label_tag }} {{ form.DELETE }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+    <button type="submit">Guardar Cambios</button>
+  </form>
+{% endblock %}

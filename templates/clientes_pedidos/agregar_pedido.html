@@ -1,0 +1,22 @@
+# Agregar Pedido
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Agregar Nuevo Pedido</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ pedido_form.as_p }}
+    {{ formset.management_form }}
+    <h3>Items del Pedido</h3>
+    <table>
+      {% for form in formset %}
+        <tr>
+          <td>{{ form.producto.label_tag }} {{ form.producto }}</td>
+          <td>{{ form.cantidad.label_tag }} {{ form.cantidad }}</td>
+          <td>{{ form.precio_unitario.label_tag }} {{ form.precio_unitario }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+    <button type="submit">Guardar Pedido</button>
+  </form>
+{% endblock %}

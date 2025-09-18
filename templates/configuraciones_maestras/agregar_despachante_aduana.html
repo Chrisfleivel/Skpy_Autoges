@@ -1,0 +1,14 @@
+# Agregar despachante de aduana
+{% extends 'base.html' %}
+
+{% block title %}Agregar Despachante de Aduana{% endblock %}
+
+{% block content %}
+    <h1>Agregar Despachante de Aduana</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Agregar despachante</button>
+    </form>
+    <a href="{% url 'lista_despachantes_aduana' %}">Volver a la lista de despachantes de aduana</a>
+{% endblock %}
