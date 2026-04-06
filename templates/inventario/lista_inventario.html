@@ -1,134 +1,510 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <div class="container py-4">
-    <h1 class="text-center mb-4">Inventario</h1>
-
-    <div class="card mb-4 shadow-sm">
-      <div class="card-body">
-        <form method="POST" action="{% url 'lista_inventario' %}" class="row g-2 justify-content-center">
-          {% csrf_token %}
-          <div class="col-md-4">
-            <input type="text" name="search_query" class="form-control" placeholder="Buscar por nombre, código, modelo..." value="{{ request.POST.search_query }}">
-          </div>
-          <div class="col-md-2">
-            <select name="tipo" class="form-select">
-              <option value="">Todos</option>
-              <option value="vehiculo">Vehículos</option>
-              <option value="repuesto">Repuestos</option>
-              <option value="mantenimiento">Mantenimientos</option>
-              <option value="deposito">Depósitos</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <button type="submit" class="btn btn-success w-100">Buscar</button>
-          </div>
-        </form>
-      </div>
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                        <i class="bi bi-boxes text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1 fw-bold text-dark">Panel de Inventario</h1>
+                        <p class="text-muted mb-0">Vista general de todos los elementos del sistema</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="bi bi-printer me-2"></i>Reporte
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="bi bi-car-front fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ vehiculos|length }}</h4>
+                    <small class="text-muted">Vehículos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="bi bi-gear fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ repuestos|length }}</h4>
+                    <small class="text-muted">Repuestos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="bi bi-wrench fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ mantenimientos|length }}</h4>
+                    <small class="text-muted">Mantenimientos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="bi bi-house fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ depositos|length }}</h4>
+                    <small class="text-muted">Depósitos</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-secondary mb-2">
+                        <i class="bi bi-rulers fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ unidades_medida|length }}</h4>
+                    <small class="text-muted">Unidades de Medida</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-danger mb-2">
+                        <i class="bi bi-cash fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">
+                        Gs. {% widthratio vehiculos|length 1 1000000|floatformat:0 %}
+                    </h4>
+                    <small class="text-muted">Valor Estimado</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-dark mb-2">
+                        <i class="bi bi-graph-up fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ vehiculos|length|add:repuestos|add:mantenimientos|add:depositos|add:unidades_medida }}</h4>
+                    <small class="text-muted">Total Elementos</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light border-0 py-3">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-search text-primary me-2"></i>
+                <h6 class="mb-0 fw-bold">Búsqueda Global</h6>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-lg-6 col-md-8">
+                    <label for="search_query" class="form-label fw-semibold">
+                        <i class="bi bi-search text-muted me-1"></i>Buscar en todo el inventario
+                    </label>
+                    <div class="input-group">
+                        <input type="text" class="form-control border-end-0" id="search_query" name="search_query"
+                               value="{{ search_query }}" placeholder="Vehículos, repuestos, mantenimientos...">
+                        <span class="input-group-text bg-transparent border-start-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <label for="tipo" class="form-label fw-semibold">
+                        <i class="bi bi-filter text-muted me-1"></i>Filtrar por tipo
+                    </label>
+                    <select class="form-select" id="tipo" name="tipo">
+                        <option value="">Todos los tipos</option>
+                        <option value="vehiculo" {% if tipo_filtro == 'vehiculo' %}selected{% endif %}>Vehículos</option>
+                        <option value="repuesto" {% if tipo_filtro == 'repuesto' %}selected{% endif %}>Repuestos</option>
+                        <option value="mantenimiento" {% if tipo_filtro == 'mantenimiento' %}selected{% endif %}>Mantenimientos</option>
+                        <option value="deposito" {% if tipo_filtro == 'deposito' %}selected{% endif %}>Depósitos</option>
+                        <option value="unidad_medida" {% if tipo_filtro == 'unidad_medida' %}selected{% endif %}>Unidades de Medida</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-12">
+                    <label class="form-label fw-semibold invisible">Acciones</label>
+                    <div class="d-flex gap-1">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search">Buscar</i>
+                        </button>
+                        <a href="{% url 'lista_inventario' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle">Limpiar</i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            {% if search_query or tipo_filtro %}
+            <div class="mt-3 p-3 bg-light rounded-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle text-primary me-2"></i>
+                    <small class="text-muted">
+                        {% if search_query %}Búsqueda: "<strong>{{ search_query }}</strong>"{% endif %}
+                        {% if tipo_filtro %} | Tipo: <strong>{{ tipo_filtro|title }}</strong>{% endif %}
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Inventory Sections -->
     <div class="row g-4">
-      <div class="col-md-6">
-        <div class="card shadow-sm">
-          <div class="card-header bg-primary text-white">Vehículos</div>
-          <div class="card-body">
-            {% if vehiculos %}
-              <ul class="list-group mb-2">
-                {% for vehiculo in vehiculos %}
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{{ vehiculo.modelo }} - {{ vehiculo.marca }}</span>
-                    <span>
-                      <a href="{% url 'detalle_vehiculo' vehiculo.id %}" class="btn btn-info btn-sm">Ver</a>
-                      <a href="{% url 'editar_vehiculo' vehiculo.id %}" class="btn btn-warning btn-sm">Editar</a>
-                    </span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <div class="text-muted">No hay vehículos en el inventario.</div>
-            {% endif %}
-            <a href="{% url 'agregar_vehiculo' %}" class="btn btn-primary btn-sm">Agregar Vehículo</a>
-            <a href="{% url 'lista_vehiculos' %}" class="btn btn-secondary btn-sm">Lista de Vehículos</a>
-          </div>
+        <!-- Vehicles Section -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary bg-opacity-10 border-0 py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-car-front text-primary me-2"></i>
+                            <h6 class="mb-0 fw-bold">Vehículos ({{ vehiculos|length }})</h6>
+                        </div>
+                        <a href="{% url 'lista_vehiculos' %}" class="btn btn-sm btn-outline-primary">
+                            Ver Todos
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if vehiculos %}
+                        <div class="row g-3">
+                            {% for vehiculo in vehiculos|slice:":4" %}
+                            <div class="col-12">
+                                <div class="d-flex align-items-center p-2 border rounded-2 hover-bg-light">
+                                    <div class="bg-primary bg-opacity-10 rounded-2 p-2 me-3">
+                                        <i class="bi bi-car-front text-primary"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold text-dark">{{ vehiculo.nombre }}</div>
+                                        <small class="text-muted">{{ vehiculo.marca }} {{ vehiculo.modelo }} ({{ vehiculo.año }})</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <a href="{% url 'detalle_vehiculo' vehiculo.id %}" class="btn btn-sm btn-outline-primary me-1">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'editar_vehiculo' vehiculo.id %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if vehiculos|length > 4 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">... y {{ vehiculos|length|add:"-4" }} más</small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-car-front display-4 text-muted mb-3"></i>
+                            <p class="text-muted mb-3">No hay vehículos registrados</p>
+                            <a href="{% url 'agregar_vehiculo' %}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i>Agregar Vehículo
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-      </div>
 
-      <div class="col-md-6">
-        <div class="card shadow-sm">
-          <div class="card-header bg-success text-white">Repuestos</div>
-          <div class="card-body">
-            {% if repuestos %}
-              <ul class="list-group mb-2">
-                {% for repuesto in repuestos %}
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{{ repuesto.nombre }} - {{ repuesto.codigo }}</span>
-                    <span>
-                      <a href="{% url 'detalle_repuesto' repuesto.id %}" class="btn btn-info btn-sm">Ver</a>
-                      <a href="{% url 'editar_repuesto' repuesto.id %}" class="btn btn-warning btn-sm">Editar</a>
-                    </span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <div class="text-muted">No hay repuestos en el inventario.</div>
-            {% endif %}
-            <a href="{% url 'agregar_repuesto' %}" class="btn btn-primary btn-sm">Agregar Repuesto</a>
-            <a href="{% url 'lista_repuestos' %}" class="btn btn-secondary btn-sm">Lista de Repuestos</a>
-          </div>
+        <!-- Spare Parts Section -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-success bg-opacity-10 border-0 py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-gear text-success me-2"></i>
+                            <h6 class="mb-0 fw-bold">Repuestos ({{ repuestos|length }})</h6>
+                        </div>
+                        <a href="{% url 'lista_repuestos' %}" class="btn btn-sm btn-outline-success">
+                            Ver Todos
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if repuestos %}
+                        <div class="row g-3">
+                            {% for repuesto in repuestos|slice:":4" %}
+                            <div class="col-12">
+                                <div class="d-flex align-items-center p-2 border rounded-2 hover-bg-light">
+                                    <div class="bg-success bg-opacity-10 rounded-2 p-2 me-3">
+                                        <i class="bi bi-gear text-success"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold text-dark">{{ repuesto.nombre }}</div>
+                                        <small class="text-muted">Código: {{ repuesto.codigo_repuesto }} | Stock: {{ repuesto.stock_actual }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <a href="{% url 'detalle_repuesto' repuesto.id %}" class="btn btn-sm btn-outline-success me-1">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'editar_repuesto' repuesto.id %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if repuestos|length > 4 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">... y {{ repuestos|length|add:"-4" }} más</small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-gear display-4 text-muted mb-3"></i>
+                            <p class="text-muted mb-3">No hay repuestos registrados</p>
+                            <a href="{% url 'agregar_repuesto' %}" class="btn btn-success btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i>Agregar Repuesto
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-      </div>
+
+        <!-- Maintenance Section -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-warning bg-opacity-10 border-0 py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-wrench text-warning me-2"></i>
+                            <h6 class="mb-0 fw-bold">Mantenimientos ({{ mantenimientos|length }})</h6>
+                        </div>
+                        <a href="{% url 'lista_mantenimientos' %}" class="btn btn-sm btn-outline-warning">
+                            Ver Todos
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if mantenimientos %}
+                        <div class="row g-3">
+                            {% for mantenimiento in mantenimientos|slice:":3" %}
+                            <div class="col-12">
+                                <div class="d-flex align-items-center p-2 border rounded-2 hover-bg-light">
+                                    <div class="bg-warning bg-opacity-10 rounded-2 p-2 me-3">
+                                        <i class="bi bi-wrench text-warning"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold text-dark">{{ mantenimiento.descripcion|truncatechars:30 }}</div>
+                                        <small class="text-muted">{{ mantenimiento.vehiculo.nombre }} | {{ mantenimiento.fecha_mantenimiento|date:"d/m/Y" }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        {% if mantenimiento.estado_mantenimiento == 'finalizado' %}
+                                            <span class="badge bg-success bg-opacity-10 text-success me-2">Finalizado</span>
+                                        {% elif mantenimiento.estado_mantenimiento == 'en_proceso' %}
+                                            <span class="badge bg-warning bg-opacity-10 text-warning me-2">En Proceso</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary me-2">Pendiente</span>
+                                        {% endif %}
+                                        <a href="{% url 'detalle_mantenimiento' mantenimiento.id %}" class="btn btn-sm btn-outline-warning">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if mantenimientos|length > 3 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">... y {{ mantenimientos|length|add:"-3" }} más</small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-wrench display-4 text-muted mb-3"></i>
+                            <p class="text-muted mb-3">No hay mantenimientos registrados</p>
+                            <a href="{% url 'agregar_mantenimiento' %}" class="btn btn-warning btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i>Agregar Mantenimiento
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Deposits Section -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-info bg-opacity-10 border-0 py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-house text-info me-2"></i>
+                            <h6 class="mb-0 fw-bold">Depósitos ({{ depositos|length }})</h6>
+                        </div>
+                        <a href="{% url 'lista_depositos' %}" class="btn btn-sm btn-outline-info">
+                            Ver Todos
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if depositos %}
+                        <div class="row g-3">
+                            {% for deposito in depositos|slice:":3" %}
+                            <div class="col-12">
+                                <div class="d-flex align-items-center p-2 border rounded-2 hover-bg-light">
+                                    <div class="bg-info bg-opacity-10 rounded-2 p-2 me-3">
+                                        <i class="bi bi-house text-info"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold text-dark">{{ deposito.nombre }}</div>
+                                        <small class="text-muted">{{ deposito.ubicacion }} | Capacidad: {{ deposito.capacidad_maxima }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <a href="{% url 'detalle_deposito' deposito.id %}" class="btn btn-sm btn-outline-info">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if depositos|length > 3 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">... y {{ depositos|length|add:"-3" }} más</small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-house display-4 text-muted mb-3"></i>
+                            <p class="text-muted mb-3">No hay depósitos registrados</p>
+                            <a href="{% url 'agregar_deposito' %}" class="btn btn-info btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i>Agregar Depósito
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Units of Measure Section -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-secondary bg-opacity-10 border-0 py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-rulers text-secondary me-2"></i>
+                            <h6 class="mb-0 fw-bold">Unidades de Medida ({{ unidades_medida|length }})</h6>
+                        </div>
+                        <a href="{% url 'lista_unidades_medida' %}" class="btn btn-sm btn-outline-secondary">
+                            Ver Todas
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if unidades_medida %}
+                        <div class="row g-3">
+                            {% for unidad in unidades_medida %}
+                            <div class="col-lg-3 col-md-4 col-sm-6">
+                                <div class="d-flex align-items-center p-3 border rounded-2 hover-bg-light">
+                                    <div class="bg-secondary bg-opacity-10 rounded-2 p-2 me-3">
+                                        <i class="bi bi-tag text-secondary"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold text-dark">{{ unidad.nombre }}</div>
+                                        <small class="text-muted">{{ unidad.abreviatura }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <a href="{% url 'detalle_unidad_medida' unidad.id %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-rulers display-4 text-muted mb-3"></i>
+                            <p class="text-muted mb-3">No hay unidades de medida registradas</p>
+                            <a href="{% url 'agregar_unidad_medida' %}" class="btn btn-secondary btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i>Agregar Unidad
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
+</div>
 
-    <div class="row g-4 mt-2">
-      <div class="col-md-6">
-        <div class="card shadow-sm">
-          <div class="card-header bg-warning text-dark">Mantenimientos</div>
-          <div class="card-body">
-            {% if mantenimientos %}
-              <ul class="list-group mb-2">
-                {% for mantenimiento in mantenimientos %}
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{{ mantenimiento.descripcion }}</span>
-                    <span>
-                      <a href="{% url 'detalle_mantenimiento' mantenimiento.id %}" class="btn btn-info btn-sm">Ver</a>
-                      <a href="{% url 'editar_mantenimiento' mantenimiento.id %}" class="btn btn-warning btn-sm">Editar</a>
-                    </span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <div class="text-muted">No hay mantenimientos en el inventario.</div>
-            {% endif %}
-            <a href="{% url 'agregar_mantenimiento' %}" class="btn btn-primary btn-sm">Agregar Mantenimiento</a>
-            <a href="{% url 'lista_mantenimientos' %}" class="btn btn-secondary btn-sm">Lista de Mantenimientos</a>
-          </div>
-        </div>
-      </div>
+<style>
+/* Custom styles for enhanced appearance */
+.card {
+    transition: all 0.3s ease;
+}
 
-      <div class="col-md-6">
-        <div class="card shadow-sm">
-          <div class="card-header bg-secondary text-white">Depósitos</div>
-          <div class="card-body">
-            {% if depositos %}
-              <ul class="list-group mb-2">
-                {% for deposito in depositos %}
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{{ deposito.nombre }}</span>
-                    <span>
-                      <a href="{% url 'detalle_deposito' deposito.id %}" class="btn btn-info btn-sm">Ver</a>
-                    </span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <div class="text-muted">No hay depósitos en el inventario.</div>
-            {% endif %}
-            <a href="{% url 'agregar_deposito' %}" class="btn btn-primary btn-sm">Agregar Depósito</a>
-            <a href="{% url 'lista_depositos' %}" class="btn btn-secondary btn-sm">Lista de Depósitos</a>
-          </div>
-        </div>
-      </div>
-      
-    </div>
-  </div>
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+}
+
+.hover-bg-light:hover {
+    background-color: rgba(0,0,0,0.02) !important;
+    transition: background-color 0.2s ease;
+}
+
+.btn-group .btn {
+    border-radius: 0.375rem !important;
+    margin-left: 2px;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+
+    .btn-group {
+        display: flex;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+        margin-left: 0 !important;
+        margin-top: 2px;
+    }
+}
+</style>
+
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh stats every 30 seconds
+    setInterval(function() {
+        // Could add AJAX call here to refresh stats
+    }, 30000);
+});
+</script>
 {% endblock %}

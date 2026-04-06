@@ -1,0 +1,70 @@
+body.theme-default {
+    --primary-color: #0d6efd;
+    --bg-form: #ffffff;
+    --text-label: #495057;
+    --border-color: #dee2e6;
+    --card-shadow: 0 0.5rem 1rem rgba(13, 110, 253, 0.15);
+    --page-bg: #f4f7f6;
+    --navbar-bg: #212529;
+}
+
+body.theme-default .form-page-wrapper {
+    background-color: var(--page-bg);
+}
+
+body.theme-default .navbar {
+    background-color: var(--navbar-bg) !important;
+}
+
+body.theme-default .custom-card {
+    background: var(--bg-form);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+}
+
+body.theme-default .custom-card-header {
+    background-color: var(--primary-color);
+}
+
+body.theme-default .form-section-title {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-default .form-control,
+body.theme-default .form-select {
+    background-color: #ffffff;
+    color: #495057;
+    border: 1px solid var(--border-color);
+}
+
+body.theme-default .form-control:focus,
+body.theme-default .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+body.theme-default .form-label {
+    color: var(--text-label);
+}
+
+body.theme-default .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+body.theme-default .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0b5ed7;
+}
+
+body.theme-default .btn-save {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+body.theme-default .btn-save:hover {
+    background-color: #0b5ed7;
+    border-color: #0b5ed7;
+    filter: brightness(90%);
+}

@@ -1,24 +1,175 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <div class="container py-4" style="background-color: #fff; border-radius: 12px;">
-    <h2 class="text-center mb-4 text-dark">Lista de Repuestos</h2>
-    <div class="card shadow-sm mb-4">
-      <div class="card-body">
-        <ul class="list-group">
-          {% for repuesto in repuestos %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              <a href="{% url 'detalle_repuesto' repuesto.id %}" class="text-primary">{{ repuesto.nombre }}</a>
-              <span class="badge bg-success">${{ repuesto.precio }}</span>
-            </li>
-          {% empty %}
-            <li class="list-group-item text-center text-muted">No hay repuestos en el inventario.</li>
-          {% endfor %}
-        </ul>
+<div class="container-fluid py-4">
+  <div class="row">
+    <!-- SIDEBAR - FILTROS IZQUIERDA -->
+    <div class="col-lg-3 mb-4">
+      <div class="card shadow-sm" style="border: 1px solid var(--border-color); background-color: var(--bg-form);">
+        <div class="card-body">
+          <h5 class="card-title mb-4" style="color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 0.75rem;">
+            <i class="bi bi-funnel"></i> Filtros
+          </h5>
+
+          <form method="get" id="filterForm">
+            <!-- Búsqueda de Texto -->
+            <div class="mb-3">
+              <label class="form-label fw-bold" style="color: var(--text-label); font-size: 0.9rem;">Buscar por Nombre/Código</label>
+              <input type="text" name="search_query" class="form-control" placeholder="Ej: Filtro..." value="{{ request.GET.search_query }}" style="border-color: var(--border-color); font-size: 0.9rem;">
+            </div>
+
+            <!-- Filtro por Categoría -->
+            <div class="mb-3">
+              <label class="form-label fw-bold" style="color: var(--text-label); font-size: 0.9rem;">Categoría</label>
+              <select name="categoria" class="form-select" style="border-color: var(--border-color); font-size: 0.9rem;">
+                <option value="">-- Todas --</option>
+                {% for cat in categorias %}
+                  <option value="{{ cat }}" {% if request.GET.categoria == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Rango de Precio -->
+            <div class="mb-3">
+              <label class="form-label fw-bold" style="color: var(--text-label); font-size: 0.9rem;">Precio Mínimo (Gs.)</label>
+              <input type="number" name="precio_min" class="form-control" placeholder="0" value="{{ request.GET.precio_min }}" style="border-color: var(--border-color); font-size: 0.9rem;">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold" style="color: var(--text-label); font-size: 0.9rem;">Precio Máximo (Gs.)</label>
+              <input type="number" name="precio_max" class="form-control" placeholder="999999" value="{{ request.GET.precio_max }}" style="border-color: var(--border-color); font-size: 0.9rem;">
+            </div>
+
+            <!-- Filtro por Stock -->
+            <div class="mb-4">
+              <label class="form-label fw-bold" style="color: var(--text-label); font-size: 0.9rem;">Stock Disponible (mín.)</label>
+              <input type="number" name="stock_min" class="form-control" placeholder="1" value="{{ request.GET.stock_min }}" style="border-color: var(--border-color); font-size: 0.9rem;">
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn fw-bold" style="background-color: var(--primary-color); color: white; border: none; font-size: 0.9rem;">
+                <i class="bi bi-search"></i> Buscar
+              </button>
+              <a href="{% url 'lista_repuestos' %}" class="btn btn-outline-secondary fw-bold" style="border-color: var(--border-color); color: var(--text-label); font-size: 0.9rem;">
+                <i class="bi bi-arrow-counterclockwise"></i> Limpiar
+              </a>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
-    <div class="text-end">
-      <a href="{% url 'agregar_repuesto' %}" class="btn btn-primary">Agregar Repuesto</a>
+
+    <!-- CONTENIDO PRINCIPAL - RESULTADOS DERECHA -->
+    <div class="col-lg-9">
+      <div class="card shadow-sm mb-4" style="border: 1px solid var(--border-color); background-color: var(--bg-form);">
+        <div class="card-body">
+          <h2 class="mb-4" style="color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 1rem;">
+            <i class="bi bi-list"></i> Lista de Repuestos
+          </h2>
+
+          <!-- Resultados -->
+          {% if repuestos %}
+            <div class="table-responsive">
+              <table class="table table-hover" style="border-color: var(--border-color); margin-bottom: 0;">
+                <thead style="background-color: var(--primary-color); color: white;">
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Código</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Compatibilidad</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for repuesto in repuestos %}
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                      <td style="color: var(--primary-color); font-weight: 500;">
+                        {{ repuesto.nombre }}
+                      </td>
+                      <td>
+                        <span class="badge" style="background-color: var(--primary-color); font-size: 0.8rem;">{{ repuesto.codigo_repuesto }}</span>
+                      </td>
+                      <td>
+                        <span class="badge bg-success" style="font-size: 0.8rem;">Gs. {{ repuesto.precio_venta|default:"0" }}</span>
+                      </td>
+                      <td>
+                        {% if repuesto.stock_actual > repuesto.stock_minimo %}
+                          <span class="badge bg-success" style="font-size: 0.8rem;">{{ repuesto.stock_actual }} uds</span>
+                        {% elif repuesto.stock_actual > 0 %}
+                          <span class="badge bg-warning" style="font-size: 0.8rem;">{{ repuesto.stock_actual }} uds</span>
+                        {% else %}
+                          <span class="badge bg-danger" style="font-size: 0.8rem;">Agotado</span>
+                        {% endif %}
+                      </td>
+                      <td style="font-size: 0.9rem;">{{ repuesto.compatibilidad|default:"Universal" }}</td>
+                      <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                          <a href="{% url 'detalle_repuesto' repuesto.id %}" class="btn" style="background-color: var(--primary-color); color: white; border: none;" title="Ver detalles">
+                            <i class="bi bi-eye"></i>
+                          </a>
+                          <a href="{% url 'editar_repuesto' repuesto.id %}" class="btn btn-warning" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                          </a>
+                          <a href="{% url 'eliminar_repuesto' repuesto.id %}" class="btn btn-danger" onclick="return confirm('¿Está seguro?');" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Resumen -->
+            <div class="mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
+              <p style="color: var(--text-label); font-size: 0.9rem; margin: 0;">
+                <strong>Total encontrados:</strong> {{ repuestos.count }} repuesto{{ repuestos.count|pluralize }}
+              </p>
+            </div>
+          {% else %}
+            <div class="alert alert-info" style="background-color: rgba(13, 110, 253, 0.1); border-color: var(--border-color); color: var(--text-label); margin-bottom: 0;">
+              <i class="bi bi-info-circle"></i> No hay repuestos que coincidan con los filtros seleccionados.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Botón Agregar -->
+      <div class="text-end">
+        <a href="{% url 'agregar_repuesto' %}" class="btn fw-bold" style="background-color: var(--primary-color); color: white; border: none; padding: 0.75rem 2rem;">
+          <i class="bi bi-plus-circle-fill"></i> Agregar Repuesto
+        </a>
+      </div>
     </div>
   </div>
+</div>
+
+<style>
+  .table {
+    background-color: var(--bg-form);
+  }
+
+  .table tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+  }
+
+  .form-control, .form-select {
+    background-color: var(--bg-form);
+    color: var(--text-label);
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15) !important;
+  }
+
+  @media (max-width: 992px) {
+    .col-lg-3, .col-lg-9 {
+      margin-bottom: 1rem;
+    }
+  }
+</style>
 {% endblock %}

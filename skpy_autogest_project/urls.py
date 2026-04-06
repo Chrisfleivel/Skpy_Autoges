@@ -16,12 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from skpy_autogest_project.views import home_view
+from skpy_autogest_project.views import home_view, configurar_apariencia
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home_view, name='home'),  # Ruta para la página de inicio
+    path('configurar_apariencia/', configurar_apariencia, name='configurar_apariencia'),
     path('seguridad_usuarios/', include('seguridad_usuarios.urls')),  # Incluir las URLs de la app seguridad_usuario
     path('inventario/', include('inventario.urls')),  # Incluir las URLs de la app inventario
     path('configuraciones_maestras/', include('configuraciones_maestras.urls')),  # Incluir las URLs de la app configuraciones_maestras

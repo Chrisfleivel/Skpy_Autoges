@@ -1,0 +1,70 @@
+body.theme-sunset {
+    --primary-color: #ea580c;
+    --bg-form: #fffaf0;
+    --text-label: #92400e;
+    --border-color: #fed7aa;
+    --card-shadow: 0 0.5rem 1rem rgba(234, 88, 12, 0.15);
+    --page-bg: #fefce8;
+    --navbar-bg: #9a3412;
+}
+
+body.theme-sunset .form-page-wrapper {
+    background-color: var(--page-bg);
+}
+
+body.theme-sunset .navbar {
+    background-color: var(--navbar-bg) !important;
+}
+
+body.theme-sunset .custom-card {
+    background: var(--bg-form);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+}
+
+body.theme-sunset .custom-card-header {
+    background-color: var(--primary-color);
+}
+
+body.theme-sunset .form-section-title {
+    color: #c2410c;
+    border-bottom: 2px solid var(--border-color);
+}
+
+body.theme-sunset .form-control,
+body.theme-sunset .form-select {
+    background-color: #ffffff;
+    color: #92400e;
+    border: 1px solid var(--border-color);
+}
+
+body.theme-sunset .form-control:focus,
+body.theme-sunset .form-select:focus {
+    border-color: #ea580c;
+    box-shadow: 0 0 0 0.25rem rgba(234, 88, 12, 0.15);
+}
+
+body.theme-sunset .form-label {
+    color: var(--text-label);
+}
+
+body.theme-sunset .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+body.theme-sunset .btn-primary:hover {
+    background-color: #c2410c;
+    border-color: #c2410c;
+}
+
+body.theme-sunset .btn-save {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+body.theme-sunset .btn-save:hover {
+    background-color: #c2410c;
+    border-color: #c2410c;
+    filter: brightness(90%);
+}

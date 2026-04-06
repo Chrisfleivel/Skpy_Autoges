@@ -1,8 +1,9 @@
 # configuraciones_maestras/admin.py
 
 from django.contrib import admin
-from .models import Proveedor, AgenteTransporte, DespachanteAduana, TasaCambio, Departamento, Cargo
+from .models import ConfiguracionApariencia, Proveedor, AgenteTransporte, DespachanteAduana, TasaCambio, Departamento, Cargo
 
+admin.site.register(ConfiguracionApariencia)
 admin.site.register(Proveedor)
 admin.site.register(AgenteTransporte)
 admin.site.register(DespachanteAduana)

@@ -1,11 +1,141 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Editar Mantenimiento</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar</button>
-    <a href="{% url 'lista_mantenimientos' %}">Cancelar</a>
-  </form>
+<div class="form-page-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="custom-card">
+                    <div class="custom-card-header">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-tools fs-3 me-3"></i>
+                            <div>
+                                <h2 class="h4 mb-0">Registrar Mantenimiento</h2>
+                                <small class="opacity-75">Complete los datos para registrar el mantenimiento del vehículo</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4 p-md-5">
+                        <form method="post" class="needs-validation" novalidate>
+                            {% csrf_token %}
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            {% endif %}
+
+                            <div class="form-section-title">Información del Mantenimiento</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Vehículo</label>
+                                    {{ form.vehiculo }}
+                                    {% if form.vehiculo.errors %}<div class="text-danger small">{{ form.vehiculo.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Fecha de Mantenimiento</label>
+                                    {{ form.fecha_mantenimiento }}
+                                    {% if form.fecha_mantenimiento.errors %}<div class="text-danger small">{{ form.fecha_mantenimiento.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Estado del Mantenimiento</label>
+                                    {{ form.estado_mantenimiento }}
+                                    {% if form.estado_mantenimiento.errors %}<div class="text-danger small">{{ form.estado_mantenimiento.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Costo del Mantenimiento (Gs.)</label>
+                                    {{ form.costo }}
+                                    {% if form.costo.errors %}<div class="text-danger small">{{ form.costo.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-section-title">Detalles del Servicio</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-12">
+                                    <label class="form-label">Descripción del Mantenimiento</label>
+                                    {{ form.descripcion }}
+                                    {% if form.descripcion.errors %}<div class="text-danger small">{{ form.descripcion.errors }}</div>{% endif %}
+                                    <div class="form-text text-muted">Describa detalladamente el trabajo realizado</div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-12">
+                                    <label class="form-label">Observaciones Adicionales</label>
+                                    {{ form.observaciones }}
+                                    {% if form.observaciones.errors %}<div class="text-danger small">{{ form.observaciones.errors }}</div>{% endif %}
+                                    <div class="form-text text-muted">Notas adicionales, recomendaciones o comentarios</div>
+                                </div>
+                            </div>
+
+                            <div class="form-section-title">Repuestos Utilizados</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-12">
+                                    <label class="form-label">Repuestos</label>
+                                    {{ form.repuestos_utilizados }}
+                                    {% if form.repuestos_utilizados.errors %}<div class="text-danger small">{{ form.repuestos_utilizados.errors }}</div>{% endif %}
+                                    <div class="form-text text-muted">Seleccione los repuestos utilizados en este mantenimiento (opcional)</div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Estado del Registro</label>
+                                    {{ form.estado }}
+                                    {% if form.estado.errors %}<div class="text-danger small">{{ form.estado.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column flex-md-row gap-3 pt-3 border-top">
+                                <button type="submit" class="btn btn-primary btn-save shadow-sm">
+                                    <i class="bi bi-check-lg me-2"></i>Guardar Mantenimiento
+                                </button>
+                                <a href="{% url 'lista_mantenimientos' %}" class="btn btn-outline-secondary px-4 d-flex align-items-center justify-content-center">
+                                    Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4 text-muted">
+                    <small>SKPY AutoGest - Módulo de Gestión de Mantenimiento</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Validación básica de Bootstrap
+    (function () {
+      'use strict'
+      var forms = document.querySelectorAll('.needs-validation')
+      Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+          form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+          }, false)
+        })
+    })()
+
+    // Auto-formateo del campo de costo
+    document.getElementById('id_costo').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/[^\d.]/g, '');
+        if (value) {
+            e.target.value = parseFloat(value).toLocaleString('es-PY', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+    });
+</script>
 {% endblock %}

@@ -88,6 +88,7 @@ class TasaCambio(models.Model):
     
 
 
+
 # Departamentos en la empresa
 
 class Departamento(models.Model):
@@ -146,3 +147,48 @@ class Cargo(models.Model):
         verbose_name = "Cargo"
         verbose_name_plural = "Cargos"
         ordering = ['nombre']
+
+
+
+# --------------------------------------------------------------------------
+# Modelo para almacenar la configuración global de apariencia
+# --------------------------------------------------------------------------
+class ConfiguracionApariencia(models.Model):
+    THEME_DEFAULT = 'theme-default'
+    THEME_DARK = 'theme-dark'
+    THEME_EMERALD = 'theme-emerald'
+    THEME_SUNSET = 'theme-sunset'
+    THEME_OCEAN = 'theme-ocean'
+    THEME_LIGHT = 'theme-light'
+
+    THEME_CHOICES = [
+        (THEME_DEFAULT, 'Azul Profesional (Defecto)'),
+        (THEME_DARK, 'Modo Oscuro'),
+        (THEME_EMERALD, 'Esmeralda Energético'),
+        (THEME_SUNSET, 'Atardecer Cálido'),
+        (THEME_OCEAN, 'Océano Profundo'),
+        (THEME_LIGHT, 'Tema Luminoso'),
+    ]
+
+    FONT_ROBOTO = "'Roboto', sans-serif"
+    FONT_PLAYFAIR = "'Playfair Display', serif"
+    FONT_MONOSPACE = 'monospace'
+
+    FONT_CHOICES = [
+        (FONT_ROBOTO, 'Roboto'),
+        (FONT_PLAYFAIR, 'Elegante (Serif)'),
+        (FONT_MONOSPACE, 'Sistema (Monospace)'),
+    ]
+
+    tema = models.CharField(max_length=40, choices=THEME_CHOICES, default=THEME_DEFAULT, verbose_name='Tema')
+    tipografia = models.CharField(max_length=100, choices=FONT_CHOICES, default=FONT_ROBOTO, verbose_name='Tipografía')
+    tamanio = models.PositiveSmallIntegerField(default=16, verbose_name='Tamaño de texto (px)')
+    actualizado_el = models.DateTimeField(auto_now=True, verbose_name='Actualizado el')
+
+    class Meta:
+        verbose_name = 'Configuración de Apariencia'
+        verbose_name_plural = 'Configuraciones de Apariencia'
+
+    def __str__(self):
+        return f'{self.get_tema_display()} — {self.tamanio}px'
+

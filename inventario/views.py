@@ -9,6 +9,7 @@ from seguridad_usuarios.decorators import requiere_privilegio
 
 # Importar el decorador revisar_permiso
 from seguridad_usuarios.decorators import revisar_permiso
+from django.db import models
 
 # --------------------------------------------------------------------------
 # Vistas para la gestión de Inventario
@@ -18,29 +19,60 @@ from seguridad_usuarios.decorators import revisar_permiso
 def lista_inventario(request):
     """
     Esta vista permite ver la lista de inventario, incluyendo vehículos, repuestos,
-    mantenimientos, depósitos y unidades de medida.
+    mantenimientos, depósitos y unidades de medida con filtros de búsqueda.
     """
+    # Obtener todos los elementos inicialmente
     vehiculos = Vehiculo.objects.all()
     repuestos = Repuesto.objects.all()
     mantenimientos = MantenimientoVehiculo.objects.all()
     depositos = Deposito.objects.all()
     unidades_medida = UnidadMedida.objects.all()
-    if request.method == 'POST':
-        search_query = request.POST.get('search_query', '')
-        if search_query:
-            vehiculos = vehiculos.filter(modelo__icontains=search_query) | vehiculos.filter(marca__icontains=search_query)
-            repuestos = repuestos.filter(nombre__icontains=search_query) | repuestos.filter(codigo__icontains=search_query)
-            mantenimientos = mantenimientos.filter(descripcion__icontains=search_query)
-            depositos = depositos.filter(nombre__icontains=search_query)
-            unidades_medida = unidades_medida.filter(nombre__icontains=search_query) | unidades_medida.filter(simbolo__icontains=search_query)
-        else:
-            messages.error(request, "Por favor ingrese un término de búsqueda.")
+
+    # Capturar parámetros GET
+    search_query = request.GET.get('search_query', '')
+    tipo_filtro = request.GET.get('tipo', '')
+
+    # Aplicar filtros si hay búsqueda
+    if search_query:
+        if tipo_filtro == 'vehiculo' or not tipo_filtro:
+            vehiculos = vehiculos.filter(
+                models.Q(modelo__icontains=search_query) |
+                models.Q(marca__icontains=search_query) |
+                models.Q(nombre__icontains=search_query)
+            )
+
+        if tipo_filtro == 'repuesto' or not tipo_filtro:
+            repuestos = repuestos.filter(
+                models.Q(nombre__icontains=search_query) |
+                models.Q(codigo_repuesto__icontains=search_query)
+            )
+
+        if tipo_filtro == 'mantenimiento' or not tipo_filtro:
+            mantenimientos = mantenimientos.filter(
+                models.Q(descripcion__icontains=search_query) |
+                models.Q(observaciones__icontains=search_query)
+            )
+
+        if tipo_filtro == 'deposito' or not tipo_filtro:
+            depositos = depositos.filter(
+                models.Q(nombre__icontains=search_query) |
+                models.Q(ubicacion__icontains=search_query)
+            )
+
+        if tipo_filtro == 'unidad_medida' or not tipo_filtro:
+            unidades_medida = unidades_medida.filter(
+                models.Q(nombre__icontains=search_query) |
+                models.Q(abreviatura__icontains=search_query)
+            )
+
     return render(request, 'inventario/lista_inventario.html', {
         'vehiculos': vehiculos,
         'repuestos': repuestos,
         'mantenimientos': mantenimientos,
         'depositos': depositos,
-        'unidades_medida': unidades_medida
+        'unidades_medida': unidades_medida,
+        'search_query': search_query,
+        'tipo_filtro': tipo_filtro
     })
 
 
@@ -60,7 +92,7 @@ def agregar_vehiculo(request):
     else:
         form = VehiculoForm()
     return render(request, 'inventario/agregar_vehiculo.html', {'form': form})
-
+'''
 @revisar_permiso('inventario.listar_vehiculos')
 def lista_vehiculos(request):
     """Vista para ver la lista de vehículos en el inventario."""
@@ -72,6 +104,48 @@ def lista_vehiculos(request):
         else:
             messages.error(request, "Por favor ingrese un término de búsqueda.")
     return render(request, 'inventario/lista_vehiculos.html', {'vehiculos': vehiculos})
+'''
+
+@revisar_permiso('inventario.listar_vehiculos')
+def lista_vehiculos(request):
+    """Vista mejorada con filtros avanzados."""
+    vehiculos = Vehiculo.objects.all()
+
+    # Capturar parámetros GET
+    query = request.GET.get('search_query', '')
+    marca = request.GET.get('marca', '')
+    anio_min = request.GET.get('anio_min')
+    anio_max = request.GET.get('anio_max')
+    precio_min = request.GET.get('precio_min')
+    precio_max = request.GET.get('precio_max')
+
+    # Filtro de texto (Modelo)
+    if query:
+        vehiculos = vehiculos.filter(modelo__icontains=query)
+    
+    # Filtro por Marca exacta
+    if marca:
+        vehiculos = vehiculos.filter(marca=marca)
+
+    # Filtros de Rango de Año
+    if anio_min:
+        vehiculos = vehiculos.filter(año__gte=anio_min)
+    if anio_max:
+        vehiculos = vehiculos.filter(año__lte=anio_max)
+
+    # Filtros de Rango de Precio
+    if precio_min:
+        vehiculos = vehiculos.filter(costo_compra__gte=precio_min)
+    if precio_max:
+        vehiculos = vehiculos.filter(costo_compra__lte=precio_max)
+
+    # Obtener marcas únicas para el select del template
+    marcas_disponibles = Vehiculo.objects.values_list('marca', flat=True).distinct()
+
+    return render(request, 'inventario/lista_vehiculos.html', {
+        'vehiculos': vehiculos,
+        'marcas': marcas_disponibles
+    })
 
 @revisar_permiso('inventario.detallar_vehiculo')
 def detalle_vehiculo(request, vehiculo_id):
@@ -107,19 +181,54 @@ def editar_vehiculo(request, vehiculo_id):
 def agregar_repuesto(request):
     """Vista para agregar un nuevo repuesto al inventario."""
     if request.method == 'POST':
-        form = RepuestoForm(request.POST)
+        form = RepuestoForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            return redirect('lista_repuestos')  # Redirige a la lista de repuestos (debes crear esta vista y url)
+            return redirect('lista_repuestos')
     else:
         form = RepuestoForm()
     return render(request, 'inventario/agregar_repuesto.html', {'form': form})
 
 @revisar_permiso('inventario.listar_repuestos')
 def lista_repuestos(request):
-    """Vista para ver la lista de repuestos en el inventario."""
+    """Vista mejorada para ver la lista de repuestos con filtros avanzados."""
     repuestos = Repuesto.objects.all()
-    return render(request, 'inventario/lista_repuestos.html', {'repuestos': repuestos})
+
+    # Capturar parámetros GET
+    query = request.GET.get('search_query', '')
+    categoria = request.GET.get('categoria', '')
+    precio_min = request.GET.get('precio_min')
+    precio_max = request.GET.get('precio_max')
+    stock_min = request.GET.get('stock_min')
+
+    # Filtro de texto (Nombre o Código)
+    if query:
+        repuestos = repuestos.filter(
+            models.Q(nombre__icontains=query) | 
+            models.Q(codigo_repuesto__icontains=query)
+        )
+    
+    # Filtro por Categoría exacta
+    if categoria:
+        repuestos = repuestos.filter(categoria=categoria)
+
+    # Filtros de Rango de Precio
+    if precio_min:
+        repuestos = repuestos.filter(precio_venta__gte=precio_min)
+    if precio_max:
+        repuestos = repuestos.filter(precio_venta__lte=precio_max)
+
+    # Filtro por Stock Disponible
+    if stock_min:
+        repuestos = repuestos.filter(stock_actual__gte=stock_min)
+
+    # Obtener categorías únicas para el select del template
+    categorias_disponibles = Repuesto.objects.values_list('categoria', flat=True).distinct().exclude(categoria__isnull=True).exclude(categoria='')
+
+    return render(request, 'inventario/lista_repuestos.html', {
+        'repuestos': repuestos,
+        'categorias': categorias_disponibles
+    })
 
 @revisar_permiso('inventario.detallar_repuesto')
 def detalle_repuesto(request, repuesto_id):
@@ -162,14 +271,61 @@ def agregar_mantenimiento(request):
 
 @revisar_permiso('inventario.listar_mantenimientos')
 def lista_mantenimientos(request):
-    mantenimientos = MantenimientoVehiculo.objects.all()
-    if request.method == 'POST':
-        search_query = request.POST.get('search_query', '')
-        if search_query:
-            mantenimientos = mantenimientos.filter(descripcion__icontains=search_query)
-        else:
-            messages.error(request, "Por favor ingrese un término de búsqueda.")
-    return render(request, 'inventario/lista_mantenimientos.html', {'mantenimientos': mantenimientos})
+    """Vista mejorada para ver la lista de mantenimientos con filtros avanzados."""
+    mantenimientos = MantenimientoVehiculo.objects.all().select_related('vehiculo')
+
+    # Capturar parámetros GET
+    query = request.GET.get('search_query', '')
+    vehiculo = request.GET.get('vehiculo', '')
+    estado = request.GET.get('estado', '')
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+    costo_min = request.GET.get('costo_min')
+    costo_max = request.GET.get('costo_max')
+
+    # Filtro de texto (Descripción)
+    if query:
+        mantenimientos = mantenimientos.filter(
+            models.Q(descripcion__icontains=query) |
+            models.Q(observaciones__icontains=query)
+        )
+
+    # Filtro por Vehículo
+    if vehiculo:
+        mantenimientos = mantenimientos.filter(vehiculo_id=vehiculo)
+
+    # Filtro por Estado del Mantenimiento
+    if estado:
+        mantenimientos = mantenimientos.filter(estado_mantenimiento=estado)
+
+    # Filtros de Fecha
+    if fecha_desde:
+        mantenimientos = mantenimientos.filter(fecha_mantenimiento__gte=fecha_desde)
+    if fecha_hasta:
+        mantenimientos = mantenimientos.filter(fecha_mantenimiento__lte=fecha_hasta)
+
+    # Filtros de Costo
+    if costo_min:
+        mantenimientos = mantenimientos.filter(costo__gte=costo_min)
+    if costo_max:
+        mantenimientos = mantenimientos.filter(costo__lte=costo_max)
+
+    # Obtener listas para los filtros
+    vehiculos_disponibles = Vehiculo.objects.all()
+    estados_disponibles = MantenimientoVehiculo.ESTADO_MANTENIMIENTO
+
+    return render(request, 'inventario/lista_mantenimientos.html', {
+        'mantenimientos': mantenimientos,
+        'vehiculos': vehiculos_disponibles,
+        'estados_mantenimiento': estados_disponibles,
+        'query': query,
+        'vehiculo': vehiculo,
+        'estado': estado,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'costo_min': costo_min,
+        'costo_max': costo_max
+    })
 
 @revisar_permiso('inventario.detallar_mantenimiento')
 def detalle_mantenimiento(request, mantenimiento_id):
@@ -211,8 +367,33 @@ def agregar_deposito(request):
 
 @revisar_permiso('inventario.listar_depositos')
 def lista_depositos(request):
+    """Vista mejorada para ver la lista de depósitos con filtros avanzados."""
     depositos = Deposito.objects.all()
-    return render(request, 'inventario/lista_depositos.html', {'depositos': depositos})
+
+    # Capturar parámetros GET
+    query = request.GET.get('search_query', '')
+    capacidad_min = request.GET.get('capacidad_min')
+    capacidad_max = request.GET.get('capacidad_max')
+
+    # Filtro de texto (Nombre o Ubicación)
+    if query:
+        depositos = depositos.filter(
+            models.Q(nombre__icontains=query) | 
+            models.Q(ubicacion__icontains=query)
+        )
+    
+    # Filtros de Rango de Capacidad
+    if capacidad_min:
+        depositos = depositos.filter(capacidad_maxima__gte=capacidad_min)
+    if capacidad_max:
+        depositos = depositos.filter(capacidad_maxima__lte=capacidad_max)
+
+    return render(request, 'inventario/lista_depositos.html', {
+        'depositos': depositos,
+        'query': query,
+        'capacidad_min': capacidad_min,
+        'capacidad_max': capacidad_max
+    })
 
 @revisar_permiso('inventario.detallar_deposito')
 def detalle_deposito(request, deposito_id):
@@ -255,8 +436,22 @@ def agregar_unidad_medida(request):
 
 @revisar_permiso('inventario.listar_unidades_medida')
 def lista_unidades_medida(request):
-    unidades = UnidadMedida.objects.all()
-    return render(request, 'inventario/lista_unidades_medida.html', {'unidades': unidades})
+    """Vista mejorada para ver la lista de unidades de medida con filtros avanzados."""
+    unidades_medida = UnidadMedida.objects.all()
+
+    # Capturar parámetros GET
+    query = request.GET.get('search_query', '')
+
+    # Filtro de texto (Nombre o Abreviatura)
+    if query:
+        unidades_medida = unidades_medida.filter(
+            models.Q(nombre__icontains=query) | models.Q(abreviatura__icontains=query)
+        )
+
+    return render(request, 'inventario/lista_unidades_medida.html', {
+        'unidades_medida': unidades_medida,
+        'query': query
+    })
 
 @revisar_permiso('inventario.detallar_unidad_medida')
 def detalle_unidad_medida(request, unidad_id):

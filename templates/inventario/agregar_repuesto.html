@@ -2,11 +2,133 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Agregar Repuesto</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar</button>
-    <a href="{% url 'inventario' %}">Cancelar</a>
-  </form>
+<div class="form-page-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="custom-card">
+                    <div class="custom-card-header">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-tools fs-3 me-3"></i>
+                            <div>
+                                <h2 class="h4 mb-0">Registrar Repuesto</h2>
+                                <small class="opacity-75">Complete los datos para agregar el repuesto al inventario</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4 p-md-5">
+                        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            {{ form.tipo }}
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            {% endif %}
+
+                            <div class="form-section-title">Datos del Repuesto</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Nombre del Repuesto</label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Código del Repuesto</label>
+                                    {{ form.codigo_repuesto }}
+                                    {% if form.codigo_repuesto.errors %}<div class="text-danger small">{{ form.codigo_repuesto.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Categoría</label>
+                                    {{ form.categoria }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Proveedor</label>
+                                    {{ form.proveedor }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Unidad de Medida</label>
+                                    {{ form.unidad_medida }}
+                                </div>
+                            </div>
+
+                            <div class="form-section-title">Stock y Precios</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4">
+                                    <label class="form-label">Stock Actual</label>
+                                    {{ form.stock_actual }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Stock Mínimo</label>
+                                    {{ form.stock_minimo }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Precio de Venta (Gs.)</label>
+                                    {{ form.precio_venta }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Costo de Compra (Gs.)</label>
+                                    {{ form.costo_compra }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Ubicación en Depósito</label>
+                                    {{ form.ubicacion }}
+                                </div>
+                            </div>
+
+                            <div class="form-section-title">Detalle y Archivo</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-12">
+                                    <label class="form-label">Compatibilidad</label>
+                                    {{ form.compatibilidad }}
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Descripción</label>
+                                    {{ form.descripcion }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Imagen del Repuesto</label>
+                                    {{ form.imagen }}
+                                    <div class="form-text text-muted">Formatos permitidos: JPG, PNG. Máx 5MB.</div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column flex-md-row gap-3 pt-3 border-top">
+                                <button type="submit" class="btn btn-primary btn-save shadow-sm">
+                                    <i class="bi bi-check-lg me-2"></i>Guardar Repuesto
+                                </button>
+                                <a href="{% url 'lista_repuestos' %}" class="btn btn-outline-secondary px-4 d-flex align-items-center justify-content-center">
+                                    Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4 text-muted">
+                    <small>SKPY AutoGest - Módulo de Gestión de Inventario</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+      'use strict'
+      var forms = document.querySelectorAll('.needs-validation')
+      Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+          form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+          }, false)
+        })
+    })()
+</script>
 {% endblock %}

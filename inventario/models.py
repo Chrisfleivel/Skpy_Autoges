@@ -161,6 +161,7 @@ class MantenimientoVehiculo(models.Model):
     estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
     estado_mantenimiento = models.CharField(max_length=20, choices=ESTADO_MANTENIMIENTO, default='pendiente', verbose_name="Estado del Mantenimiento")
     fecha_registro = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name="Fecha de Registro")
+    repuestos_utilizados = models.ManyToManyField(Repuesto, blank=True, verbose_name="Repuestos Utilizados")
 
 
     class Meta:
@@ -241,3 +242,4 @@ class CentroVentas(models.Model):
         return f"{self.nombre} - {self.deposito.nombre}"
     
 # Modelo para registrar la transferencia de productos entre depósitos
+

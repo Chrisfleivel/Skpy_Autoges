@@ -1,12 +1,89 @@
-
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Agregar Depósito</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Agregar Depósito</button>
-  </form>
-  <a href="{% url 'lista_depositos' %}">Cancelar</a>
+<div class="form-page-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="custom-card">
+                    <div class="custom-card-header">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-building fs-3 me-3"></i>
+                            <div>
+                                <h2 class="h4 mb-0">Registrar Depósito</h2>
+                                <small class="opacity-75">Complete los datos para crear un nuevo depósito.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4 p-md-5">
+                        <form method="post" class="needs-validation" novalidate>
+                            {% csrf_token %}
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            {% endif %}
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Nombre del Depósito</label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Ubicación</label>
+                                    {{ form.ubicacion }}
+                                    {% if form.ubicacion.errors %}<div class="text-danger small">{{ form.ubicacion.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Capacidad Máxima (unidades)</label>
+                                    {{ form.capacidad_maxima }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Descripción</label>
+                                    {{ form.descripcion }}
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column flex-md-row gap-3 pt-3 border-top">
+                                <button type="submit" class="btn btn-primary btn-save shadow-sm">
+                                    <i class="bi bi-check-lg me-2"></i>Guardar Depósito
+                                </button>
+                                <a href="{% url 'lista_depositos' %}" class="btn btn-outline-secondary px-4 d-flex align-items-center justify-content-center">
+                                    Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4 text-muted">
+                    <small>SKPY AutoGest - Gestión de Depósitos</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+      'use strict'
+      var forms = document.querySelectorAll('.needs-validation')
+      Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+          form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+          }, false)
+        })
+    })()
+</script>
 {% endblock %}

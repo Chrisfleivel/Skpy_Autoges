@@ -1,24 +1,369 @@
-# inventario/lista_mantenimiento.html 
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Lista de Mantenimientos</h2>
-  <form method="post">
-    {% csrf_token %}
-    <input type="text" name="search_query" placeholder="Buscar mantenimientos...">
-    <button type="submit">Buscar</button>
-  </form>
-  <ul>
-    {% for mantenimiento in mantenimientos %}
-      <li>
-        <a href="{% url 'detalle_mantenimiento' mantenimiento.id %}">{{ mantenimiento.descripcion }}</a>
-        <form method="post" action="{% url 'eliminar_mantenimiento' mantenimiento.id %}" style="display:inline;">
-          {% csrf_token %}
-          <button type="submit">Eliminar</button>
-        </form>
-      </li>
-    {% empty %}
-      <li>No hay mantenimientos registrados.</li>
-    {% endfor %}
-  </ul>
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                        <i class="bi bi-wrench-adjustable text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1 fw-bold text-dark">Gestión de Mantenimientos</h1>
+                        <p class="text-muted mb-0">Historial y seguimiento de servicios realizados</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="bi bi-printer me-2"></i>Imprimir
+                    </button>
+                    <a href="{% url 'agregar_mantenimiento' %}" class="btn btn-primary shadow-sm">
+                        <i class="bi bi-plus-circle-fill me-2"></i>Nuevo Mantenimiento
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="bi bi-tools fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ mantenimientos|length }}</h4>
+                    <small class="text-muted">Total Servicios</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="bi bi-clock fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ mantenimientos|length|add:"0" }}</h4>
+                    <small class="text-muted">En Proceso</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="bi bi-check-circle fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ mantenimientos|length|add:"0" }}</h4>
+                    <small class="text-muted">Completados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="bi bi-cash fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">
+                        Gs. {% widthratio mantenimientos|length 1 100000|floatformat:0 %}
+                    </h4>
+                    <small class="text-muted">Costo Promedio</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light border-0 py-3">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-funnel text-primary me-2"></i>
+                <h6 class="mb-0 fw-bold">Filtros de Búsqueda</h6>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-lg-3 col-md-6">
+                    <label for="search_query" class="form-label fw-semibold">
+                        <i class="bi bi-search text-muted me-1"></i>Buscar en descripción
+                    </label>
+                    <div class="input-group">
+                        <input type="text" class="form-control border-end-0" id="search_query" name="search_query"
+                               value="{{ query }}" placeholder="Descripción del servicio...">
+                        <span class="input-group-text bg-transparent border-start-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label for="vehiculo" class="form-label fw-semibold">
+                        <i class="bi bi-car-front text-muted me-1"></i>Vehículo
+                    </label>
+                    <select class="form-select" id="vehiculo" name="vehiculo">
+                        <option value="">Todos los vehículos</option>
+                        {% for veh in vehiculos %}
+                        <option value="{{ veh.id }}" {% if veh.id|stringformat:"s" == vehiculo %}selected{% endif %}>
+                            {{ veh.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label for="estado" class="form-label fw-semibold">
+                        <i class="bi bi-flag text-muted me-1"></i>Estado
+                    </label>
+                    <select class="form-select" id="estado" name="estado">
+                        <option value="">Todos los estados</option>
+                        {% for estado_choice in estados_mantenimiento %}
+                        <option value="{{ estado_choice.0 }}" {% if estado_choice.0 == estado %}selected{% endif %}>
+                            {{ estado_choice.1 }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label for="fecha_desde" class="form-label fw-semibold">
+                        <i class="bi bi-calendar text-muted me-1"></i>Desde
+                    </label>
+                    <input type="date" class="form-control" id="fecha_desde" name="fecha_desde" value="{{ fecha_desde }}">
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label for="fecha_hasta" class="form-label fw-semibold">
+                        <i class="bi bi-calendar-check text-muted me-1"></i>Hasta
+                    </label>
+                    <input type="date" class="form-control" id="fecha_hasta" name="fecha_hasta" value="{{ fecha_hasta }}">
+                </div>
+                <div class="col-lg-1 col-md-6">
+                    <label class="form-label fw-semibold invisible">Acciones</label>
+                    <div class="d-flex gap-1">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <a href="{% url 'lista_mantenimientos' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            {% if query or vehiculo or estado or fecha_desde or fecha_hasta %}
+            <div class="mt-3 p-3 bg-light rounded-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle text-primary me-2"></i>
+                    <small class="text-muted">
+                        {% if query %}Descripción: "<strong>{{ query }}</strong>"{% endif %}
+                        {% if vehiculo %} | Vehículo filtrado{% endif %}
+                        {% if estado %} | Estado: <strong>{{ estado|title }}</strong>{% endif %}
+                        {% if fecha_desde %} | Desde: <strong>{{ fecha_desde }}</strong>{% endif %}
+                        {% if fecha_hasta %} | Hasta: <strong>{{ fecha_hasta }}</strong>{% endif %}
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-table text-primary me-2"></i>
+                    <h6 class="mb-0 fw-bold">Lista de Mantenimientos</h6>
+                </div>
+                <div class="text-muted small">
+                    {{ mantenimientos|length }} servicio{{ mantenimientos|length|pluralize:"s" }}
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if mantenimientos %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0 fw-semibold ps-4">#</th>
+                            <th class="border-0 fw-semibold">Vehículo</th>
+                            <th class="border-0 fw-semibold">Servicio</th>
+                            <th class="border-0 fw-semibold">Fecha</th>
+                            <th class="border-0 fw-semibold">Estado</th>
+                            <th class="border-0 fw-semibold">Costo</th>
+                            <th class="border-0 fw-semibold text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mantenimiento in mantenimientos %}
+                        <tr class="border-bottom border-light">
+                            <td class="ps-4">
+                                <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold">
+                                    #{{ mantenimiento.id }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-info bg-opacity-10 rounded-2 p-2 me-3">
+                                        <i class="bi bi-car-front text-info"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold text-dark">{{ mantenimiento.vehiculo.nombre }}</div>
+                                        <small class="text-muted">{{ mantenimiento.vehiculo.marca }} {{ mantenimiento.vehiculo.modelo }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="fw-semibold text-dark" title="{{ mantenimiento.descripcion }}">
+                                        {{ mantenimiento.descripcion|truncatechars:40 }}
+                                    </div>
+                                    {% if mantenimiento.observaciones %}
+                                    <small class="text-muted">{{ mantenimiento.observaciones|truncatechars:30 }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-calendar text-muted me-2"></i>
+                                    <span>{{ mantenimiento.fecha_mantenimiento|date:"d/m/Y" }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if mantenimiento.estado_mantenimiento == 'finalizado' %}
+                                    <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-3 py-2">
+                                        <i class="bi bi-check-circle-fill me-1"></i>Finalizado
+                                    </span>
+                                {% elif mantenimiento.estado_mantenimiento == 'en_proceso' %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-3 py-2">
+                                        <i class="bi bi-clock-fill me-1"></i>En Proceso
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-3 py-2">
+                                        <i class="bi bi-pause-circle-fill me-1"></i>Pendiente
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if mantenimiento.costo > 0 %}
+                                    <span class="fw-semibold text-success">
+                                        Gs. {{ mantenimiento.costo|floatformat:0 }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">No especificado</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'detalle_mantenimiento' mantenimiento.id %}"
+                                       class="btn btn-sm btn-outline-primary"
+                                       data-bs-toggle="tooltip"
+                                       title="Ver detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'editar_mantenimiento' mantenimiento.id %}"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       data-bs-toggle="tooltip"
+                                       title="Editar mantenimiento">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'eliminar_mantenimiento' mantenimiento.id %}"
+                                       class="btn btn-sm btn-outline-danger"
+                                       data-bs-toggle="tooltip"
+                                       title="Eliminar mantenimiento"
+                                       onclick="return confirm('¿Está seguro de que desea eliminar este mantenimiento?');">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-wrench-adjustable display-1 text-muted"></i>
+                </div>
+                <h5 class="text-muted mb-3">
+                    {% if query or vehiculo or estado or fecha_desde or fecha_hasta %}
+                        No se encontraron mantenimientos
+                    {% else %}
+                        No hay mantenimientos registrados
+                    {% endif %}
+                </h5>
+                <p class="text-muted mb-4">
+                    {% if query or vehiculo or estado or fecha_desde or fecha_hasta %}
+                        No se encontraron mantenimientos que coincidan con los criterios de búsqueda.
+                    {% else %}
+                        Comienza registrando el primer mantenimiento para llevar un control de los servicios realizados.
+                    {% endif %}
+                </p>
+                {% if not query and not vehiculo and not estado and not fecha_desde and not fecha_hasta %}
+                <a href="{% url 'agregar_mantenimiento' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Registrar Primer Mantenimiento
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom styles for enhanced appearance */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,0.05);
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+}
+
+.btn-group .btn {
+    border-radius: 0.375rem !important;
+    margin-left: 2px;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+
+    .btn-group {
+        display: flex;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+        margin-left: 0 !important;
+        margin-top: 2px;
+    }
+}
+</style>
+
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
 {% endblock %}

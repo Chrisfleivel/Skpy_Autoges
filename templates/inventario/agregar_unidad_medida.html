@@ -2,11 +2,198 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Agregar Unidad de Medida</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Agregar Unidad</button>
-  </form>
-  <a href="{% url 'lista_unidades_medida' %}">Cancelar</a>
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                        <i class="bi bi-rulers text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1 fw-bold text-dark">Nueva Unidad de Medida</h1>
+                        <p class="text-muted mb-0">Registra una nueva unidad para medir productos</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'lista_unidades_medida' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Volver a la Lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-plus-circle text-primary me-2"></i>
+                        <h6 class="mb-0 fw-bold">Información de la Unidad</h6>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Mensajes de error generales -->
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Campo Nombre -->
+                        <div class="mb-4">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label fw-semibold">
+                                <i class="bi bi-tag text-muted me-1"></i>Nombre de la Unidad
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form.nombre }}
+                                <span class="input-group-text">
+                                    <i class="bi bi-tag-fill text-muted"></i>
+                                </span>
+                            </div>
+                            {% if form.nombre.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>
+                                    {% for error in form.nombre.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Ejemplo: Unidad, Litro, Caja, Metro, Kilogramo
+                            </div>
+                        </div>
+
+                        <!-- Campo Abreviatura -->
+                        <div class="mb-4">
+                            <label for="{{ form.abreviatura.id_for_label }}" class="form-label fw-semibold">
+                                <i class="bi bi-hash text-muted me-1"></i>Abreviatura
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form.abreviatura }}
+                                <span class="input-group-text">
+                                    <i class="bi bi-hash text-muted"></i>
+                                </span>
+                            </div>
+                            {% if form.abreviatura.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>
+                                    {% for error in form.abreviatura.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Ejemplo: Und, Lt, Cja, M, Kg (máximo 10 caracteres)
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="{% url 'lista_unidades_medida' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle-fill me-2"></i>Crear Unidad
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="card border-0 shadow-sm mt-4 bg-light">
+                <div class="card-body">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-info-circle text-info fs-4 me-3 mt-1"></i>
+                        <div>
+                            <h6 class="fw-bold text-dark mb-2">Información Importante</h6>
+                            <ul class="mb-0 small text-muted">
+                                <li>El nombre y abreviatura deben ser únicos en el sistema</li>
+                                <li>La abreviatura se mostrará en las listas y reportes</li>
+                                <li>Estos datos se utilizarán para medir la cantidad de repuestos</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos personalizados */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+}
+
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.alert {
+    border-radius: 0.5rem;
+    border: none;
+}
+</style>
+
+<script>
+// Mejorar la experiencia del usuario
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus en el primer campo
+    const firstInput = document.querySelector('input[type="text"]');
+    if (firstInput) {
+        firstInput.focus();
+    }
+
+    // Convertir abreviatura a mayúsculas automáticamente
+    const abreviaturaInput = document.getElementById('{{ form.abreviatura.id_for_label }}');
+    if (abreviaturaInput) {
+        abreviaturaInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+
+    // Validación en tiempo real
+    const inputs = document.querySelectorAll('input[type="text"]');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value.trim() === '') {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

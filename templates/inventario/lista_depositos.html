@@ -1,31 +1,328 @@
-
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Lista de Depósitos</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Nombre</th>
-        <th>Ubicación</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for deposito in depositos %}
-        <tr>
-          <td>{{ deposito.id }}</td>
-          <td>{{ deposito.nombre }}</td>
-          <td>{{ deposito.ubicacion }}</td>
-          <td>
-            <a href="{% url 'detalle_deposito' deposito.id %}">Ver</a>
-            <a href="{% url 'editar_deposito' deposito.id %}">Editar</a>
-            <a href="{% url 'eliminar_deposito' deposito.id %}" onclick="return confirm('¿Está seguro de que desea eliminar este depósito?');">Eliminar</a>
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <a href="{% url 'agregar_deposito' %}">Agregar Depósito</a>
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                        <i class="bi bi-building text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1 fw-bold text-dark">Gestión de Depósitos</h1>
+                        <p class="text-muted mb-0">Administra los almacenes y centros de distribución</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="bi bi-printer me-2"></i>Imprimir
+                    </button>
+                    <a href="{% url 'agregar_deposito' %}" class="btn btn-primary shadow-sm">
+                        <i class="bi bi-plus-circle-fill me-2"></i>Nuevo Depósito
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="bi bi-building fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ depositos|length }}</h4>
+                    <small class="text-muted">Total Depósitos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="bi bi-check-circle fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ depositos|length }}</h4>
+                    <small class="text-muted">Activos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="bi bi-boxes fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">
+                        {% widthratio depositos|length 1 100 %}%
+                    </h4>
+                    <small class="text-muted">Capacidad Utilizada</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="bi bi-geo-alt fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ depositos|length }}</h4>
+                    <small class="text-muted">Ubicaciones</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light border-0 py-3">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-funnel text-primary me-2"></i>
+                <h6 class="mb-0 fw-bold">Filtros de Búsqueda</h6>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-lg-4 col-md-6">
+                    <label for="search_query" class="form-label fw-semibold">
+                        <i class="bi bi-search text-muted me-1"></i>Buscar por nombre o ubicación
+                    </label>
+                    <div class="input-group">
+                        <input type="text" class="form-control border-end-0" id="search_query" name="search_query"
+                               value="{{ query }}" placeholder="Ingrese nombre o ubicación...">
+                        <span class="input-group-text bg-transparent border-start-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                    <label for="capacidad_min" class="form-label fw-semibold">
+                        <i class="bi bi-dash-circle text-muted me-1"></i>Capacidad mínima
+                    </label>
+                    <input type="number" class="form-control" id="capacidad_min" name="capacidad_min"
+                           value="{{ capacidad_min }}" placeholder="0" min="0">
+                </div>
+                <div class="col-lg-2 col-md-3">
+                    <label for="capacidad_max" class="form-label fw-semibold">
+                        <i class="bi bi-plus-circle text-muted me-1"></i>Capacidad máxima
+                    </label>
+                    <input type="number" class="form-control" id="capacidad_max" name="capacidad_max"
+                           value="{{ capacidad_max }}" placeholder="999999" min="0">
+                </div>
+                <div class="col-lg-4 col-md-12">
+                    <label class="form-label fw-semibold invisible">Acciones</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="bi bi-search me-2"></i>Filtrar Resultados
+                        </button>
+                        <a href="{% url 'lista_depositos' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            {% if query or capacidad_min or capacidad_max %}
+            <div class="mt-3 p-3 bg-light rounded-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle text-primary me-2"></i>
+                    <small class="text-muted">
+                        {% if query %}Búsqueda: "<strong>{{ query }}</strong>"{% endif %}
+                        {% if capacidad_min %} | Capacidad mín: <strong>{{ capacidad_min }}</strong>{% endif %}
+                        {% if capacidad_max %} | Capacidad máx: <strong>{{ capacidad_max }}</strong>{% endif %}
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-table text-primary me-2"></i>
+                    <h6 class="mb-0 fw-bold">Lista de Depósitos</h6>
+                </div>
+                <div class="text-muted small">
+                    {{ depositos|length }} resultado{{ depositos|length|pluralize:"s" }}
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if depositos %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0 fw-semibold ps-4">#</th>
+                            <th class="border-0 fw-semibold">Depósito</th>
+                            <th class="border-0 fw-semibold">Ubicación</th>
+                            <th class="border-0 fw-semibold">Capacidad</th>
+                            <th class="border-0 fw-semibold">Estado</th>
+                            <th class="border-0 fw-semibold text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for deposito in depositos %}
+                        <tr class="border-bottom border-light">
+                            <td class="ps-4">
+                                <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold">
+                                    #{{ deposito.id }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary bg-opacity-10 rounded-2 p-2 me-3">
+                                        <i class="bi bi-building text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold text-dark">{{ deposito.nombre }}</div>
+                                        <small class="text-muted">ID: {{ deposito.id }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-geo-alt text-muted me-2"></i>
+                                    <span>{{ deposito.ubicacion|truncatechars:30 }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if deposito.capacidad_maxima >= 1000 %}
+                                    <span class="badge bg-success bg-opacity-10 text-success fw-semibold px-3 py-2">
+                                        <i class="bi bi-boxes me-1"></i>{{ deposito.capacidad_maxima|floatformat:0 }} uds
+                                    </span>
+                                {% elif deposito.capacidad_maxima >= 500 %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning fw-semibold px-3 py-2">
+                                        <i class="bi bi-boxes me-1"></i>{{ deposito.capacidad_maxima|floatformat:0 }} uds
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-info bg-opacity-10 text-info fw-semibold px-3 py-2">
+                                        <i class="bi bi-boxes me-1"></i>{{ deposito.capacidad_maxima|floatformat:0 }} uds
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Activo
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'detalle_deposito' deposito.id %}"
+                                       class="btn btn-sm btn-outline-primary"
+                                       data-bs-toggle="tooltip"
+                                       title="Ver detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'editar_deposito' deposito.id %}"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       data-bs-toggle="tooltip"
+                                       title="Editar depósito">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'eliminar_deposito' deposito.id %}"
+                                       class="btn btn-sm btn-outline-danger"
+                                       data-bs-toggle="tooltip"
+                                       title="Eliminar depósito"
+                                       onclick="return confirm('¿Está seguro de que desea eliminar este depósito?');">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-building display-1 text-muted"></i>
+                </div>
+                <h5 class="text-muted mb-3">
+                    {% if query or capacidad_min or capacidad_max %}
+                        No se encontraron depósitos
+                    {% else %}
+                        No hay depósitos registrados
+                    {% endif %}
+                </h5>
+                <p class="text-muted mb-4">
+                    {% if query or capacidad_min or capacidad_max %}
+                        No se encontraron depósitos que coincidan con los criterios de búsqueda.
+                    {% else %}
+                        Comienza registrando tu primer depósito para organizar mejor tu inventario.
+                    {% endif %}
+                </p>
+                {% if not query and not capacidad_min and not capacidad_max %}
+                <a href="{% url 'agregar_deposito' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Crear Primer Depósito
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom styles for enhanced appearance */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,0.05);
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+}
+
+.btn-group .btn {
+    border-radius: 0.375rem !important;
+    margin-left: 2px;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+
+    .btn-group {
+        display: flex;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+        margin-left: 0 !important;
+        margin-top: 2px;
+    }
+}
+</style>
+
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
 {% endblock %}
