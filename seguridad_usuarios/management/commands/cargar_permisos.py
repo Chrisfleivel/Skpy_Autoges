@@ -13,19 +13,30 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         permisos_iniciales = buscar_permisos()
         for permiso in permisos_iniciales:
+            sector = permiso.get('sector') or derive_sector_from_codename(permiso.get('codename', ''))
             Permiso.objects.get_or_create(
                 codename=permiso['codename'],
                 defaults={
                     'nombre': permiso['nombre'],
-                    'descripcion': permiso['descripcion']
+                    'descripcion': permiso.get('descripcion', ''),
+                    'sector': sector,
                 }
             )
         self.stdout.write(self.style.SUCCESS('Permisos cargados correctamente.'))
 
+def derive_sector_from_codename(codename):
+    if not codename:
+        return ''
+    if '.' in codename:
+        sector = codename.split('.', 1)[0]
+        return sector.replace('_', ' ').title()
+    return ''
+
+
 def buscar_permisos():
     """Función para buscar y combinar permisos iniciales de diferentes módulos."""
     permisos = []
-    permisos.extend(permisos_iniciales_clientes_pedidos)
+    #permisos.extend(permisos_iniciales_clientes_pedidos)
     permisos.extend(permisos_iniciales_configuraciones_maestras)
     permisos.extend(permisos_iniciales_seguridad_usuarios)
     permisos.extend(permisos_iniciales_inventario)

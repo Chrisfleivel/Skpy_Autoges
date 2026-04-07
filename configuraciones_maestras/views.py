@@ -356,107 +356,128 @@ permisos_iniciales_configuraciones_maestras = [
         {
             'codename': 'configuraciones_maestras.agregar_proveedor',
             'nombre': 'Agregar Proveedor',
-            'descripcion': 'Permite registrar nuevos Proveedores.'
+            'descripcion': 'Permite registrar nuevos Proveedores.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.editar_proveedor',
             'nombre': 'Editar Proveedor',
-            'descripcion': 'Permite editar los datos de Proveedores existentes.'
+            'descripcion': 'Permite editar los datos de Proveedores existentes.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.eliminar_proveedor',
             'nombre': 'Eliminar Proveedor',
-            'descripcion': 'Permite eliminar Proveedores del sistema.'
+            'descripcion': 'Permite eliminar Proveedores del sistema.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.inactivar_proveedor',
             'nombre': 'Inactivar Proveedor',
-            'descripcion': 'Permite inactivar Proveedores del sistema.'
+            'descripcion': 'Permite inactivar Proveedores del sistema.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.listar_proveedores',
             'nombre': 'Listar Proveedores',
-            'descripcion': 'Permite ver la lista de Proveedores registrados.'
+            'descripcion': 'Permite ver la lista de Proveedores registrados.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.detallar_proveedor',
             'nombre': 'Detalle de Proveedor',
-            'descripcion': 'Permite ver el detalle de un Proveedor.'
+            'descripcion': 'Permite ver el detalle de un Proveedor.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.agregar_agente_transporte',
             'nombre': 'Agregar Agente de Transporte',
-            'descripcion': 'Permite registrar nuevos Agentes de Transporte.'
+            'descripcion': 'Permite registrar nuevos Agentes de Transporte.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.editar_agente_transporte',
             'nombre': 'Editar Agente de Transporte',
-            'descripcion': 'Permite editar los datos de Agentes de Transporte existentes.'
+            'descripcion': 'Permite editar los datos de Agentes de Transporte existentes.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.eliminar_agente_transporte',
             'nombre': 'Eliminar Agente de Transporte',
-            'descripcion': 'Permite eliminar Agentes de Transporte del sistema.'
+            'descripcion': 'Permite eliminar Agentes de Transporte del sistema.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.listar_agentes_transporte',
             'nombre': 'Listar Agentes de Transporte',
-            'descripcion': 'Permite ver la lista de Agentes de Transporte registrados.'
+            'descripcion': 'Permite ver la lista de Agentes de Transporte registrados.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.detallar_agente_transporte',
             'nombre': 'Detalle de Agente de Transporte',
-            'descripcion': 'Permite ver el detalle de un Agente de Transporte.'
+            'descripcion': 'Permite ver el detalle de un Agente de Transporte.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.agregar_despachante_aduana',
             'nombre': 'Agregar Despachante de Aduana',
-            'descripcion': 'Permite registrar nuevos Despachantes de Aduana.'
+            'descripcion': 'Permite registrar nuevos Despachantes de Aduana.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.editar_despachante_aduana',
             'nombre': 'Editar Despachante de Aduana',
-            'descripcion': 'Permite editar los datos de Despachantes de Aduana existentes.'
+            'descripcion': 'Permite editar los datos de Despachantes de Aduana existentes.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.eliminar_despachante_aduana',
             'nombre': 'Eliminar Despachante de Aduana',
-            'descripcion': 'Permite eliminar Despachantes de Aduana del sistema.'
+            'descripcion': 'Permite eliminar Despachantes de Aduana del sistema.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.listar_despachantes_aduana',
             'nombre': 'Listar Despachantes de Aduana',
-            'descripcion': 'Permite ver la lista de Despachantes de Aduana registrados.'
+            'descripcion': 'Permite ver la lista de Despachantes de Aduana registrados.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.detallar_despachante_aduana',
             'nombre': 'Detalle de Despachante de Aduana',
-            'descripcion': 'Permite ver el detalle de un Despachante de Aduana.'
+            'descripcion': 'Permite ver el detalle de un Despachante de Aduana.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.agregar_tasa_cambio',
             'nombre': 'Agregar Tasa de Cambio',
-            'descripcion': 'Permite registrar nuevas Tasas de Cambio.'
+            'descripcion': 'Permite registrar nuevas Tasas de Cambio.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.editar_tasa_cambio',
             'nombre': 'Editar Tasa de Cambio',
-            'descripcion': 'Permite editar los datos de Tasas de Cambio existentes.'
+            'descripcion': 'Permite editar los datos de Tasas de Cambio existentes.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.eliminar_tasa_cambio',
             'nombre': 'Eliminar Tasa de Cambio',
-            'descripcion': 'Permite eliminar Tasas de Cambio del sistema.'
+            'descripcion': 'Permite eliminar Tasas de Cambio del sistema.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.listar_tasas_cambio',
             'nombre': 'Listar Tasas de Cambio',
-            'descripcion': 'Permite ver la lista de Tasas de Cambio registradas.'
+            'descripcion': 'Permite ver la lista de Tasas de Cambio registradas.',
+            'sector': 'Configuraciones Maestras'
         },
         {
             'codename': 'configuraciones_maestras.detallar_tasa_cambio',
             'nombre': 'Detalle de Tasa de Cambio',
-            'descripcion': 'Permite ver el detalle de una Tasa de Cambio.'
+            'descripcion': 'Permite ver el detalle de una Tasa de Cambio.',
+            'sector': 'Configuraciones Maestras'
         },
         
     ]

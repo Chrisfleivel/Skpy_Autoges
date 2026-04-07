@@ -66,10 +66,13 @@ class RolForm(forms.ModelForm):
         model = Rol
         fields = ['nombre', 'descripcion', 'permisos']
         widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Administrador'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Breve descripción del rol...'}),
             'permisos': forms.CheckboxSelectMultiple(),
         }
+    
 
-
+    
 class PermisoForm(forms.ModelForm):
     """
     Formulario para crear o editar permisos.

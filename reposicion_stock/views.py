@@ -150,6 +150,7 @@ permisos_iniciales_reposicion_stock = [
     {
         'codename': 'reposicion_stock.cancelar_solicitud_de_reposicion',
         'nombre': 'Cancelar Solicitud de Reposición',
-        'descripcion': 'Permite cancelar una solicitud de reposición de stock.'
+        'descripcion': 'Permite cancelar una solicitud de reposición de stock.',
+        'sector': 'Reposición de Stock'
     },
 ]

@@ -3,109 +3,199 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid py-5" style="min-height: 100vh;">
-  <div class="row justify-content-center">
-    <div class="col-12">
-      <div class="card shadow-lg border-0">
+<div class="container-fluid py-4 {{ theme_class }}">
+  <div class="row">
+    <!-- SIDEBAR - FILTROS IZQUIERDA -->
+    <div class="col-lg-3 mb-4">
+      <div class="card shadow-sm filter-box {% if theme_class == 'theme-dark' %}bg-dark text-light border-secondary{% elif theme_class == 'theme-light' %}bg-white{% else %}bg-light{% endif %}">
         <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-            <h2 class="fw-bold mb-0" style="color: #292929;">Gestión de Empleados</h2>
-            <a href="{% url 'agregar_empleado' %}" 
-              class="btn btn-lg d-flex align-items-center"
-              style="gap: 8px; background-color: #1f58d3; border-color: #2159d3; color: #fff;">
-                <img src="{% static 'img/agregar.png' %}" alt="Agregar" width="28" height="28">
-                <span class="d-none d-md-inline">Empleado</span>
-            </a>
-          </div>
-          <form method="get" class="row g-3 mb-4 justify-content-center align-items-end bg-light p-3 rounded shadow-sm">
-            <div class="col-md-3">
-              <input type="text" name="nombre" placeholder="Nombre" value="{{ request.GET.nombre }}" class="form-control">
+          <h5 class="card-title mb-4 {% if theme_class == 'theme-dark' %}text-light{% else %}text-primary{% endif %} border-bottom border-2 pb-2">
+            <i class="bi bi-funnel"></i> Filtros
+          </h5>
+
+          <form method="get" id="filterForm">
+            <div class="mb-3">
+              <label class="form-label fw-bold {% if theme_class == 'theme-dark' %}text-light{% else %}text-dark{% endif %}" style="font-size: 0.9rem;">Nombre</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                <input type="text" name="nombre" class="form-control" placeholder="Nombre" value="{{ request.GET.nombre }}" style="font-size: 0.9rem;">
+              </div>
             </div>
-            <div class="col-md-3">
-              <input type="text" name="apellido" placeholder="Apellido" value="{{ request.GET.apellido }}" class="form-control">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold {% if theme_class == 'theme-dark' %}text-light{% else %}text-dark{% endif %}" style="font-size: 0.9rem;">Apellido</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                <input type="text" name="apellido" class="form-control" placeholder="Apellido" value="{{ request.GET.apellido }}" style="font-size: 0.9rem;">
+              </div>
             </div>
-            <div class="col-md-2">
-              <input type="text" name="departamento" placeholder="Departamento" value="{{ request.GET.departamento }}" class="form-control">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold {% if theme_class == 'theme-dark' %}text-light{% else %}text-dark{% endif %}" style="font-size: 0.9rem;">Departamento</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-building"></i></span>
+                <input type="text" name="departamento" class="form-control" placeholder="Departamento" value="{{ request.GET.departamento }}" style="font-size: 0.9rem;">
+              </div>
             </div>
-            <div class="col-md-2">
-              <input type="text" name="email" placeholder="Email" value="{{ request.GET.email }}" class="form-control">
+
+            <div class="mb-3">
+              <label class="form-label fw-bold {% if theme_class == 'theme-dark' %}text-light{% else %}text-dark{% endif %}" style="font-size: 0.9rem;">Email</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                <input type="text" name="email" class="form-control" placeholder="Email" value="{{ request.GET.email }}" style="font-size: 0.9rem;">
+              </div>
             </div>
-            <div class="col-md-2">
-              <select name="estado" class="form-select">
-                <option value="">Estado</option>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold {% if theme_class == 'theme-dark' %}text-light{% else %}text-dark{% endif %}" style="font-size: 0.9rem;">Estado</label>
+              <select name="estado" class="form-select" style="font-size: 0.9rem;">
+                <option value="">Todos</option>
                 <option value="ACTIVO" {% if request.GET.estado == 'ACTIVO' %}selected{% endif %}>Activos</option>
                 <option value="INACTIVO" {% if request.GET.estado == 'INACTIVO' %}selected{% endif %}>Inactivos</option>
               </select>
             </div>
-            <div class="col-md-2">
-              <select name="usuario" class="form-select">
-                <option value="">Usuario</option>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold {% if theme_class == 'theme-dark' %}text-light{% else %}text-dark{% endif %}" style="font-size: 0.9rem;">Usuario</label>
+              <select name="usuario" class="form-select" style="font-size: 0.9rem;">
+                <option value="">Todos</option>
                 <option value="SI" {% if request.GET.usuario == 'SI' %}selected{% endif %}>Con Usuario</option>
                 <option value="NO" {% if request.GET.usuario == 'NO' %}selected{% endif %}>Sin Usuario</option>
               </select>
             </div>
-            <div class="col-md-2 d-grid">
-              <button type="submit" class="btn btn-success"><i class="bi bi-search"></i> Buscar</button>
-            </div>
-            <div class="col-md-2 d-grid">
-              <a href="{% url 'lista_empleados' %}" class="btn btn-secondary"><i class="bi bi-x-circle"></i> Limpiar</a>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-success fw-bold" style="font-size: 0.9rem;">
+                <i class="bi bi-search"></i> Buscar
+              </button>
+              <a href="{% url 'lista_empleados' %}" class="btn btn-secondary fw-bold" style="font-size: 0.9rem;">
+                <i class="bi bi-x-circle"></i> Limpiar
+              </a>
             </div>
           </form>
-          <div class="table-responsive">
-            <table class="table table-hover align-middle text-center">
-              <thead class="table-dark">
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Apellido</th>
-                  <th>Correo Electrónico</th>
-                  <th>Departamento</th>
-                  <th>Cargo</th>
-                  <th colspan="3">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for empleado in empleados %}
-                  <tr>
-                    <td>{{ empleado.id }}</td>
-                    <td>{{ empleado.nombre }}</td>
-                    <td>{{ empleado.apellidos }}</td>
-                    <td>{{ empleado.email }}</td>
-                    <td>{{ empleado.departamento }}</td>
-                    <td>{{ empleado.cargo }}</td>
-                    <td>
-                      <a href="{% url 'detalle_empleado' empleado.id %}" class="btn btn-warning btn-sm" title="Detalles">
-                        <i class="bi bi-eye-fill">Detalles</i>
-                      </a>
-                    </td>
-                    <td>
-                      <a href="{% url 'editar_empleado' empleado.id %}" class="btn btn-info btn-sm" title="Editar">
-                        <i class="bi bi-pencil-square">Editar</i>
-                      </a>
-                    </td>
-                    <td>
-                      {% if empleado.estado %}
-                        <a href="{% url 'desactivar_empleado' empleado.id %}" class="btn btn-danger btn-sm" title="Desactivar">
-                          <i class="bi bi-person-dash-fill">Inactivar</i>
-                        </a>
-                      {% else %}
-                        <a href="{% url 'activar_empleado' empleado.id %}" class="btn btn-success btn-sm" title="Activar">
-                          <i class="bi bi-person-check-fill">Activar</i>
-                        </a>
-                      {% endif %}
-                    </td>
-                  </tr>
-                {% empty %}
-                  <tr>
-                    <td colspan="8" class="text-center text-muted">No se encontraron empleados.</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL - RESULTADOS DERECHA -->
+    <div class="col-lg-9">
+      <div class="card shadow-sm results-card mb-4 {% if theme_class == 'theme-dark' %}bg-dark text-light border-secondary{% elif theme_class == 'theme-light' %}bg-white{% else %}bg-light{% endif %}">
+        <div class="card-body">
+          <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3 mb-4">
+            <div>
+              <h2 class="mb-1 {% if theme_class == 'theme-dark' %}text-light{% else %}text-dark{% endif %}">Gestión de Empleados</h2>
+              <p class="mb-0 {% if theme_class == 'theme-dark' %}text-light opacity-75{% else %}text-muted{% endif %}" style="font-size: 0.95rem;">
+                Filtra y administra empleados desde esta vista.
+              </p>
+            </div>
+            <a href="{% url 'agregar_empleado' %}" class="btn btn-primary btn-lg d-flex align-items-center gap-2">
+              <img src="{% static 'img/agregar.png' %}" alt="Agregar" width="24" height="24">
+              <span>Empleado</span>
+            </a>
           </div>
+
+          {% if empleados %}
+            <div class="table-responsive shadow-sm rounded overflow-hidden">
+              <table class="table table-hover align-middle text-center mb-0">
+                <thead class="{% if theme_class == 'theme-dark' %}table-dark{% else %}bg-primary text-white{% endif %}">
+                  <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Correo Electrónico</th>
+                    <th>Departamento</th>
+                    <th>Cargo</th>
+                    <th colspan="3">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for empleado in empleados %}
+                    <tr>
+                      <td>{{ empleado.id }}</td>
+                      <td class="text-start">{{ empleado.nombre }}</td>
+                      <td class="text-start">{{ empleado.apellidos }}</td>
+                      <td class="text-start">{{ empleado.email }}</td>
+                      <td class="text-start">{{ empleado.departamento }}</td>
+                      <td class="text-start">{{ empleado.cargo }}</td>
+                      <td>
+                        <a href="{% url 'detalle_empleado' empleado.id %}" class="btn btn-warning btn-sm" title="Detalles">
+                          <i class="bi bi-eye-fill"></i>
+                        </a>
+                      </td>
+                      <td>
+                        <a href="{% url 'editar_empleado' empleado.id %}" class="btn btn-info btn-sm" title="Editar">
+                          <i class="bi bi-pencil-square"></i>
+                        </a>
+                      </td>
+                      <td>
+                        {% if empleado.estado %}
+                          <a href="{% url 'desactivar_empleado' empleado.id %}" class="btn btn-danger btn-sm" title="Desactivar">
+                            <i class="bi bi-person-dash-fill"></i>
+                          </a>
+                        {% else %}
+                          <a href="{% url 'activar_empleado' empleado.id %}" class="btn btn-success btn-sm" title="Activar">
+                            <i class="bi bi-person-check-fill"></i>
+                          </a>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-3 pt-3 border-top">
+              <p class="{% if theme_class == 'theme-dark' %}text-light{% else %}text-muted{% endif %}" style="font-size: 0.9rem; margin: 0;">
+                <strong>Total encontrados:</strong> {{ empleados.count }} empleado{{ empleados.count|pluralize }}
+              </p>
+            </div>
+          {% else %}
+            <div class="alert alert-info {% if theme_class == 'theme-dark' %}alert-dark{% endif %}" style="margin-bottom: 0;">
+              <i class="bi bi-info-circle"></i> No se encontraron empleados que coincidan con los filtros.
+            </div>
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<style>
+  .filter-box .form-control,
+  .filter-box .form-select {
+    border-radius: 0.75rem;
+  }
+
+  .filter-box .input-group-text {
+    background-color: rgba(0, 0, 0, 0.04);
+    border-color: var(--border-color);
+  }
+
+  .filter-box .form-label {
+    letter-spacing: 0.5px;
+  }
+
+  .results-card .table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .results-card .table thead th {
+    border-bottom-width: 2px;
+  }
+
+  .results-card .btn-warning,
+  .results-card .btn-info,
+  .results-card .btn-danger,
+  .results-card .btn-success {
+    min-width: 2.5rem;
+  }
+
+  @media (max-width: 992px) {
+    .filter-box,
+    .results-card {
+      margin-bottom: 1rem;
+    }
+  }
+</style>
 {% endblock %}

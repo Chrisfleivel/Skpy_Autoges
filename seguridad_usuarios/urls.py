@@ -33,9 +33,11 @@ urlpatterns = [
     # Roles
     path('roles/', views.lista_roles, name='lista_roles'),
     path('roles/crear/', views.agregar_rol, name='crear_rol'),
-    # path('roles/<int:pk>/', views.detalle_rol, name='detalle_rol'),
+    path('roles/<int:pk>/', views.detalle_rol, name='detalle_rol'),
     path('roles/<int:pk>/editar/', views.editar_rol, name='editar_rol'),
-    # path('roles/<int:pk>/eliminar/', views.eliminar_rol, name='eliminar_rol'),
+    path('roles/<int:pk>/eliminar/', views.eliminar_rol, name='eliminar_rol'),
+    path('roles/<int:pk>/inactivar/', views.inactivar_rol, name='inactivar_rol'),
+    path('roles/<int:pk>/activar/', views.activar_rol, name='activar_rol'),
 
     # Empleados
     path('empleados/', views.lista_empleados, name='lista_empleados'),
@@ -46,14 +48,16 @@ urlpatterns = [
     path('empleados/<int:pk>/desactivar/', views.desactivar_empleado, name='desactivar_empleado'),
     # path('empleados/<int:pk>/eliminar/', views.eliminar_empleado, name='eliminar_empleado'),
 
-    # Perfil
+    # Perfiles
     path('perfil/', views.lista_perfiles, name='lista_perfiles'),
-    # perfil usuario
+    # perfil usuario para el admin
     path('perfil/e/<int:empleado_id>/', views.perfil_usuario, name='perfil_usuario'),
+    path('perfil/e/<int:empleado_id>/editar/', views.editar_perfil_usuario, name='editar_perfil_usuario'),
     # path('perfil/crear/', views.crear_perfil, name='crear_perfil'),
     #lista perfiles
-    path('perfiles/', views.lista_perfiles, name='lista_perfiles'),
+    #path('perfiles/', views.lista_perfiles, name='lista_perfiles'),
 
+    # perfil usuario para el empleado
     path('perfil/<int:pk>/', views.ver_perfil, name='perfil'),
     # crear_usuario_para_empleado 
     path('empleados/<int:empleado_id>/crear_usuario/', views.crear_usuario_para_empleado, name='crear_usuario_para_empleado'),

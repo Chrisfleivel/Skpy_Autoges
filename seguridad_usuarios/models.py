@@ -1,6 +1,6 @@
 # seguridad_usuarios/models.py
 
-from datetime import timezone
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
 from abc import ABC
@@ -41,17 +41,35 @@ class Rol(models.Model):
     fecha_vigencia = models.DateTimeField(blank=True, null=True, verbose_name="Fecha de Vigencia")
     permisos = models.ManyToManyField('Permiso', blank=True, verbose_name="Permisos")
     estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
+    utilizado = models.BooleanField(default=False, verbose_name="Utilizado")  # Indica si el rol está asignado a algún usuario
 
     def agregar_permiso(self, permiso):
-        self.permisos.add(permiso)
-        self.save()
+        if self.utilizado or self.estado == False:
+            raise ValueError("No se pueden modificar los permisos de un rol que ya está asignado a usuarios.")
+        else:
+            self.permisos.add(permiso)
+            self.save()
+    
 
     def eliminar_permiso(self, permiso):
-        self.permisos.remove(permiso)
-        self.save()
+        if self.utilizado or self.estado == False:
+            raise ValueError("No se pueden modificar los permisos de un rol que ya está asignado a usuarios.")
+        else:
+            self.permisos.remove(permiso)
+            self.save()
     
     def finalizar_vigencia(self):
-        self.fecha_vigencia = models.DateTimeField(auto_now=True)
+        self.fecha_vigencia = timezone.now()
+        self.estado = False
+        self.save()
+
+    def reactivar_rol(self):
+        self.fecha_vigencia = None
+        self.estado = True
+        self.save()
+    
+    def inactivar_rol(self):
+        self.fecha_vigencia = timezone.now()
         self.estado = False
         self.save()
     
@@ -72,9 +90,12 @@ class Permiso(models.Model):
     nombre = models.CharField(max_length=50, unique=True)
     descripcion = models.TextField(blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    sector = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
-        return self.codename
+        if self.sector:
+            return f" ({self.sector.upper()}) - {self.nombre}"
+        return self.nombre
 
     class Meta:
         verbose_name = "Permiso"

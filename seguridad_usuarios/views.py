@@ -432,6 +432,7 @@ def editar_rol(request, pk):
     try:
         rol = get_object_or_404(Rol, id=pk)
         if request.method == 'POST':
+
             form = RolForm(request.POST, instance=rol)
             if form.is_valid():
                 form.save()
@@ -476,6 +477,41 @@ def lista_roles(request):
     }
               
     return render(request, 'seguridad_usuarios/lista_roles.html', context)             
+
+@revisar_permiso('seguridad_usuarios.detallar_rol')
+def detalle_rol(request, pk):
+    rol = get_object_or_404(Rol, id=pk)
+    return render(request, 'seguridad_usuarios/detalle_rol.html', {'rol': rol})
+
+@revisar_permiso('seguridad_usuarios.inactivar_rol')
+def inactivar_rol(request, pk):
+    rol = get_object_or_404(Rol, id=pk)
+    if request.method == 'POST':
+        rol.inactivar_rol()
+        messages.success(request, 'Rol inactivado correctamente.')
+        return redirect('lista_roles')
+    return render(request, 'seguridad_usuarios/inactivar_rol.html', {'rol': rol})
+
+@revisar_permiso('seguridad_usuarios.activar_rol')
+def activar_rol(request, pk):
+    rol = get_object_or_404(Rol, id=pk)
+    if request.method == 'POST':
+        rol.reactivar_rol()
+        messages.success(request, 'Rol activado correctamente.')
+        return redirect('lista_roles')
+    return render(request, 'seguridad_usuarios/activar_rol.html', {'rol': rol})
+
+@revisar_permiso('seguridad_usuarios.eliminar_rol')
+def eliminar_rol(request, pk):
+    rol = get_object_or_404(Rol, id=pk)
+    if request.method == 'POST':
+        if rol.usuarios.exists():
+            messages.error(request, 'No se puede eliminar un rol que ya ha sido asignado a usuarios.')
+            return redirect('detalle_rol', pk=pk)
+        rol.delete()
+        messages.success(request, 'Rol eliminado correctamente.')
+        return redirect('lista_roles')
+    return render(request, 'seguridad_usuarios/eliminar_rol.html', {'rol': rol})
 
 
 # --------------------------------------------------------------------------
@@ -572,7 +608,7 @@ def ver_perfil(request, pk):
         return redirect('home')
 
 
-# @revisar_permiso('seguridad_usuarios.ver_perfil_usuario')
+@revisar_permiso('seguridad_usuarios.ver_perfil_usuario')
 def perfil_usuario(request, empleado_id):
     """
     Vista para ver el perfil de un usuario a partir del id de empleado.
@@ -650,7 +686,7 @@ def desactivar_usuario(request, pk):
         user.save()
         messages.success(request, f'Usuario "{user.username}" desactivado correctamente.')
         return redirect('lista_perfiles')
-    return render(request, 'seguridad_usuarios/desactivar_usuario.html', {'user': user})
+    return render(request, 'seguridad_usuarios/inactivar_usuario.html', {'user': user})
 
 @revisar_permiso('seguridad_usuarios.crear_usuario_para_empleado')
 def crear_usuario_para_empleado(request, empleado_id):
@@ -810,106 +846,185 @@ permisos_iniciales_seguridad_usuarios = [
         {
             'codename': 'seguridad_usuarios.registrar_usuario',
             'nombre': 'Registrar usuario',
-            'descripcion': 'Permite registrar nuevos usuarios en el sistema.'
+            'descripcion': 'Registrar nuevos usuarios en el sistema.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.editar_usuario',
             'nombre': 'Editar usuario',
-            'descripcion': 'Permite editar los datos de usuarios existentes.'
+            'descripcion': 'Editar los datos de usuarios existentes.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.eliminar_usuario',
             'nombre': 'Eliminar usuario',
-            'descripcion': 'Permite eliminar usuarios del sistema.'
+            'descripcion': 'Eliminar usuarios del sistema.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.listar_usuarios',
             'nombre': 'Listar usuarios',
-            'descripcion': 'Permite ver la lista de usuarios registrados.'
+            'descripcion': 'Ver la lista de usuarios registrados.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.cambiar_contrasena',
             'nombre': 'Cambiar contraseña',
-            'descripcion': 'Permite cambiar la contraseña de usuario.'
+            'descripcion': 'Permite cambiar la contraseña de usuario.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.agregar_empleado',
             'nombre': 'Agregar empleado',
-            'descripcion': 'Permite agregar nuevos empleados.'
+            'descripcion': 'Agregar nuevos empleados.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.editar_empleado',
             'nombre': 'Editar empleado',
-            'descripcion': 'Permite editar los datos de empleados.'
+            'descripcion': 'Editar los datos de empleados.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.eliminar_empleado',
             'nombre': 'Eliminar empleado',
-            'descripcion': 'Permite eliminar empleados del sistema.'
+            'descripcion': 'Eliminar empleados del sistema.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.listar_empleados',
             'nombre': 'Listar empleados',
-            'descripcion': 'Permite ver la lista de empleados registrados.'
+            'descripcion': 'Ver la lista de empleados registrados.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.detallar_empleado',
             'nombre': 'Detalle de empleado',
-            'descripcion': 'Permite ver el detalle de un empleado.'
+            'descripcion': 'Ver el detalle de un empleado.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.agregar_rol',
             'nombre': 'Agregar rol',
-            'descripcion': 'Permite agregar nuevos roles.'
+            'descripcion': 'Agregar nuevos roles.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.editar_rol',
             'nombre': 'Editar rol',
-            'descripcion': 'Permite editar los datos de roles.'
+            'descripcion': 'Editar los datos de roles.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.listar_rol',
             'nombre': 'Listar roles',
-            'descripcion': 'Permite ver la lista de roles registrados.'
+            'descripcion': 'Ver la lista de roles registrados.',
+            'sector': 'Seguridad y Usuarios'
+        },
+        {
+            'codename': 'seguridad_usuarios.detallar_rol',
+            'nombre': 'Detalle de rol',
+            'descripcion': 'Ver el detalle de un rol.',
+            'sector': 'Seguridad y Usuarios'
+        },
+        {
+            'codename': 'seguridad_usuarios.inactivar_rol',
+            'nombre': 'Inactivar rol',
+            'descripcion': 'Inactivar un rol existente.',
+            'sector': 'Seguridad y Usuarios'
+        },
+        {
+            'codename': 'seguridad_usuarios.activar_rol',
+            'nombre': 'Activar rol',
+            'descripcion': 'Activar un rol existente.',
+            'sector': 'Seguridad y Usuarios'
+        },
+        {
+            'codename': 'seguridad_usuarios.eliminar_rol',
+            'nombre': 'Eliminar rol',
+            'descripcion': 'Eliminar roles del sistema.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.agregar_permiso',
             'nombre': 'Agregar permiso',
-            'descripcion': 'Permite agregar nuevos permisos.'
+            'descripcion': 'Agregar nuevos permisos.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.editar_permiso',
             'nombre': 'Editar permiso',
-            'descripcion': 'Permite editar los datos de permisos.'
+            'descripcion': 'Editar los datos de permisos.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.eliminar_permiso',
             'nombre': 'Eliminar permiso',
-            'descripcion': 'Permite eliminar permisos del sistema.'
+            'descripcion': 'Permite eliminar permisos del sistema.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.listar_permisos',
             'nombre': 'Listar permisos',
-            'descripcion': 'Permite ver la lista de permisos registrados.'
+            'descripcion': 'Permite ver la lista de permisos registrados.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.ver_perfil',
             'nombre': 'Ver perfil',
-            'descripcion': 'Permite ver el perfil de usuario.'
+            'descripcion': 'Permite ver el perfil de usuario.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.ver_perfil_usuario',
             'nombre': 'Ver perfil de empleado',
-            'descripcion': 'Permite ver el perfil de usuario asociado a un empleado.'
+            'descripcion': 'Permite ver el perfil de usuario asociado a un empleado.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.listar_perfiles',
             'nombre': 'Listar perfiles',
-            'descripcion': 'Permite ver la lista de perfiles de usuario.'
+            'descripcion': 'Permite ver la lista de perfiles de usuario.',
+            'sector': 'Seguridad y Usuarios'
         },
         {
             'codename': 'seguridad_usuarios.crear_usuario_para_empleado',
             'nombre': 'Crear usuario para empleado',
-            'descripcion': 'Permite crear un usuario y perfil para un empleado.'
+            'descripcion': 'Permite crear un usuario y perfil para un empleado.',
+            'sector': 'Seguridad y Usuarios'
         },
     ]
+
+@revisar_permiso('seguridad_usuarios.editar_perfil')
+def editar_perfil_usuario(request, empleado_id):
+    """
+    Vista para editar el perfil de un usuario, incluyendo la foto de perfil.
+    """
+    try:
+        empleado = get_object_or_404(Empleado, id=empleado_id)
+        usuario_perfil = getattr(empleado, 'usuario_perfil', None)
+
+        if not usuario_perfil:
+            messages.warning(request, 'Este empleado no tiene un perfil de usuario asociado.')
+            return redirect('perfil_usuario', empleado_id=empleado_id)
+
+        if request.method == 'POST':
+            form = PerfilUsuarioForm(request.POST, request.FILES, instance=usuario_perfil)
+            if form.is_valid():
+                perfil = form.save()
+                # Guardar los roles seleccionados
+                perfil.roles.set(form.cleaned_data['roles'])
+                messages.success(request, 'Perfil de usuario actualizado correctamente.')
+                return redirect('perfil_usuario', empleado_id=empleado_id)
+        else:
+            form = PerfilUsuarioForm(instance=usuario_perfil)
+
+        return render(request, 'seguridad_usuarios/editar_perfil_usuario.html', {
+            'form': form,
+            'empleado': empleado,
+            'usuario_perfil': usuario_perfil
+        })
+    except Exception as e:
+        logger.error(f"Error al editar perfil de usuario con ID {empleado_id}: {e}")
+        messages.error(request, "Ocurrió un error al editar el perfil del usuario.")
+        return redirect('perfil_usuario', empleado_id=empleado_id)

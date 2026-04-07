@@ -65,6 +65,23 @@
         .btn-save:hover {
             transform: translateY(-1px);
         }
+
+        /* Estilo global para hover en tablas de resultados */
+        .results-card .table tbody tr:hover {
+            {% if theme_class == 'theme-dark' %}
+              background-color: rgba(255, 255, 255, 0.08);
+            {% elif theme_class == 'theme-emerald' %}
+              background-color: rgba(16, 185, 129, 0.08);
+            {% elif theme_class == 'theme-sunset' %}
+              background-color: rgba(245, 158, 11, 0.08);
+            {% elif theme_class == 'theme-ocean' %}
+              background-color: rgba(59, 130, 246, 0.08);
+            {% elif theme_class == 'theme-light' %}
+              background-color: rgba(0, 0, 0, 0.08);
+            {% else %}
+              background-color: rgba(13, 110, 253, 0.08);
+            {% endif %}
+        }
     </style>
 
     {% include '_navbar2.html' %}

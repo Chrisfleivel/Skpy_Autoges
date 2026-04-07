@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from skpy_autogest_project.views import home_view, configurar_apariencia
 
 
@@ -28,4 +30,4 @@ urlpatterns = [
     path('configuraciones_maestras/', include('configuraciones_maestras.urls')),  # Incluir las URLs de la app configuraciones_maestras
     path('clientes_pedidos/', include('clientes_pedidos.urls')),  # Incluir las URLs de la app clientes_pedidos
     path('reposicion_stock/', include('reposicion_stock.urls')),  # Incluir las URLs de la app reposicion_stock
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

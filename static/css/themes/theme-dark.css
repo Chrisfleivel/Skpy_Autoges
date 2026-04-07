@@ -34,18 +34,29 @@ body.theme-dark .form-section-title {
 body.theme-dark .form-control,
 body.theme-dark .form-select {
     background-color: #111827;
-    color: #e2e8f0;
-    border: 1px solid var(--border-color);
+    color: #f8fafc;
+    border: 1px solid #374151;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 body.theme-dark .form-control:focus,
 body.theme-dark .form-select:focus {
-    border-color: #6610f2;
-    box-shadow: 0 0 0 0.25rem rgba(102, 16, 242, 0.15);
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+    outline: none;
+}
+
+body.theme-dark .form-control::placeholder {
+    color: #6b7280;
+    opacity: 0.7;
 }
 
 body.theme-dark .form-label {
-    color: var(--text-label);
+    color: #a78bfa;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
 }
 
 body.theme-dark .btn-primary {
@@ -67,4 +78,82 @@ body.theme-dark .btn-save:hover {
     background-color: #5a0fb7;
     border-color: #5a0fb7;
     filter: brightness(90%);
+}
+
+/* Mejora de visibilidad para etiquetas y valores en modo oscuro */
+body.theme-dark .form-label,
+body.theme-dark .detail-label,
+body.theme-dark .detail-term {
+    color: #a78bfa !important;
+    font-weight: 600;
+}
+
+body.theme-dark .detail-value,
+body.theme-dark td,
+body.theme-dark span,
+body.theme-dark p {
+    color: #f8fafc !important;
+}
+
+body.theme-dark .custom-card .row div {
+    color: #f8fafc;
+}
+
+/* Alineación perfecta para los permisos */
+body.theme-dark .form-check {
+    display: flex;
+    align-items: flex-start;
+    padding-left: 0;
+    margin-bottom: 0.5rem;
+}
+
+body.theme-dark .form-check-input {
+    margin-top: 0.3rem;
+    margin-left: 0 !important;
+    float: none;
+    flex-shrink: 0;
+}
+
+body.theme-dark .form-check-label {
+    margin-left: 10px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+/* === MEJORAS SKPY AUTOGEST MODO OSCURO === */
+
+/* Fondo de la página y contenedores principales */
+body.theme-dark {
+    background-color: #0f172a !important;
+}
+
+/* Tarjetas de contenido */
+body.theme-dark .card, 
+body.theme-dark .custom-card {
+    background-color: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+/* Arreglo específico para la tabla de empleados */
+body.theme-dark table, 
+body.theme-dark .table {
+    background-color: #1e293b !important;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+body.theme-dark th {
+    color: #a78bfa !important;
+    border-bottom: 2px solid #334155 !important;
+}
+
+body.theme-dark td {
+    color: #cbd5e1 !important;
+    border-bottom: 1px solid #334155 !important;
+    background-color: #1e293b !important; /* Forzar fondo oscuro en celdas */
+}
+
+/* Inputs y Selects */
+body.theme-dark select.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23a78bfa' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
 }

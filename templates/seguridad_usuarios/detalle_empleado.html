@@ -2,26 +2,128 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Detalle del Empleado</h2>
-  <a href="{% url 'editar_empleado' empleado.id %}" class="btn btn-warning">Editar Empleado</a>
-  <a href="{% url 'lista_empleados' %}" class="btn btn-secondary">Volver a la Lista</a>
+<div class="form-page-wrapper">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-xl-10 col-lg-11">
+        <div class="custom-card">
+          <div class="custom-card-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+              <div>
+                <h2 class="h4 mb-1">Detalle del Empleado</h2>
+                <p class="mb-0 opacity-75">Información completa del empleado y acciones rápidas.</p>
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'editar_empleado' empleado.id %}" class="btn btn-outline-light btn-sm">
+                  <i class="bi bi-pencil-square me-1"></i> Editar
+                </a>
+                <a href="{% url 'lista_empleados' %}" class="btn btn-light btn-sm text-dark">
+                  <i class="bi bi-arrow-left-circle me-1"></i> Volver
+                </a>
+              </div>
+            </div>
+          </div>
 
-  <div class="employee-details">
-    <p><strong>ID:</strong> {{ empleado.id }}</p>
-    <p><strong>Nombre:</strong> {{ empleado.nombre }}</p>
-    <p><strong>Apellido:</strong> {{ empleado.apellidos }}</p>
-    <p><strong>Documento de Identidad:</strong> {{ empleado.documento_identidad }}</p>
-    <p><strong>Departamento:</strong> {{ empleado.departamento }}</p>
-    <p><strong>Cargo:</strong> {{ empleado.cargo }}</p>
-    <p><strong>Descripción del Trabajo:</strong> {{ empleado.cargo.descripcion }}</p>
-    <p><strong>Email:</strong> {{ empleado.email }}</p>
-    <p><strong>Teléfono:</strong> {{ empleado.telefono }}</p>
-    <p><strong>Tiene Usuario:</strong> {{ empleado.tiene_usuario|yesno:"Sí,No" }}</p>
-    <p><strong>Fecha de Registro:</strong> {{ empleado.fecha_registro }}</p>
+          <div class="card-body">
+            <div class="row g-4">
+            <div class="col-md-6">
+              <div class="employee-panel rounded-3 shadow-sm p-4 h-100">
+                <h5 class="mb-3">Datos personales</h5>
+                <dl class="row mb-0">
+                  <dt class="col-5 detail-term">ID</dt>
+                  <dd class="col-7 detail-value">{{ empleado.id }}</dd>
+                  <dt class="col-5 detail-term">Nombre</dt>
+                  <dd class="col-7 detail-value">{{ empleado.nombre }}</dd>
+                  <dt class="col-5 detail-term">Apellido</dt>
+                  <dd class="col-7 detail-value">{{ empleado.apellidos }}</dd>
+                  <dt class="col-5 detail-term">Documento</dt>
+                  <dd class="col-7 detail-value">{{ empleado.documento_identidad }}</dd>
+                  <dt class="col-5 detail-term">Email</dt>
+                  <dd class="col-7 detail-value">{{ empleado.email }}</dd>
+                  <dt class="col-5 detail-term">Teléfono</dt>
+                  <dd class="col-7 detail-value">{{ empleado.telefono }}</dd>
+                </dl>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="employee-panel rounded-3 shadow-sm p-4 h-100">
+                <h5 class="mb-3">Información laboral</h5>
+                <dl class="row mb-0">
+                  <dt class="col-5 detail-term">Departamento</dt>
+                  <dd class="col-7 detail-value">{{ empleado.departamento }}</dd>
+                  <dt class="col-5 detail-term">Cargo</dt>
+                  <dd class="col-7 detail-value">{{ empleado.cargo }}</dd>
+                  <dt class="col-5 detail-term">Descripción</dt>
+                  <dd class="col-7 detail-value">{{ empleado.cargo.descripcion }}</dd>
+                  <dt class="col-5 detail-term">Usuario</dt>
+                  <dd class="col-7 detail-value">{{ empleado.tiene_usuario|yesno:"Sí,No" }}</dd>
+                  <dt class="col-5 detail-term">Registro</dt>
+                  <dd class="col-7 detail-value">{{ empleado.fecha_registro }}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-panel mt-4 rounded-3 shadow-sm p-4">
+            {% if not empleado.tiene_usuario %}
+              <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                  <h6 class="mb-1">Sin acceso de usuario</h6>
+                  <p class="mb-0 text-muted">Puedes crear una cuenta para que el empleado acceda al sistema.</p>
+                </div>
+                <a href="{% url 'crear_usuario_para_empleado' empleado.id %}" class="btn btn-primary">
+                  <i class="bi bi-person-plus me-1"></i> Crear usuario
+                </a>
+              </div>
+            {% else %}
+              <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                  <h6 class="mb-1">Usuario activo</h6>
+                  <p class="mb-0 text-muted">El empleado ya tiene un usuario asociado.</p>
+                </div>
+                <a href="{% url 'perfil_usuario' empleado.id %}" class="btn btn-outline-primary">
+                  <i class="bi bi-person-circle me-1"></i> Ver perfil
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  {% if not empleado.tiene_usuario %}
-    <a href="{% url 'crear_usuario_para_empleado' empleado.id %}" class="btn btn-primary">Crear Usuario para este Empleado</a>
-  {% else %}
-    <p>Ir a <a href="{% url 'perfil_usuario' empleado.id %}">Perfil Usuario</a></p>
-  {% endif %}
+</div>
+
+<style>
+  .employee-panel {
+    background-color: var(--bg-form);
+    border: 1px solid var(--border-color);
+  }
+  .employee-panel h5 {
+    color: var(--primary-color);
+  }
+  .detail-term {
+    color: var(--text-label);
+  }
+  .detail-value {
+    color: inherit;
+  }
+  .action-panel {
+    background-color: var(--bg-form);
+    border: 1px solid var(--border-color);
+  }
+  .custom-card-header {
+    background-color: var(--primary-color);
+  }
+  .custom-card-header h2,
+  .custom-card-header p {
+    color: white;
+  }
+  @media (max-width: 768px) {
+    .form-page-wrapper {
+      padding-top: 2rem;
+      padding-bottom: 2rem;
+    }
+  }
+</style>
 {% endblock %}

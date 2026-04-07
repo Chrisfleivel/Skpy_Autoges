@@ -1,36 +1,119 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="card shadow p-4" style="width: 100%; max-width: 500px;">
-      <h2 class="mb-4 text-center">Agregar Empleado</h2>
-      <form method="POST" class="needs-validation" novalidate>
-        {% csrf_token %}
-        {% for field in form %}
-          <div class="mb-3">
-            <label for="{{ field.id_for_label }}" class="form-label">
-              {{ field.label }}
-              {% if field.field.required %}
-                <span style="color: red;">*</span>
-              {% endif %}
-            </label>
-            {{ field }}
-            
-            {% if field.errors %}
-              <div class="text-danger small">
-                {{ field.errors|striptags }}
-              </div>
-            {% endif %}
-          </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary w-100">Agregar</button>
-        <a href="{% url 'lista_empleados' %}" class="btn btn-secondary w-100 mt-2">Cancelar</a>
-      </form>
-      <p class="mt-3 text-center"><span style="color: red;">*</span> Campos obligatorios</p>
-    </div>
-  </div>
+<div class="form-page-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="custom-card">
+                    <div class="custom-card-header">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-plus fs-3 me-3"></i>
+                            <div>
+                                <h2 class="h4 mb-0">Registrar Empleado</h2>
+                                <small class="opacity-75">Complete los datos para agregar el empleado al sistema</small>
+                            </div>
+                        </div>
+                    </div>
 
-  <script>
+                    <div class="card-body p-4 p-md-5">
+                        <form method="POST" class="needs-validation" novalidate>
+                            {% csrf_token %}
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            {% endif %}
+
+                            <div class="form-section-title">Datos Personales</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Nombre</label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Apellidos</label>
+                                    {{ form.apellidos }}
+                                    {% if form.apellidos.errors %}<div class="text-danger small">{{ form.apellidos.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Correo Electrónico</label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-section-title">Información Laboral</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Departamento</label>
+                                    {{ form.departamento }}
+                                    {% if form.departamento.errors %}<div class="text-danger small">{{ form.departamento.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Cargo</label>
+                                    {{ form.cargo }}
+                                    {% if form.cargo.errors %}<div class="text-danger small">{{ form.cargo.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            {% for field in form %}
+                                {% if not field.name in 'nombre,apellidos,email,departamento,cargo' %}
+                                    <div class="mb-3">
+                                        <label for="{{ field.id_for_label }}" class="form-label">
+                                            {{ field.label }}
+                                            {% if field.field.required %}
+                                                <span style="color: red;">*</span>
+                                            {% endif %}
+                                        </label>
+                                        {{ field }}
+                                        {% if field.errors %}
+                                            <div class="text-danger small">
+                                                {{ field.errors|striptags }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+
+                            <div class="d-flex flex-column flex-md-row gap-3 pt-3 border-top">
+                                <button type="submit" class="btn btn-primary btn-save shadow-sm">
+                                    <i class="bi bi-check-lg me-2"></i>Guardar Empleado
+                                </button>
+                                <a href="{% url 'lista_empleados' %}" class="btn btn-outline-secondary px-4 d-flex align-items-center justify-content-center">
+                                    Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4 text-muted">
+                    <small>SKPY AutoGest - Módulo de Gestión de Usuarios</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+      'use strict'
+      var forms = document.querySelectorAll('.needs-validation')
+      Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+          form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+          }, false)
+        })
+    })()
+
     document.addEventListener('DOMContentLoaded', function() {
       const departamentoSelect = document.getElementById('id_departamento');
       const cargoSelect = document.getElementById('id_cargo');
@@ -54,5 +137,5 @@
         });
       }
     });
-  </script>
+</script>
 {% endblock %}

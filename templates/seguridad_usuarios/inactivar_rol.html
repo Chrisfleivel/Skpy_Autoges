@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-page-wrapper">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-xl-8 col-lg-9">
+        <div class="custom-card">
+          <div class="custom-card-header">
+            <h2 class="h4 mb-1">Inactivar Rol</h2>
+            <p class="mb-0 opacity-75">Confirmación para inactivar el rol temporalmente.</p>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <strong>¿Está seguro que desea inactivar el rol "<b>{{ rol.nombre }}</b>"?</strong>
+              <br>
+              El rol seguirá existiendo pero no podrá ser asignado a nuevos usuarios.
+            </div>
+            <form method="POST">
+              {% csrf_token %}
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-warning">
+                  <i class="bi bi-pause-circle me-1"></i> Inactivar Rol
+                </button>
+                <a href="{% url 'detalle_rol' rol.id %}" class="btn btn-secondary">
+                  <i class="bi bi-arrow-left me-1"></i> Cancelar
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

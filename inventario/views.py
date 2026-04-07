@@ -480,126 +480,151 @@ permisos_iniciales_inventario = [
     {
         'codename': 'inventario.listar_inventario',
         'nombre': 'Listar Inventario',
-        'descripcion': 'Permite agregar un nuevo vehículo al inventario.'
+        'descripcion': 'Permite agregar un nuevo vehículo al inventario.', 
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.agregar_vehiculo',
         'nombre': 'Agregar Vehículo',
-        'descripcion': 'Permite agregar un nuevo vehículo al inventario.'
+        'descripcion': 'Permite agregar un nuevo vehículo al inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.listar_vehiculos',
         'nombre': 'Listar Vehículos',
-        'descripcion': 'Permite ver la lista de vehículos en el inventario.'
+        'descripcion': 'Permite ver la lista de vehículos en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.detallar_vehiculo',
         'nombre': 'Detalle Vehículo',
-        'descripcion': 'Permite ver los detalles de un vehículo en el inventario.'
+        'descripcion': 'Permite ver los detalles de un vehículo en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.editar_vehiculo',
         'nombre': 'Editar Vehículo',
-        'descripcion': 'Permite editar un vehículo en el inventario.'
+        'descripcion': 'Permite editar un vehículo en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.eliminar_vehiculo',
         'nombre': 'Eliminar Vehículo',
-        'descripcion': 'Permite eliminar un vehículo del inventario.'
+        'descripcion': 'Permite eliminar un vehículo del inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.agregar_repuesto',
         'nombre': 'Agregar Repuesto',
-        'descripcion': 'Permite agregar un nuevo repuesto al inventario.'
+        'descripcion': 'Permite agregar un nuevo repuesto al inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.listar_repuestos',
         'nombre': 'Listar Repuestos',
-        'descripcion': 'Permite ver la lista de repuestos en el inventario.'
+        'descripcion': 'Permite ver la lista de repuestos en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.detallar_repuesto',
         'nombre': 'Detalle Repuesto',
-        'descripcion': 'Permite ver los detalles de un repuesto en el inventario.'
+        'descripcion': 'Permite ver los detalles de un repuesto en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.editar_repuesto',
         'nombre': 'Editar Repuesto',
-        'descripcion': 'Permite editar un repuesto en el inventario.'
+        'descripcion': 'Permite editar un repuesto en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.eliminar_repuesto',
         'nombre': 'Eliminar Repuesto',
-        'descripcion': 'Permite eliminar un repuesto del inventario.'
+        'descripcion': 'Permite eliminar un repuesto del inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.agregar_mantenimiento',
         'nombre': 'Agregar Mantenimiento',
-        'descripcion': 'Permite agregar un nuevo mantenimiento al inventario.'
+        'descripcion': 'Permite agregar un nuevo mantenimiento al inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.listar_mantenimientos',
         'nombre': 'Listar Mantenimientos',
-        'descripcion': 'Permite ver la lista de mantenimientos en el inventario.'
+        'descripcion': 'Permite ver la lista de mantenimientos en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.detallar_mantenimiento',
         'nombre': 'Detalle Mantenimiento',
-        'descripcion': 'Permite ver los detalles de un mantenimiento en el inventario.'
+        'descripcion': 'Permite ver los detalles de un mantenimiento en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.editar_mantenimiento',
         'nombre': 'Editar Mantenimiento',
-        'descripcion': 'Permite editar un mantenimiento en el inventario.'
+        'descripcion': 'Permite editar un mantenimiento en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.eliminar_mantenimiento',
         'nombre': 'Eliminar Mantenimiento',
-        'descripcion': 'Permite eliminar un mantenimiento del inventario.'
+        'descripcion': 'Permite eliminar un mantenimiento del inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.agregar_deposito',
         'nombre': 'Agregar Depósito',
-        'descripcion': 'Permite agregar un nuevo depósito al inventario.'
+        'descripcion': 'Permite agregar un nuevo depósito al inventario.' ,
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.listar_depositos',
         'nombre': 'Listar Depósitos',
-        'descripcion': 'Permite ver la lista de depósitos en el inventario.'
+        'descripcion': 'Permite ver la lista de depósitos en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.detallar_deposito',
         'nombre': 'Detalle Depósito',
-        'descripcion': 'Permite ver los detalles de un depósito en el inventario.'
+        'descripcion': 'Permite ver los detalles de un depósito en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.editar_deposito',
         'nombre': 'Editar Depósito',
-        'descripcion': 'Permite editar un depósito en el inventario.'
+        'descripcion': 'Permite editar un depósito en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.eliminar_deposito',
         'nombre': 'Eliminar Depósito',
-        'descripcion': 'Permite eliminar un depósito del inventario.'
+        'descripcion': 'Permite eliminar un depósito del inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.agregar_unidad_medida',
         'nombre': 'Agregar Unidad de Medida',
-        'descripcion': 'Permite agregar una nueva unidad de medida al inventario.'
+        'descripcion': 'Permite agregar una nueva unidad de medida al inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.listar_unidades_medida',
         'nombre': 'Listar Unidades de Medida',
-        'descripcion': 'Permite ver la lista de unidades de medida en el inventario.'
+        'descripcion': 'Permite ver la lista de unidades de medida en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.detallar_unidad_medida',
         'nombre': 'Detalle Unidad de Medida',
-        'descripcion': 'Permite ver los detalles de una unidad de medida en el inventario.'
+        'descripcion': 'Permite ver los detalles de una unidad de medida en el inventario.',
+        'sector': 'Inventario'
     },
     {
         'codename': 'inventario.editar_unidad_medida',
         'nombre': 'Editar Unidad de Medida',
-        'descripcion': 'Permite editar una unidad de medida en el inventario.'
+        'descripcion': 'Permite editar una unidad de medida en el inventario.',
+        'sector': 'Inventario'
     },
 ]

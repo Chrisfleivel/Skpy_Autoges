@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-page-wrapper">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-xl-8 col-lg-9">
+        <div class="custom-card">
+          <div class="custom-card-header">
+            <h2 class="h4 mb-1">Activar Rol</h2>
+            <p class="mb-0 opacity-75">Confirmación para reactivar el rol.</p>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-success">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <strong>¿Está seguro que desea activar el rol "<b>{{ rol.nombre }}</b>"?</strong>
+              <br>
+              El rol volverá a estar disponible para ser asignado a usuarios.
+            </div>
+            <form method="POST">
+              {% csrf_token %}
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                  <i class="bi bi-play-circle me-1"></i> Activar Rol
+                </button>
+                <a href="{% url 'detalle_rol' rol.id %}" class="btn btn-secondary">
+                  <i class="bi bi-arrow-left me-1"></i> Cancelar
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

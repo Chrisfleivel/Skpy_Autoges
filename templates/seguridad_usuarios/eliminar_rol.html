@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-page-wrapper">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-xl-8 col-lg-9">
+        <div class="custom-card">
+          <div class="custom-card-header">
+            <h2 class="h4 mb-1">Eliminar Rol</h2>
+            <p class="mb-0 opacity-75">Confirmación para eliminar el rol permanentemente.</p>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <strong>¿Está seguro que desea eliminar el rol "<b>{{ rol.nombre }}</b>"?</strong>
+              <br>
+              Esta acción no se puede deshacer.
+            </div>
+            {% if rol.usuarios.exists %}
+              <div class="alert alert-warning">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                Este rol ya ha sido asignado a usuarios y no puede ser eliminado.
+              </div>
+            {% endif %}
+            <form method="POST">
+              {% csrf_token %}
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger" {% if rol.usuarios.exists %}disabled{% endif %}>
+                  <i class="bi bi-trash me-1"></i> Eliminar Rol
+                </button>
+                <a href="{% url 'detalle_rol' rol.id %}" class="btn btn-secondary">
+                  <i class="bi bi-arrow-left me-1"></i> Cancelar
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
