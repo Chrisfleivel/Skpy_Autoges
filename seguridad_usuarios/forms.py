@@ -42,7 +42,7 @@ class PasswordChangeForm(forms.Form):
     """
     Formulario para cambiar la contraseña del usuario.
     """
-    old_password = forms.CharField(label='Contraseña actual', widget=forms.PasswordInput)
+    old_password = forms.CharField(label='Contraseña actual', widget=forms.PasswordInput) # , attrs={'required': 'required', 'class': 'form-control'}
     new_password = forms.CharField(label='Nueva contraseña', widget=forms.PasswordInput)
     confirm_password = forms.CharField(label='Confirmar nueva contraseña', widget=forms.PasswordInput)
 
@@ -91,12 +91,16 @@ class EmpleadoForm(forms.ModelForm):
         model = Empleado
         fields = ['nombre', 'apellidos', 'documento_identidad', 'ruc', 'telefono', 'email', 'direccion', 'departamento', 'cargo', 'estado']
         widgets = {
-            'nombre': forms.TextInput(attrs={'required': 'required'}),
-            'apellidos': forms.TextInput(attrs={'required': 'required'}),
-            'documento_identidad': forms.TextInput(attrs={'required': 'required'}),
-            'email': forms.EmailInput(attrs={'required': 'required'}),
-            'departamento': forms.Select(attrs={'id': 'id_departamento'}),
-            'cargo': forms.Select(attrs={'id': 'id_cargo'}),
+            'nombre': forms.TextInput(attrs={'required': 'required','class': 'form-control', 'placeholder': 'Ej: Jose Luis'}),
+            'apellidos': forms.TextInput(attrs={'required': 'required', 'class': 'form-control', 'placeholder': 'Ej: Perez Gomez'}),
+            'documento_identidad': forms.TextInput(attrs={'required': 'required', 'class': 'form-control', 'placeholder': 'Ej: 12345678'}),
+            'email': forms.EmailInput(attrs={'required': 'required', 'class': 'form-control', 'placeholder': 'Ej: jose@example.com'}),
+            'departamento': forms.Select(attrs={'id': 'id_departamento', 'class': 'form-control'}),
+            'cargo': forms.Select(attrs={'id': 'id_cargo', 'class': 'form-control'}),
+            'ruc': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 1234567-7'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 0987654321'}),
+            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Dirección completa...'}),
+            'estado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def clean(self):

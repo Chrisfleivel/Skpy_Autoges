@@ -3,84 +3,192 @@
 
 {% block content %}
 <div class="container-fluid py-5" style="min-height: 100vh;">
-  <div class="row justify-content-center">
+  <div class="row justify-content-center mb-4">
     <div class="col-12">
-      <div class="card shadow-lg border-0">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-            <h2 class="fw-bold mb-0" style="color: #292929;">Gestión de Clientes</h2>
-            <a href="{% url 'agregar_cliente' %}" 
-              class="btn btn-lg d-flex align-items-center"
-              style="gap: 8px; background-color: #2563eb; border-color: #2563eb; color: #fff;">
-                <img src="{% static 'img/agregar.png' %}" alt="Agregar" width="28" height="28">
-                <span class="d-none d-md-inline">Cliente</span>
-            </a>
+      <div class="card border-0 shadow-lg overflow-hidden">
+        <div class="card-body p-4">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+              <h2 class="fw-bold mb-2" style="color: #1f2937;">Panel de Clientes</h2>
+              <p class="mb-0 text-muted">Administra clientes, pedidos y el estado de cada cuenta desde un panel centralizado.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+              <a href="{% url 'agregar_cliente' %}" class="btn btn-primary btn-lg d-flex align-items-center gap-2">
+                <img src="{% static 'img/agregar.png' %}" alt="Agregar" width="24" height="24">
+                <span>Nuevo Cliente</span>
+              </a>
+              <a href="{% url 'lista_clientes' %}" class="btn btn-outline-secondary btn-lg d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Actualizar</span>
+              </a>
+            </div>
           </div>
-          <form method="get" action="{% url 'lista_clientes' %}" class="row g-3 mb-4 justify-content-center align-items-end bg-light p-3 rounded shadow-sm">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-primary mb-3">
+            <i class="bi bi-people-fill fs-2"></i>
+          </div>
+          <h4 class="fw-bold mb-1">{{ clientes|length }}</h4>
+          <p class="text-muted mb-0">Clientes visibles</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-success mb-3">
+            <i class="bi bi-person-check-fill fs-2"></i>
+          </div>
+          <h4 class="fw-bold mb-1">{{ request.GET.estado|default:'Todos' }}</h4>
+          <p class="text-muted mb-0">Estado aplicado</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-warning mb-3">
+            <i class="bi bi-search fs-2"></i>
+          </div>
+          <h4 class="fw-bold mb-1">{{ request.GET.ruc|default:'-' }}</h4>
+          <p class="text-muted mb-0">RUC de búsqueda</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-info mb-3">
+            <i class="bi bi-card-list fs-2"></i>
+          </div>
+          <h4 class="fw-bold mb-1">Resumen</h4>
+          <p class="text-muted mb-0">Clientes + acciones rápidas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body bg-light p-4">
+          <form method="get" action="{% url 'lista_clientes' %}" class="row g-3 align-items-end">
             <div class="col-md-3">
-              <input type="text" name="ruc" placeholder="Buscar por RUC" value="{{ request.GET.ruc }}" class="form-control">
+              <label for="ruc" class="form-label fw-semibold">RUC</label>
+              <input type="text" id="ruc" name="ruc" placeholder="Buscar por RUC" value="{{ request.GET.ruc }}" class="form-control">
             </div>
             <div class="col-md-3">
-              <input type="text" name="documento_identidad" placeholder="Buscar por Documento de Identidad" value="{{ request.GET.documento_identidad }}" class="form-control">
+              <label for="documento_identidad" class="form-label fw-semibold">Documento</label>
+              <input type="text" id="documento_identidad" name="documento_identidad" placeholder="Buscar por Documento" value="{{ request.GET.documento_identidad }}" class="form-control">
             </div>
             <div class="col-md-3">
-              <input type="text" name="nombre" placeholder="Buscar por Nombre o Apellidos" value="{{ request.GET.nombre }}" class="form-control">
+              <label for="nombre" class="form-label fw-semibold">Nombre o Apellido</label>
+              <input type="text" id="nombre" name="nombre" placeholder="Buscar por Nombre o Apellido" value="{{ request.GET.nombre }}" class="form-control">
             </div>
             <div class="col-md-2">
-              <select name="estado" class="form-select">
-                <option value="">Todos los Estados</option>
+              <label for="estado" class="form-label fw-semibold">Estado</label>
+              <select id="estado" name="estado" class="form-select">
+                <option value="">Todos los estados</option>
                 <option value="Activo" {% if request.GET.estado == 'Activo' %}selected{% endif %}>Activo</option>
                 <option value="Inactivo" {% if request.GET.estado == 'Inactivo' %}selected{% endif %}>Inactivo</option>
               </select>
             </div>
-            <div class="col-md-2 d-grid">
-              <button type="submit" class="btn btn-success"><i class="bi bi-search"></i> Buscar</button>
+            <div class="col-md-1 d-grid">
+              <button type="submit" class="btn btn-primary">Buscar</button>
             </div>
-            <div class="col-md-2 d-grid">
-              <a href="{% url 'lista_clientes' %}" class="btn btn-secondary"><i class="bi bi-x-circle"></i> Limpiar</a>
+            <div class="col-md-1 d-grid">
+              <a href="{% url 'lista_clientes' %}" class="btn btn-outline-secondary">Limpiar</a>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+              <h3 class="h5 fw-bold mb-1">Clientes</h3>
+              <p class="text-muted mb-0">Resultados encontrados: <strong>{{ clientes|length }}</strong></p>
+            </div>
+            <div class="text-muted small">
+              {% if request.GET.ruc or request.GET.documento_identidad or request.GET.nombre or request.GET.estado %}
+                Filtros activos
+              {% else %}
+                Sin filtros aplicados
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-hover align-middle text-center">
-              <thead class="table-dark">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-center">
                 <tr>
-                  <th>Nombre / Razón Social</th>
-                  <th>Teléfono</th>
-                  <th>Dirección</th>
-                  <th>Acciones</th> 
+                  <th class="border-0 fw-semibold">Cliente</th>
+                  <th class="border-0 fw-semibold">Teléfono</th>
+                  <th class="border-0 fw-semibold">Dirección</th>
+                  <th class="border-0 fw-semibold">Estado</th>
+                  <th class="border-0 fw-semibold">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {% for cliente in clientes %}
                   <tr>
+                    <td class="text-start">
+                      <div class="fw-semibold text-dark">
+                        {% if cliente.nombre %}
+                          {{ cliente.nombre }} {{ cliente.apellidos }}
+                        {% else %}
+                          {{ cliente.razon_social }}
+                        {% endif %}
+                      </div>
+                      <small class="text-muted">
+                        {% if cliente.nombre %}
+                          {{ cliente.razon_social }}
+                        {% else %}
+                          Cliente individual
+                        {% endif %}
+                      </small>
+                    </td>
+                    <td>{{ cliente.telefono|default:'-' }}</td>
+                    <td>{{ cliente.direccion|default:'-' }}</td>
                     <td>
-                      {% if cliente.nombre %}
-                        {{ cliente.nombre }} - {{ cliente.apellidos }}
+                      {% if cliente.estado == 'Activo' %}
+                        <span class="badge bg-success bg-opacity-10 text-success">Activo</span>
+                      {% elif cliente.estado == 'Inactivo' %}
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary">Inactivo</span>
                       {% else %}
-                        {{ cliente.razon_social }}
+                        <span class="badge bg-info bg-opacity-10 text-info">Sin estado</span>
                       {% endif %}
                     </td>
-                    <td>{{ cliente.telefono }}</td>
-                    <td>{{ cliente.direccion }}</td>
-                    
                     <td>
-                      
-                      <a href="{% url 'detalle_cliente' cliente.id %}" class="btn btn-warning btn-sm" title="Ver Detalle">
-                        <i class="bi bi-eye-fill">Ver</i>
-                      </a>
-                      
-                      <a href="{% url 'realizar_pedido' cliente.id %}" class="btn btn-success btn-sm" title="Realizar Pedido">
-                        <i class="bi bi-cart-fill">Pedido</i>
-                      </a>
-                      <a href="{% url 'realizar_pedido_a_medida' cliente.id %}" class="btn btn-success btn-sm" title="Realizar Pedido Importacion">
-                        <i class="bi bi-cart-fill">Pedido Importacion</i>
-                      </a>
+                      <div class="d-flex justify-content-center gap-1 flex-wrap">
+                        <a href="{% url 'detalle_cliente' cliente.id %}" class="btn btn-outline-warning btn-sm" title="Ver Detalle">
+                          <i class="bi bi-eye-fill"></i>
+                        </a>
+                        <a href="{% url 'realizar_pedido' cliente.id %}" class="btn btn-outline-success btn-sm" title="Realizar Pedido">
+                          <i class="bi bi-cart-fill"></i>
+                        </a>
+                        <a href="{% url 'realizar_pedido_a_medida' cliente.id %}" class="btn btn-outline-info btn-sm" title="Pedido Importación">
+                          <i class="bi bi-box-seam"></i>
+                        </a>
+                      </div>
                     </td>
-                    
                   </tr>
                 {% empty %}
                   <tr>
-                    <td colspan="4" class="text-center text-muted">No se encontraron clientes.</td>
+                    <td colspan="5" class="text-center text-muted py-4">No se encontraron clientes que coincidan con los criterios.</td>
                   </tr>
                 {% endfor %}
               </tbody>
@@ -91,4 +199,25 @@
     </div>
   </div>
 </div>
+
+<style>
+.card {
+  border-radius: 1rem;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.05);
+}
+
+.btn-outline-secondary {
+  border-color: #d1d5db;
+}
+
+@media (max-width: 767px) {
+  .card-body .row.g-3 > div {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+}
+</style>
 {% endblock %}

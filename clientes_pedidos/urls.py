@@ -11,15 +11,15 @@ urlpatterns = [
     path('clientes/<int:cliente_id>/realizar_pedido/', views.realizar_pedido, name='realizar_pedido'),
     path('clientes/<int:cliente_id>/realizar_pedido_importacion/', views.realizar_pedido_a_medida, name='realizar_pedido_a_medida'),
 
-    # path('pedidos/', login_required(views.lista_pedidos), name='lista_pedidos'),
-    # path('pedidos/<int:pedido_id>/', login_required(views.detalle_pedido), name='detalle_pedido'),
-    # path('pedidos/<int:pedido_id>/editar/', login_required(views.editar_pedido), name='editar_pedido'),
+    path('pedidos/', views.lista_pedidos, name='lista_pedidos'),
+    path('pedidos/<int:pedido_id>/', views.detalle_pedido, name='detalle_pedido'),
+    path('pedidos/<int:pedido_id>/editar/', views.editar_pedido, name='editar_pedido'),
     
     # path('cotizaciones/', login_required(views.lista_cotizaciones), name='lista_cotizaciones'),
     # path('cotizaciones/<int:cotizacion_id>/', login_required(views.detalle_cotizacion), name='detalle_cotizacion'),
     # path('cotizaciones/<int:cotizacion_id>/editar/', login_required(views.editar_cotizacion), name='editar_cotizacion'),
     
-    # path('pedidos/crear/', login_required(views.crear_pedido), name='crear_pedido'),
+    path('pedidos/agregar/', views.agregar_pedido, name='agregar_pedido'),
     # path('pedidos/<int:pedido_id>/cotizacion/crear/', login_required(views.crear_cotizacion), name='crear_cotizacion'),
     
     # path('item_pedido/crear/', login_required(views.crear_item_pedido), name='crear_item_pedido'),

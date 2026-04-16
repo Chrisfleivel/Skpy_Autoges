@@ -58,7 +58,7 @@
                         <i class="bi bi-bar-chart fs-1"></i>
                     </div>
                     <h4 class="fw-bold mb-1">{{ unidades_medida|length|add:"0" }}</h4>
-                    <small class="text-muted">En Uso</small>
+                    <small class="text-muted">Disponibles</small>
                 </div>
             </div>
         </div>
@@ -134,25 +134,31 @@
                             <th class="border-0 fw-semibold ps-4">#</th>
                             <th class="border-0 fw-semibold">Nombre</th>
                             <th class="border-0 fw-semibold">Abreviatura</th>
-                            <th class="border-0 fw-semibold">En Uso</th>
+                            <th class="border-0 fw-semibold">Uso</th>
                             <th class="border-0 fw-semibold text-end pe-4">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for unidad in unidades_medida %}
-                        <tr class="border-bottom border-light">
+
+                        <tr class="position-relative border-bottom border-light hover-table-row">
+
                             <td class="ps-4">
                                 <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold">
                                     #{{ unidad.id }}
                                 </span>
                             </td>
                             <td>
-                                <div class="d-flex align-items-center">
+                                <div class="d-flex align-items-center position-relative">
                                     <div class="bg-info bg-opacity-10 rounded-2 p-2 me-3">
                                         <i class="bi bi-tag text-info"></i>
                                     </div>
                                     <div>
-                                        <div class="fw-semibold text-dark">{{ unidad.nombre }}</div>
+                                        <div class="fw-semibold text-dark">
+                                            <a href="{% url 'detalle_unidad_medida' unidad.id %}" class="stretched-link text-decoration-none text-dark">
+                                                {{ unidad.nombre }}
+                                            </a>
+                                        </div>
                                         <small class="text-muted">Unidad de medida</small>
                                     </div>
                                 </div>
@@ -172,20 +178,22 @@
                                     <a href="{% url 'detalle_unidad_medida' unidad.id %}"
                                        class="btn btn-sm btn-outline-primary"
                                        data-bs-toggle="tooltip"
-                                       title="Ver detalles">
+                                       title="Ver detalles"
+                                       onclick="event.stopPropagation();">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                     <a href="{% url 'editar_unidad_medida' unidad.id %}"
                                        class="btn btn-sm btn-outline-secondary"
                                        data-bs-toggle="tooltip"
-                                       title="Editar unidad">
+                                       title="Editar unidad"
+                                       onclick="event.stopPropagation();">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <a href="{% url 'eliminar_unidad_medida' unidad.id %}"
                                        class="btn btn-sm btn-outline-danger"
                                        data-bs-toggle="tooltip"
                                        title="Eliminar unidad"
-                                       onclick="return confirm('¿Está seguro de que desea eliminar esta unidad de medida? Esta acción no se puede deshacer.');">
+                                       onclick="event.stopPropagation(); return confirm('¿Está seguro de que desea eliminar esta unidad de medida? Esta acción no se puede deshacer.');">
                                         <i class="bi bi-trash"></i>
                                     </a>
                                 </div>
@@ -250,6 +258,11 @@
 
 .badge {
     font-size: 0.75rem;
+}
+
+.hover-table-row:hover {
+    background-color: rgba(102, 16, 242, 0.1); /* Un toque de tu color púrpura */
+    cursor: pointer;
 }
 
 @media (max-width: 768px) {

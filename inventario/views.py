@@ -92,19 +92,7 @@ def agregar_vehiculo(request):
     else:
         form = VehiculoForm()
     return render(request, 'inventario/agregar_vehiculo.html', {'form': form})
-'''
-@revisar_permiso('inventario.listar_vehiculos')
-def lista_vehiculos(request):
-    """Vista para ver la lista de vehículos en el inventario."""
-    vehiculos = Vehiculo.objects.all()
-    if request.method == 'POST':
-        search_query = request.POST.get('search_query', '')
-        if search_query:
-            vehiculos = vehiculos.filter(modelo__icontains=search_query) | vehiculos.filter(marca__icontains=search_query)
-        else:
-            messages.error(request, "Por favor ingrese un término de búsqueda.")
-    return render(request, 'inventario/lista_vehiculos.html', {'vehiculos': vehiculos})
-'''
+
 
 @revisar_permiso('inventario.listar_vehiculos')
 def lista_vehiculos(request):
