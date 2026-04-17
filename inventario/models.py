@@ -94,7 +94,8 @@ class Vehiculo(Producto):
     transmision = models.CharField(max_length=50, blank=True, null=True, verbose_name="Tipo de Transmisión")
     precio_cif_usd = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio CIF (USD)")
     precio_cif_guarani = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio CIF (Guaraníes)")
-    
+    imagen = models.ImageField(upload_to='vehiculos/', blank=True, null=True, verbose_name="Imagen del Vehículo", default='vehiculos/default_vehicle.png')
+
     def formar_nombre_completo(self):
         self.nombre = f"{self.marca} {self.modelo} ({self.año})"
 
@@ -130,6 +131,7 @@ class Repuesto(Producto):
     categoria = models.CharField(max_length=100, blank=True, null=True, verbose_name="Categoría del Repuesto")
     compatibilidad = models.CharField(max_length=200, blank=True, null=True, verbose_name="Compatibilidad (Modelos/Marcas)")
     costo_unitario = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Costo Unitario (Guaraníes)", default=0)
+    imagen = models.ImageField(upload_to='repuestos/', blank=True, null=True, verbose_name="Imagen del Repuesto", default='repuestos/default_repuesto.png')
 
     class Meta:
         verbose_name = "Repuesto"

@@ -2,11 +2,90 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Editar Unidad de Medida</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar Cambios</button>
-  </form>
-  <a href="{% url 'lista_unidades_medida' %}">Cancelar</a>
+<div class="container-fluid py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-xl-8">
+      <!-- Header Section -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+          <div>
+            <h1 class="h4 fw-bold mb-1">Editar Unidad de Medida</h1>
+            <p class="text-muted mb-0">Modifica la información de la unidad de medida "{{ unidad.nombre }}"</p>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{% url 'detalle_unidad_medida' unidad.id %}" class="btn btn-outline-info">
+              <i class="bi bi-eye me-2"></i>Ver Detalles
+            </a>
+            <a href="{% url 'lista_unidades_medida' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-2"></i>Volver
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Card -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="mb-0 fw-bold">Información de la Unidad</h6>
+        </div>
+        <div class="card-body p-4">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-4" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="row g-3">
+              {% for field in form.visible_fields %}
+              <div class="col-md-6">
+                <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
+                  {{ field.label }}{% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+                {% if field.errors %}
+                <div class="text-danger small mt-1">
+                  {% for error in field.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <a href="{% url 'lista_unidades_medida' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle me-2"></i>Cancelar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle me-2"></i>Guardar Cambios
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.form-control, .form-select {
+  border-radius: 0.75rem;
+}
+
+.card {
+  border-radius: 1rem;
+}
+
+@media (max-width: 767px) {
+  .d-flex.gap-2 {
+    flex-direction: column;
+  }
+}
+</style>
 {% endblock %}

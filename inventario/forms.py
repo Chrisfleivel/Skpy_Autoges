@@ -81,3 +81,5 @@ class UnidadMedidaForm(forms.ModelForm):
     class Meta:
         model = UnidadMedida
         fields = '__all__'
+
+

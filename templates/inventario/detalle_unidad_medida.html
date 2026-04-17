@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                        <i class="bi bi-rulers text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1 fw-bold text-dark">{{ unidad.nombre }}</h1>
+                        <p class="text-muted mb-0">Detalles de la unidad de medida</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'lista_unidades_medida' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Volver
+                    </a>
+                    <a href="{% url 'editar_unidad_medida' unidad.id %}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i>Editar
+                    </a>
+                    <a href="{% url 'eliminar_unidad_medida' unidad.id %}" class="btn btn-outline-danger"
+                       onclick="return confirm('¿Está seguro de que desea eliminar esta unidad de medida? Esta acción no se puede deshacer.');">
+                        <i class="bi bi-trash me-2"></i>Eliminar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold">Información General</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="border-start border-primary border-4 ps-3">
+                                <label class="text-muted small mb-1">ID</label>
+                                <div class="fw-semibold">#{{ unidad.id }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-success border-4 ps-3">
+                                <label class="text-muted small mb-1">Nombre</label>
+                                <div class="fw-semibold">{{ unidad.nombre }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-info border-4 ps-3">
+                                <label class="text-muted small mb-1">Abreviatura</label>
+                                <div class="fw-semibold">{{ unidad.abreviatura }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-warning border-4 ps-3">
+                                <label class="text-muted small mb-1">Estado</label>
+                                <div class="fw-semibold">
+                                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">
+                                        <i class="bi bi-check-circle-fill me-1"></i>Activa
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usage Stats Card -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold">Estadísticas de Uso</h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-bar-chart text-primary fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1">{{ unidad.repuesto_set.count }}</h4>
+                    <small class="text-muted">Repuestos que usan esta unidad</small>
+                    <div class="mt-3">
+                        <a href="{% url 'lista_repuestos' %}?unidad_medida={{ unidad.id }}" class="btn btn-sm btn-outline-primary">
+                            Ver Repuestos
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Items Section -->
+    {% if unidad.repuesto_set.exists %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold">Repuestos Relacionados</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0 fw-semibold ps-4">Código</th>
+                                    <th class="border-0 fw-semibold">Nombre</th>
+                                    <th class="border-0 fw-semibold">Stock</th>
+                                    <th class="border-0 fw-semibold text-end pe-4">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for repuesto in unidad.repuesto_set.all|slice:":5" %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold">
+                                            {{ repuesto.codigo_repuesto }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">{{ repuesto.nombre }}</div>
+                                        <small class="text-muted">{{ repuesto.categoria }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info bg-opacity-10 text-info fw-semibold px-3 py-2">
+                                            {{ repuesto.stock_actual }} {{ unidad.abreviatura }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a href="{% url 'detalle_repuesto' repuesto.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if unidad.repuesto_set.count > 5 %}
+                    <div class="card-footer bg-light text-center">
+                        <a href="{% url 'lista_repuestos' %}?unidad_medida={{ unidad.id }}" class="btn btn-sm btn-primary">
+                            Ver Todos los Repuestos ({{ unidad.repuesto_set.count }})
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,0.05);
+}
+
+@media (max-width: 768px) {
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

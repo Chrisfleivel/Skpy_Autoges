@@ -4,39 +4,61 @@ from django import forms
 from .models import Cliente, Pedido, ItemPedido, Cotizacion, Carrito
 
 
-# Formulario para crear un Pedido
-class PedidoCreateForm(forms.ModelForm):
-	class Meta:
-		model = Pedido
-		fields = ['cliente', 'observaciones', 'monto_total', 'iva']
-		
+class BootstrapFormMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            css = field.widget.attrs.get('class', '')
+            field.widget.attrs['class'] = f'{css} form-control'.strip()
 
-# Formulario para los ítems del pedido
-class ItemPedidoForm(forms.ModelForm):
+
+class PedidoCreateForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Pedido
+        fields = ['cliente', 'observaciones', 'monto_total', 'iva']
+        widgets = {
+            'observaciones': forms.Textarea(attrs={'rows': 3}),
+            'monto_total': forms.NumberInput(attrs={'step': '0.01'}),
+            'iva': forms.NumberInput(attrs={'step': '0.01'}),
+        }
+
+
+class ItemPedidoForm(BootstrapFormMixin, forms.ModelForm):
     tipo_item = forms.ChoiceField(
         choices=[('vehiculo', 'Vehículo'), ('repuesto', 'Repuesto')],
         required=True,
-        label='Tipo de Ítem'
+        label='Tipo de Ítem',
+        widget=forms.Select()
     )
 
     class Meta:
         model = ItemPedido
-        fields = ['tipo_item', 'vehiculo', 'repuesto', 'cantidad', 'precio_unitario']
-# Formset para asociar varios ítems a un pedido
+        fields = ['pedido', 'tipo_item', 'vehiculo', 'repuesto', 'cantidad', 'precio_unitario']
+        widgets = {
+            'pedido': forms.HiddenInput(),
+            'vehiculo': forms.Select(),
+            'repuesto': forms.Select(),
+            'cantidad': forms.NumberInput(attrs={'step': '1', 'min': '1'}),
+            'precio_unitario': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
+        }
+
+
 ItemPedidoFormSet = inlineformset_factory(
-	Pedido,
-	ItemPedido,
-	form=ItemPedidoForm,
-	extra=1,
-	can_delete=True
+    Pedido,
+    ItemPedido,
+    form=ItemPedidoForm,
+    extra=1,
+    can_delete=True
 )
 
-class ClienteForm2(forms.ModelForm):
-	class Meta:
-		model = Cliente
-		exclude = ['pedidos', 'compras_realizadas', 'total_gastado']
 
-class ClienteForm(forms.ModelForm):
+class ClienteForm2(forms.ModelForm):
+    class Meta:
+        model = Cliente
+        exclude = ['pedidos', 'compras_realizadas', 'total_gastado']
+
+
+class ClienteForm(BootstrapFormMixin, forms.ModelForm):
     """
     Formulario para crear o editar un cliente.
     """
@@ -44,9 +66,16 @@ class ClienteForm(forms.ModelForm):
         model = Cliente
         fields = ['tipo_persona', 'razon_social', 'nombre', 'apellidos', 'ruc', 'documento_identidad', 'telefono', 'email', 'direccion', 'estado', 'fecha_baja']
         widgets = {
-            'fecha_registro': forms.DateInput(attrs={'type': 'date'}),
-            'fecha_modificacion': forms.DateInput(attrs={'type': 'date'}),
             'fecha_baja': forms.DateInput(attrs={'type': 'date'}),
+            'tipo_persona': forms.Select(),
+            'razon_social': forms.TextInput(),
+            'nombre': forms.TextInput(),
+            'apellidos': forms.TextInput(),
+            'documento_identidad': forms.TextInput(),
+            'ruc': forms.TextInput(),
+            'telefono': forms.TextInput(),
+            'email': forms.EmailInput(),
+            'direccion': forms.Textarea(attrs={'rows': 3}),
         }
 
     def clean(self):
@@ -56,7 +85,7 @@ class ClienteForm(forms.ModelForm):
         razon_social = cleaned_data.get('razon_social')
         documento_identidad = cleaned_data.get('documento_identidad')
         ruc = cleaned_data.get('ruc')
-		
+
         if tipo_persona == 'FISICA':
             if not nombre:
                 self.add_error('nombre', 'El nombre es obligatorio para persona física.')
@@ -73,21 +102,26 @@ class ClienteForm(forms.ModelForm):
         return cleaned_data
 
 
+class PedidoForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Pedido
+        fields = ['cliente', 'vendedor', 'estado', 'tipo', 'observaciones', 'monto_total', 'iva']
+        widgets = {
+            'observaciones': forms.Textarea(attrs={'rows': 3}),
+            'monto_total': forms.NumberInput(attrs={'step': '0.01'}),
+            'iva': forms.NumberInput(attrs={'step': '0.01'}),
+        }
 
-class PedidoForm(forms.ModelForm):
-	class Meta:
-		model = Pedido
-		fields = ['cliente', 'vendedor', 'estado', 'tipo', 'observaciones', 'monto_total', 'iva']
 
-class ItemPedidoForm(forms.ModelForm):
-	class Meta:
-		model = ItemPedido
-		fields = ['pedido', 'vehiculo', 'repuesto', 'cantidad', 'precio_unitario']
-
-class CotizacionForm(forms.ModelForm):
-	class Meta:
-		model = Cotizacion
-		fields = ['pedido', 'estado', 'descripcion_solicitud', 'monto_estimado', 'fecha_validez']
+class CotizacionForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Cotizacion
+        fields = ['pedido', 'estado', 'descripcion_solicitud', 'monto_estimado', 'fecha_validez']
+        widgets = {
+            'descripcion_solicitud': forms.Textarea(attrs={'rows': 3}),
+            'monto_estimado': forms.NumberInput(attrs={'step': '0.01'}),
+            'fecha_validez': forms.DateInput(attrs={'type': 'date'}),
+        }
 
 
 class CarritoForm(forms.ModelForm):
@@ -98,10 +132,5 @@ class CarritoForm(forms.ModelForm):
             'cliente': forms.HiddenInput(),
         }
 
-class CarritoVendedorForm(forms.ModelForm):
-    class Meta:
-        model = Carrito
-        fields = ['cliente', 'vehiculos', 'repuestos']
-        widgets = {
-            'cliente': forms.HiddenInput(),
-        }
+
+
