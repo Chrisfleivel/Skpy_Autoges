@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                        <i class="bi bi-car-front text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1 fw-bold text-dark">Modelos de Vehículos</h1>
+                        <p class="text-muted mb-0">Administra los modelos de vehículos en tu inventario</p>
+                    </div>
+                </div>
+                <a href="{% url 'agregar_modelo_vehiculo' %}" class="btn btn-primary shadow-sm">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Agregar Modelo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label for="search_query" class="form-label fw-semibold">Buscar modelo</label>
+                    <input type="text" id="search_query" name="search_query" class="form-control" placeholder="Nombre del modelo..." value="{{ query }}">
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary mt-3">
+                        <i class="bi bi-search me-2"></i>Buscar
+                    </button>
+                    <a href="{% url 'lista_modelos_vehiculos' %}" class="btn btn-outline-secondary mt-3">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="mb-0 fw-bold">Lista de Modelos de Vehículos</h6>
+            </div>
+            <div class="text-muted small">Total: {{ modelos|length }}</div>
+        </div>
+        <div class="card-body p-0">
+            {% if modelos %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0 fw-semibold ps-4">#</th>
+                            <th class="border-0 fw-semibold">Marca</th>
+                            <th class="border-0 fw-semibold">Modelo</th>
+                            <th class="border-0 fw-semibold">Tipo</th>
+                            <th class="border-0 fw-semibold text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for modelo in modelos %}
+                        <tr>
+                            <td class="ps-4">{{ modelo.id }}</td>
+                            <td>
+                                <a href="{% url 'detalle_marca_vehiculo' modelo.marca.id %}" class="text-decoration-none text-dark fw-semibold">
+                                    {{ modelo.marca.nombre }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'detalle_modelo_vehiculo' modelo.id %}" class="text-decoration-none text-dark fw-semibold">
+                                    {{ modelo.nombre }}
+                                </a>
+                            </td>
+                            <td class="text-muted">{{ modelo.tipo_vehiculo.nombre|default:'Sin tipo' }}</td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'detalle_modelo_vehiculo' modelo.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'editar_modelo_vehiculo' modelo.id %}" class="btn btn-sm btn-outline-secondary" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'eliminar_modelo_vehiculo' modelo.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Eliminar este modelo? Esta acción no se puede deshacer.');">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-car-front display-1 text-muted"></i>
+                </div>
+                <h5 class="text-muted mb-3">No hay modelos de vehículos registrados</h5>
+                <p class="text-muted mb-4">Agrega tu primer modelo de vehículo para organizar mejor el inventario.</p>
+                <a href="{% url 'agregar_modelo_vehiculo' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Agregar Modelo
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

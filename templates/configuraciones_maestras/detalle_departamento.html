@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Departamento{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="h4 fw-bold">{{ departamento.nombre }}</h1>
+      <p class="text-muted mb-0">Información del departamento.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'editar_departamento' departamento.id %}" class="btn btn-outline-secondary">Editar</a>
+      <a href="{% url 'lista_departamentos' %}" class="btn btn-outline-primary">Volver</a>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Nombre</dt>
+        <dd class="col-sm-9">{{ departamento.nombre }}</dd>
+
+        <dt class="col-sm-3">Descripción</dt>
+        <dd class="col-sm-9">{{ departamento.descripcion|default:'Sin descripción' }}</dd>
+
+        <dt class="col-sm-3">Estado</dt>
+        <dd class="col-sm-9">
+          {% if departamento.estado %}
+            <span class="badge bg-success bg-opacity-10 text-success">Activo</span>
+          {% else %}
+            <span class="badge bg-secondary bg-opacity-10 text-secondary">Inactivo</span>
+          {% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Fecha de creación</dt>
+        <dd class="col-sm-9">{{ departamento.fecha_creacion }}</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+{% endblock %}

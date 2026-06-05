@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Inactivar Cargo{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <h1 class="mb-3">Inactivar Cargo</h1>
+      <p class="text-muted">¿Deseas inactivar el cargo <strong>{{ cargo.nombre }}</strong>?</p>
+      <form method="post" action="{% url 'inactivar_cargo' cargo.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-warning">Inactivar</button>
+        <a href="{% url 'lista_cargos' %}" class="btn btn-secondary ms-2">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Activar Departamento{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Activar Departamento</h1>
+  <div class="card border-0 shadow-sm p-4">
+    <p>¿Deseas reactivar el departamento "{{ departamento.nombre }}"?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success">Activar</button>
+      <a href="{% url 'lista_departamentos' %}" class="btn btn-secondary ms-2">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -479,5 +479,88 @@ permisos_iniciales_configuraciones_maestras = [
             'descripcion': 'Permite ver el detalle de una Tasa de Cambio.',
             'sector': 'Configuraciones Maestras'
         },
-        
+        {
+            'codename': 'configuraciones_maestras.agregar_departamento',
+            'nombre': 'Agregar Departamento',
+            'descripcion': 'Permite registrar nuevos Departamentos.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.editar_departamento',
+            'nombre': 'Editar Departamento',
+            'descripcion': 'Permite editar los datos de Departamentos existentes.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.eliminar_departamento',
+            'nombre': 'Eliminar Departamento',
+            'descripcion': 'Permite eliminar Departamentos del sistema.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.inactivar_departamento',
+            'nombre': 'Inactivar Departamento',
+            'descripcion': 'Permite inactivar Departamentos del sistema.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.activar_departamento',
+            'nombre': 'Activar Departamento',
+            'descripcion': 'Permite activar Departamentos del sistema.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.listar_departamentos',
+            'nombre': 'Listar Departamentos',
+            'descripcion': 'Permite ver la lista de Departamentos registrados.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.detallar_departamento',
+            'nombre': 'Detalle de Departamento',
+            'descripcion': 'Permite ver el detalle de un Departamento.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.agregar_cargo',
+            'nombre': 'Agregar Cargo',
+            'descripcion': 'Permite registrar nuevos Cargos.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.editar_cargo',
+            'nombre': 'Editar Cargo',
+            'descripcion': 'Permite editar los datos de Cargos existentes.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.eliminar_cargo',
+            'nombre': 'Eliminar Cargo',
+            'descripcion': 'Permite eliminar Cargos del sistema.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.inactivar_cargo',
+            'nombre': 'Inactivar Cargo',
+            'descripcion': 'Permite inactivar Cargos del sistema.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.activar_cargo',
+            'nombre': 'Activar Cargo',
+            'descripcion': 'Permite activar Cargos del sistema.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.listar_cargos',
+            'nombre': 'Listar Cargos',
+            'descripcion': 'Permite ver la lista de Cargos registrados.',
+            'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.detallar_cargo',
+            'nombre': 'Detalle de Cargo',
+            'descripcion': 'Permite ver el detalle de un Cargo.',
+            'sector': 'Configuraciones Maestras'
+        },
     ]

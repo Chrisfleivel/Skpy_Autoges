@@ -2,7 +2,37 @@
 
 from django.db import models
 from configuraciones_maestras.models import Proveedor
+from colorfield.fields import ColorField
+import re
+from django.core.exceptions import ValidationError
 
+def es_vin_valido(vin):
+    """
+    Valida un número VIN de 17 caracteres según el estándar ISO 3779.
+    """
+    # 1. Verificar longitud
+    if len(vin) != 17:
+        return False
+    
+    # 2. Convertir a mayúsculas
+    vin = vin.upper()
+    
+    # 3. Verificar caracteres prohibidos (I, O, Q)
+    if re.search(r'[IOQ]', vin):
+        return False
+    
+    # 4. Verificar caracteres alfanuméricos
+    if not re.match(r'^[A-HJ-NPR-Z0-9]{17}$', vin):
+        return False
+        
+    # Nota: El cálculo del dígito verificador (caracter 9) es un proceso
+    # matemático complejo que varía según el mercado (ej. América del Norte).
+    # Esta validación cubre el formato, que es lo más común en registros.
+    return True
+
+def validar_vin(value):
+    if not es_vin_valido(value):
+        raise ValidationError('El número de chasis (VIN) no es válido.')
 # --------------------------------------------------------------------------
 # Modelo para representar la Unidad de Medida de los repuestos
 # --------------------------------------------------------------------------
@@ -21,6 +51,153 @@ class UnidadMedida(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.abreviatura})"
+    
+# modelo deposito
+class Deposito(models.Model):
+    """
+    Modelo que representa un depósito o almacén donde se guardan los vehículos y repuestos.
+    """
+    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre del Depósito")
+    ubicacion = models.CharField(max_length=255, verbose_name="Ubicación del Depósito")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción Adicional")
+    capacidad_maxima = models.PositiveIntegerField(default=0, verbose_name="Capacidad Máxima (unidades)")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, null=True, blank=True,verbose_name="Fecha de Creación")
+
+    
+    class Meta:
+        verbose_name = "Depósito"
+        verbose_name_plural = "Depósitos"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
+class MarcaVehiculo(models.Model):
+    """
+    Modelo para representar las marcas de vehículos.
+    """
+    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la Marca")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción Adicional")
+    estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
+
+    def eliminable(self):
+        return not self.modelos.exists()  # Solo se puede eliminar si no tiene modelos asociados
+    
+    def activar(self):
+        self.estado = True
+        self.save()
+    
+    def inactivar(self):
+        self.estado = False
+        self.save()
+
+    def esta_activo(self):
+        return self.estado
+    
+    class Meta:
+        verbose_name = "Marca"
+        verbose_name_plural = "Marcas"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+class TipoVehiculo(models.Model):
+    """
+    Modelo para representar los tipos de vehículos.
+    Ej: 'Sedán', 'SUV', 'Hatchback', etc.
+    """
+    nombre = models.CharField(max_length=50, unique=True, verbose_name="Nombre del Tipo de Vehículo")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción Adicional")
+    estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
+
+    def eliminable(self):
+        return not self.modelos.exists()  # Solo se puede eliminar si no tiene modelos asociados
+    
+    def activar(self):
+        self.estado = True
+        self.save()
+    
+    def inactivar(self):
+        self.estado = False
+        self.save()
+    
+    def esta_activo(self):
+        return self.estado
+    
+    class Meta:
+        verbose_name = "Tipo de Vehículo"
+        verbose_name_plural = "Tipos de Vehículos"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+    
+
+class ModeloVehiculo(models.Model):
+    """
+    Modelo para representar los modelos de vehículos.
+    """
+    marca = models.ForeignKey(MarcaVehiculo, on_delete=models.CASCADE, related_name='modelos', verbose_name="Marca del Vehículo")
+    nombre = models.CharField(max_length=100, verbose_name="Nombre del Modelo")
+    tipo_vehiculo = models.ForeignKey(TipoVehiculo, on_delete=models.SET_NULL, null=True, blank=True, related_name='modelos', verbose_name="Tipo de Vehículo")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción Adicional")
+    estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
+
+    def eliminable(self):
+        return not self.vehiculos.exists()  # Solo se puede eliminar si no tiene vehículos asociados
+    
+    def activar(self):
+        self.estado = True
+        self.save()
+    
+    def inactivar(self):
+        self.estado = False
+        self.save()
+    
+    def esta_activo(self):
+        return self.estado
+
+    class Meta:
+        verbose_name = "Modelo de Vehículo"
+        verbose_name_plural = "Modelos de Vehículos"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f"{self.marca.nombre} {self.nombre}"
+    
+class TipoTransmision(models.Model):
+    """
+    Modelo para representar los tipos de transmisión de los vehículos.
+    Ej: 'Manual', 'Automática', 'CVT', etc.
+    """
+    nombre = models.CharField(max_length=50, unique=True, verbose_name="Nombre del Tipo de Transmisión")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción Adicional")
+    estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
+
+    def eliminable(self):
+        return not self.vehiculos.exists()  # Solo se puede eliminar si no tiene vehículos asociados
+    
+    def activar(self):
+        self.estado = True
+        self.save()
+    
+    def inactivar(self):
+        self.estado = False
+        self.save()
+    
+    def esta_activo(self):
+        return self.estado
+
+    class Meta:
+        verbose_name = "Tipo de Transmisión"
+        verbose_name_plural = "Tipos de Transmisión"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
 
 # --------------------------------------------------------------------------
 # Modelo para representar un producto en el inventario
@@ -41,7 +218,8 @@ class Producto(models.Model):
     fecha_ingreso = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name="Fecha de Ingreso al Inventario")
     costo_compra = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Costo de Compra (Guaraníes)")
     precio_venta = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio de Venta Sugerido") 
-    ubicacion = models.CharField(max_length=100, blank=True, null=True, verbose_name="Ubicación en el Depósito")
+    # ubicacion del deposito
+    ubicacion = models.ForeignKey(Deposito, on_delete=models.SET_NULL, null=True, blank=True, related_name='+', verbose_name="Depósito de Ubicación")
     fecha_compra = models.DateField(blank=True, null=True, verbose_name="Fecha de Compra")
     imagen = models.ImageField(upload_to='productos/', blank=True, null=True, verbose_name="Imagen del Producto")
 
@@ -71,7 +249,7 @@ class Vehiculo(Producto):
         ('reservado', 'Reservado'),
     )
     TIPO_COMBUSTIBLE = (
-        ('gasolina', 'Gasolina'),
+        ('nafta', 'Nafta'),
         ('diesel', 'Diésel'),
         ('electrico', 'Eléctrico'),
         ('hibrido', 'Híbrido'),
@@ -79,25 +257,24 @@ class Vehiculo(Producto):
     )
 
     nombre = models.CharField(max_length=150, verbose_name="Nombre del Vehículo")
-    marca = models.CharField(max_length=100, verbose_name="Marca")
-    modelo = models.CharField(max_length=100, verbose_name="Modelo")
+    marca = models.ForeignKey(MarcaVehiculo, on_delete=models.SET_NULL, null=True, blank=True, related_name='vehiculos', verbose_name="Marca del Vehículo")
+    modelo = models.ForeignKey(ModeloVehiculo, on_delete=models.SET_NULL, null=True, blank=True, related_name='vehiculos', verbose_name="Modelo del Vehículo")
     año = models.PositiveIntegerField(verbose_name="Año de Fabricación")
     kilometraje = models.PositiveIntegerField(default=0, verbose_name="Kilometraje")
-    codigo_chasis = models.CharField(max_length=50, unique=True, verbose_name="Código de Chasis (VIN)")
+    codigo_chasis = models.CharField(max_length=17, unique=True, verbose_name="Código de Chasis (VIN)", validators=[validar_vin])
     estado = models.CharField(max_length=20, choices=ESTADO_VEHICULO, default='disponible', verbose_name="Estado")
     costo_compra = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Costo de Compra (Guaraníes)")
     precio_venta = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio de Venta Sugerido")
     fecha_ingreso = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name="Fecha de Ingreso al Inventario")
-    motorizacion = models.CharField(max_length=100, blank=True, null=True, verbose_name="Motorización")
-    color = models.CharField(max_length=50, blank=True, null=True, verbose_name="Color")
+    color = ColorField(default='#FFFFFF', verbose_name="Color del Vehículo", blank=True, null=True, help_text="Selecciona el color del vehículo")
     combustible = models.CharField(max_length=50, blank=True, null=True, choices=TIPO_COMBUSTIBLE, verbose_name="Tipo de Combustible", default='gasolina')
-    transmision = models.CharField(max_length=50, blank=True, null=True, verbose_name="Tipo de Transmisión")
+    transmision = models.ForeignKey(TipoTransmision, on_delete=models.SET_NULL, null=True, blank=True, related_name='vehiculos', verbose_name="Tipo de Transmisión")
     precio_cif_usd = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio CIF (USD)")
     precio_cif_guarani = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio CIF (Guaraníes)")
     imagen = models.ImageField(upload_to='vehiculos/', blank=True, null=True, verbose_name="Imagen del Vehículo", default='vehiculos/default_vehicle.png')
 
     def formar_nombre_completo(self):
-        self.nombre = f"{self.marca} {self.modelo} ({self.año})"
+        self.nombre = f"{self.marca.nombre} {self.modelo.nombre} ({self.año})"
 
     def save(self, *args, **kwargs):
         self.formar_nombre_completo()
@@ -202,25 +379,6 @@ class SalidaRepuesto(models.Model):
     def __str__(self):
         return f"Salida de {self.cantidad} unidades de {self.repuesto} - {self.fecha_salida}" 
 
-# modelo deposito
-class Deposito(models.Model):
-    """
-    Modelo que representa un depósito o almacén donde se guardan los vehículos y repuestos.
-    """
-    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre del Depósito")
-    ubicacion = models.CharField(max_length=255, verbose_name="Ubicación del Depósito")
-    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción Adicional")
-    capacidad_maxima = models.PositiveIntegerField(default=0, verbose_name="Capacidad Máxima (unidades)")
-    fecha_creacion = models.DateTimeField(auto_now_add=True, null=True, blank=True,verbose_name="Fecha de Creación")
-
-    
-    class Meta:
-        verbose_name = "Depósito"
-        verbose_name_plural = "Depósitos"
-        ordering = ['nombre']
-
-    def __str__(self):
-        return self.nombre
 
 # Centro de Ventas
 class CentroVentas(models.Model):

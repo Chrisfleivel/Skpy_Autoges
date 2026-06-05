@@ -73,8 +73,18 @@
                     {% for form in formset %}
                     <tr>
                       <td>{{ form.tipo_item }}</td>
-                      <td>{{ form.vehiculo }}</td>
-                      <td>{{ form.repuesto }}</td>
+                      <td>
+                        <div class="vehiculo-field" style="display: none;">
+                          {{ form.vehiculo_search }}
+                          {{ form.vehiculo }}
+                        </div>
+                      </td>
+                      <td>
+                        <div class="repuesto-field" style="display: none;">
+                          {{ form.repuesto_search }}
+                          {{ form.repuesto }}
+                        </div>
+                      </td>
                       <td>{{ form.cantidad }}</td>
                       <td>{{ form.precio_unitario }}</td>
                       <td class="text-center">{{ form.DELETE }}</td>
@@ -125,3 +135,62 @@
 }
 </style>
 {% endblock %}
+
+<datalist id="vehiculos-list">
+  {% for vehiculo in vehiculos %}
+  <option value="{{ vehiculo.id }}">{{ vehiculo.nombre }}</option>
+  {% endfor %}
+</datalist>
+
+<datalist id="repuestos-list">
+  {% for repuesto in repuestos %}
+  <option value="{{ repuesto.id }}">{{ repuesto.nombre }}</option>
+  {% endfor %}
+</datalist>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Función para mostrar/ocultar campos basados en tipo_item
+  function toggleFields(row) {
+    const tipoItem = row.querySelector('select[name*="tipo_item"]').value;
+    const vehiculoField = row.querySelector('.vehiculo-field');
+    const repuestoField = row.querySelector('.repuesto-field');
+    
+    if (tipoItem === 'vehiculo') {
+      vehiculoField.style.display = 'block';
+      repuestoField.style.display = 'none';
+    } else if (tipoItem === 'repuesto') {
+      vehiculoField.style.display = 'none';
+      repuestoField.style.display = 'block';
+    } else {
+      vehiculoField.style.display = 'none';
+      repuestoField.style.display = 'none';
+    }
+  }
+
+  // Aplicar a filas existentes
+  document.querySelectorAll('tbody tr').forEach(toggleFields);
+
+  // Escuchar cambios en tipo_item
+  document.addEventListener('change', function(e) {
+    if (e.target.name && e.target.name.includes('tipo_item')) {
+      const row = e.target.closest('tr');
+      toggleFields(row);
+    }
+  });
+
+  // Sincronizar búsqueda con hidden fields (ya no necesario, el input tiene el ID)
+  // document.addEventListener('input', function(e) {
+  //   if (e.target.name && e.target.name.includes('vehiculo_search')) {
+  //     const row = e.target.closest('tr');
+  //     const hidden = row.querySelector('input[name*="vehiculo"]');
+  //     if (hidden) hidden.value = e.target.value;
+  //   }
+  //   if (e.target.name && e.target.name.includes('repuesto_search')) {
+  //     const row = e.target.closest('tr');
+  //     const hidden = row.querySelector('input[name*="repuesto"]');
+  //     if (hidden) hidden.value = e.target.value;
+  //   }
+  // });
+});
+</script>

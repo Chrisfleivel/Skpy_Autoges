@@ -61,3 +61,4 @@ class Notificacion(models.Model):
     
     def __str__(self):
         return f"Notificación para {self.destinatario} - {self.asunto}"
+    

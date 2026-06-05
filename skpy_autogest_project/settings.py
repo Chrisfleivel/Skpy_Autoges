@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     #'importaciones',
     #'reportes',
     'reposicion_stock',
+    'colorfield',
 ]
 
 MIDDLEWARE = [

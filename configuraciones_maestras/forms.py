@@ -48,14 +48,26 @@ class TasaCambioForm(forms.ModelForm):
         fields = ['moneda_origen', 'moneda_destino', 'valor']
 
 class DepartamentoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control'})
+
     class Meta:
         model = Departamento
         fields = ['nombre', 'descripcion']
 
 class CargoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control'})
+
     class Meta:
         model = Cargo
-        fields = ['nombre', 'departamento', 'descripcion']  
+        fields = ['nombre', 'departamento', 'descripcion', 'vacantes', 'salario', 'roles']
         widgets = {
             'departamento': forms.Select(attrs={'class': 'form-control'}),
-        } 
+            'roles': forms.SelectMultiple(attrs={'class': 'form-control', 'size': 6}),
+        }
+

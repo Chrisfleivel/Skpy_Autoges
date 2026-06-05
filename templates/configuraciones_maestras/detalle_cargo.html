@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle Cargo{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="h4 fw-bold mb-1">Detalle de Cargo</h1>
+      <p class="text-muted mb-0">Información completa del puesto y su departamento.</p>
+    </div>
+    <div>
+      <a href="{% url 'editar_cargo' cargo.id %}" class="btn btn-outline-secondary me-2"><i class="bi bi-pencil"></i> Editar</a>
+      <a href="{% url 'lista_cargos' %}" class="btn btn-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <h5 class="mb-2">Nombre</h5>
+          <p class="text-muted">{{ cargo.nombre }}</p>
+        </div>
+        <div class="col-md-6">
+          <h5 class="mb-2">Departamento</h5>
+          <p class="text-muted">{{ cargo.departamento.nombre }}</p>
+        </div>
+        <div class="col-md-6">
+          <h5 class="mb-2">Vacantes</h5>
+          <p class="text-muted">{{ cargo.vacantes }}</p>
+        </div>
+        <div class="col-md-6">
+          <h5 class="mb-2">Salario</h5>
+          <p class="text-muted">{{ cargo.salario|default:'No especificado' }}</p>
+        </div>
+        <div class="col-12">
+          <h5 class="mb-2">Descripción</h5>
+          <p class="text-muted">{{ cargo.descripcion|default:'Sin descripción' }}</p>
+        </div>
+        <div class="col-12">
+          <h5 class="mb-2">Roles asociados</h5>
+          <p class="text-muted">
+            {% if cargo.roles.all %}
+              {{ cargo.roles.all|join:", " }}
+            {% else %}
+              No hay roles asociados.
+            {% endif %}
+          </p>
+        </div>
+        <div class="col-md-4">
+          <h5 class="mb-2">Estado</h5>
+          <p class="text-muted">
+            {% if cargo.estado %}
+              Activo
+            {% else %}
+              Inactivo
+            {% endif %}
+          </p>
+        </div>
+        <div class="col-md-4">
+          <h5 class="mb-2">Creado</h5>
+          <p class="text-muted">{{ cargo.fecha_creacion|date:"d/m/Y H:i" }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

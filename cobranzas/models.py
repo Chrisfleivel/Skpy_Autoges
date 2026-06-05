@@ -41,3 +41,4 @@ class Pago(models.Model):
 
     def __str__(self):
         return f"Pago de {self.monto} - {self.get_tipo_pago_display()}"
+

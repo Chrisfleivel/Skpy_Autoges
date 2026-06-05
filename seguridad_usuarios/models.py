@@ -183,16 +183,30 @@ class UsuarioPerfil(models.Model):
     debe_cambiar_contrasena = models.BooleanField(default=True) # Indica si el usuario debe cambiar su contraseña en el próximo inicio de sesión
     rol_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Rol")
     foto_perfil = models.ImageField(upload_to='fotos_perfil/', blank=True, null=True, verbose_name="Foto de Perfil")
+    Contrasena_temporal = models.CharField(max_length=255, blank=True, null=True, verbose_name="Contraseña Temporal")
 
     def permisos_asignados(self):
         permisos = set()
         for rol in self.roles.all():
             permisos.update(rol.permisos.values_list('codename', flat=True))
         return permisos
+    
+    def enviar_contrasena_temporal(self):
+        if self.empleado and self.empleado.email:
+            enviar_contrasena_temporal(self.empleado.email)
 
     class Meta:
         verbose_name = "Usuario Perfil"
         verbose_name_plural = "Usuarios Perfil"
         ordering = ['user__username']
+
+def enviar_contrasena_temporal(email_destino):
+    asunto = "Contraseña Temporal para tu Cuenta en SKPY"
+    mensaje = f"Hola,\n\nSe ha generado una contraseña temporal para tu cuenta en SKPY. Por favor, utiliza la siguiente contraseña para iniciar sesión y recuerda cambiarla después de ingresar:\n\nContraseña Temporal: {Contrasena_temporal}\n\nSi no solicitaste esta contraseña, por favor ignora este correo.\n\nSaludos,\nEquipo de SKPY"
+    send_mail(asunto, mensaje, email, [email_destino], fail_silently=False)
+
+def enviar_email_notificacion(email_destino, asunto, mensaje):
+    send_mail(asunto, mensaje, email, [email_destino], fail_silently=False)
+
 
 

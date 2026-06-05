@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Inactivar Departamento{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Inactivar Departamento</h1>
+  <div class="card border-0 shadow-sm p-4">
+    <p>¿Deseas poner en inactivo el departamento "{{ departamento.nombre }}"?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-warning">Inactivar</button>
+      <a href="{% url 'lista_departamentos' %}" class="btn btn-secondary ms-2">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

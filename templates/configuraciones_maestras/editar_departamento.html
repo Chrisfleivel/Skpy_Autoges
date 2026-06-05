@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Departamento{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Editar Departamento</h1>
+
+  <form method="post" action="{% url 'editar_departamento' departamento.id %}">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        <ul class="mb-0">
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <div class="mb-3">
+      <label class="form-label">Nombre</label>
+      {{ form.nombre }}
+      {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors }}</div>{% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Descripción</label>
+      {{ form.descripcion }}
+      {% if form.descripcion.errors %}<div class="text-danger small">{{ form.descripcion.errors }}</div>{% endif %}
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-primary">Actualizar Departamento</button>
+      <a href="{% url 'lista_departamentos' %}" class="btn btn-secondary ms-2">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -24,7 +24,7 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'lista_inventario' %}">Inventario</a>
-                </li>
+                </li> 
                 <li class="nav-item">
                     <a class="nav-link" href="#">Importaciones</a>
                 </li>
@@ -43,6 +43,10 @@
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfig">
                         <li><a class="dropdown-item" href="{% url 'lista_proveedores' %}">Proveedores</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_departamentos' %}">Departamentos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_cargos' %}">Cargos</a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#">Sucursales</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'lista_agentes_transporte' %}">Agentes de Transporte</a></li>
@@ -52,6 +56,14 @@
                         <li><a class="dropdown-item" href="#">Tasas de Cambio</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'configurar_apariencia' %}">Apariencia</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_marcas_vehiculos' %}">Marcas de Vehículos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_modelos_vehiculos' %}">Modelos de Vehículos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_tipos_transmision' %}">Tipos de Transmisión</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_tipos_vehiculos' %}">Tipos de Vehículos</a></li>
                     </ul>
                 </li>
 

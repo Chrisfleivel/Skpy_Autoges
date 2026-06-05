@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                        <i class="bi bi-award text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1 fw-bold text-dark">Marcas de Vehículos</h1>
+                        <p class="text-muted mb-0">Administra las marcas usadas en tu inventario de vehículos.</p>
+                    </div>
+                </div>
+                <a href="{% url 'agregar_marca_vehiculo' %}" class="btn btn-primary shadow-sm">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Agregar Marca
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label for="search_query" class="form-label fw-semibold">Buscar marca</label>
+                    <input type="text" id="search_query" name="search_query" class="form-control" placeholder="Nombre de la marca..." value="{{ query }}">
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary mt-3">
+                        <i class="bi bi-search me-2"></i>Buscar
+                    </button>
+                    <a href="{% url 'lista_marcas_vehiculos' %}" class="btn btn-outline-secondary mt-3">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="mb-0 fw-bold">Lista de Marcas</h6>
+            </div>
+            <div class="text-muted small">Total: {{ marcas|length }}</div>
+        </div>
+        <div class="card-body p-0">
+            {% if marcas %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0 fw-semibold ps-4">#</th>
+                            <th class="border-0 fw-semibold">Marca</th>
+                            <th class="border-0 fw-semibold">Descripción</th>
+                            <th class="border-0 fw-semibold text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for marca in marcas %}
+                        <tr>
+                            <td class="ps-4">{{ marca.id }}</td>
+                            <td>
+                                <a href="{% url 'detalle_marca_vehiculo' marca.id %}" class="text-decoration-none text-dark fw-semibold">
+                                    {{ marca.nombre }}
+                                </a>
+                            </td>
+                            <td class="text-muted">{{ marca.descripcion|default:'Sin descripción' }}</td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'detalle_marca_vehiculo' marca.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'editar_marca_vehiculo' marca.id %}" class="btn btn-sm btn-outline-secondary" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'eliminar_marca_vehiculo' marca.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Eliminar esta marca? Esta acción no se puede deshacer.');">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-award display-1 text-muted"></i>
+                </div>
+                <h5 class="text-muted mb-3">No hay marcas registradas</h5>
+                <p class="text-muted mb-4">Agrega tu primera marca de vehículo para organizar mejor el inventario.</p>
+                <a href="{% url 'agregar_marca_vehiculo' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Agregar Marca
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

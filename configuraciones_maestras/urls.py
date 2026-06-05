@@ -6,6 +6,7 @@ from .views import (
     lista_agentes_transporte,
     lista_despachantes_aduana,
     lista_tasas_cambio,
+    lista_departamentos,
     agregar_proveedor,
     editar_proveedor,
     eliminar_proveedor,
@@ -23,6 +24,12 @@ from .views import (
     editar_tasa_cambio,
     eliminar_tasa_cambio,
     detalle_tasa_cambio,
+    agregar_departamento,
+    editar_departamento,
+    eliminar_departamento,
+    detalle_departamento,
+    inactivar_departamento,
+    activar_departamento,
 )
 
 urlpatterns = [
@@ -52,20 +59,20 @@ urlpatterns = [
     #path('tasas-cambio/detalle/<int:pk>/', detalle_tasa_cambio, name='detalle_tasa_cambio'),
 
     # Rutas para Departamentos
-    #path('departamentos/', lista_departamentos, name='lista_departamentos'),
-    #path('departamentos/agregar/', agregar_departamento, name='agregar_departamento'),
-    #path('departamentos/editar/<int:pk>/', editar_departamento, name='editar_departamento'),
-    #path('departamentos/eliminar/<int:pk>/', eliminar_departamento, name='eliminar_departamento'),
-    #path('departamentos/detalle/<int:pk>/', detalle_departamento, name='detalle_departamento'),
-    #path('departamentos/inactivar/<int:pk>/', inactivar_departamento, name='inactivar_departamento'),
-    #path('departamentos/activar/<int:pk>/', activar_departamento, name='activar_departamento'),    
+    path('departamentos/', lista_departamentos, name='lista_departamentos'),
+    path('departamentos/agregar/', agregar_departamento, name='agregar_departamento'),
+    path('departamentos/editar/<int:pk>/', editar_departamento, name='editar_departamento'),
+    path('departamentos/eliminar/<int:pk>/', eliminar_departamento, name='eliminar_departamento'),
+    path('departamentos/detalle/<int:pk>/', detalle_departamento, name='detalle_departamento'),
+    path('departamentos/inactivar/<int:pk>/', inactivar_departamento, name='inactivar_departamento'),
+    path('departamentos/activar/<int:pk>/', activar_departamento, name='activar_departamento'),    
     # Rutas para Cargos
-    #path('cargos/', lista_cargos, name='lista_cargos'),
-    #path('cargos/agregar/', agregar_cargo, name='agregar_cargo'),
-    #path('cargos/editar/<int:pk>/', editar_cargo, name='editar_cargo'),
-    #path('cargos/eliminar/<int:pk>/', eliminar_cargo, name='eliminar_cargo'),
-    #path('cargos/detalle/<int:pk>/', detalle_cargo, name='detalle_cargo'), 
-    #path('cargos/inactivar/<int:pk>/', inactivar_cargo, name='inactivar_cargo'),
-    #path('cargos/activar/<int:pk>/', activar_cargo, name='activar_cargo'),
+    path('cargos/', lista_cargos, name='lista_cargos'),
+    path('cargos/agregar/', agregar_cargo, name='agregar_cargo'),
+    path('cargos/editar/<int:pk>/', editar_cargo, name='editar_cargo'),
+    path('cargos/eliminar/<int:pk>/', eliminar_cargo, name='eliminar_cargo'),
+    path('cargos/detalle/<int:pk>/', detalle_cargo, name='detalle_cargo'),
+    path('cargos/inactivar/<int:pk>/', inactivar_cargo, name='inactivar_cargo'),
+    path('cargos/activar/<int:pk>/', activar_cargo, name='activar_cargo'),
     
 ]

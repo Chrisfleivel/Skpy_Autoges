@@ -1,9 +1,10 @@
 # inventario/views.py
 from django.shortcuts import render, redirect
-from .models import Vehiculo, Repuesto, MantenimientoVehiculo, Deposito, UnidadMedida
+from .models import Vehiculo, Repuesto, MantenimientoVehiculo, Deposito, UnidadMedida, MarcaVehiculo, TipoVehiculo, ModeloVehiculo, TipoTransmision
 from django.contrib import messages
-from .forms import VehiculoForm, RepuestoForm, MantenimientoForm, DepositoForm, UnidadMedidaForm
+from .forms import VehiculoForm, RepuestoForm, MantenimientoForm, DepositoForm, UnidadMedidaForm, MarcaVehiculoForm, TipoVehiculoForm, ModeloVehiculoForm, TipoTransmisionForm
 from django import forms
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from seguridad_usuarios.decorators import requiere_privilegio
 
@@ -85,13 +86,43 @@ def agregar_vehiculo(request):
     """Vista para agregar un nuevo vehículo al inventario."""
     if request.method == 'POST':
         # Lógica para procesar el formulario y agregar el vehículo
-        form = VehiculoForm(request.POST)
+        form = VehiculoForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            return redirect('lista_vehiculos')  # Redirige a la lista de vehículos (debes crear esta vista y url)
+            nuevo = form.cleaned_data.get('nuevo_modelo')
+            estado = form.cleaned_data.get('estado') or 'disponible'
+            # Si se escribió un nuevo modelo, crear o obtener y asignar
+            if nuevo and form.cleaned_data.get('marca') and not form.cleaned_data.get('modelo'):
+                marca = form.cleaned_data.get('marca')
+                modelo_obj, _ = ModeloVehiculo.objects.get_or_create(marca=marca, nombre=nuevo)
+                vehiculo = form.save(commit=False)
+                vehiculo.modelo = modelo_obj
+            else:
+                vehiculo = form.save(commit=False)
+            vehiculo.tipo = 'vehiculo'
+            vehiculo.estado = estado
+            # Asignar valores requeridos que no están en el formulario
+            if vehiculo.costo_compra is None:
+                vehiculo.costo_compra = 0
+            if vehiculo.precio_venta is None:
+                vehiculo.precio_venta = 0
+            vehiculo.save()
+            return redirect('lista_vehiculos')  # Redirige a la lista de vehículos
+        else:
+            # Debug: imprimir errores del formulario
+            print(f"Errores del formulario: {form.errors}")
     else:
         form = VehiculoForm()
     return render(request, 'inventario/agregar_vehiculo.html', {'form': form})
+
+
+def ajax_modelos_por_marca(request):
+    """Endpoint AJAX que retorna JSON con modelos filtrados por marca."""
+    marca_id = request.GET.get('marca_id')
+    modelos = []
+    if marca_id:
+        qs = ModeloVehiculo.objects.filter(marca_id=marca_id).order_by('nombre')
+        modelos = list(qs.values('id', 'nombre'))
+    return JsonResponse({'modelos': modelos})
 
 
 @revisar_permiso('inventario.listar_vehiculos')
@@ -109,7 +140,7 @@ def lista_vehiculos(request):
 
     # Filtro de texto (Modelo)
     if query:
-        vehiculos = vehiculos.filter(modelo__icontains=query)
+        vehiculos = vehiculos.filter(modelo__nombre__icontains=query)
     
     # Filtro por Marca exacta
     if marca:
@@ -152,9 +183,17 @@ def editar_vehiculo(request, vehiculo_id):
     """Vista para editar un vehículo en el inventario."""
     vehiculo = Vehiculo.objects.get(id=vehiculo_id)
     if request.method == 'POST':
-        form = VehiculoForm(request.POST, instance=vehiculo)
+        form = VehiculoForm(request.POST, request.FILES, instance=vehiculo)
         if form.is_valid():
-            form.save()
+            nuevo = form.cleaned_data.get('nuevo_modelo')
+            if nuevo and form.cleaned_data.get('marca') and not form.cleaned_data.get('modelo'):
+                marca = form.cleaned_data.get('marca')
+                modelo_obj, _ = ModeloVehiculo.objects.get_or_create(marca=marca, nombre=nuevo)
+                veh = form.save(commit=False)
+                veh.modelo = modelo_obj
+                veh.save()
+            else:
+                form.save()
             return redirect('detalle_vehiculo', vehiculo_id=vehiculo.id)
     else:
         form = VehiculoForm(instance=vehiculo)
@@ -464,6 +503,202 @@ def editar_unidad_medida(request, unidad_id):
         form = UnidadMedidaForm(instance=unidad)
     return render(request, 'inventario/editar_unidad_medida.html', {'form': form, 'unidad': unidad})
 
+# --------------------------------------------------------------------------
+# Vistas para la gestión de Marcas de Vehículos
+# --------------------------------------------------------------------------
+
+@revisar_permiso('inventario.agregar_marcas_vehiculos')
+def agregar_marca_vehiculo(request):
+    if request.method == 'POST':
+        form = MarcaVehiculoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_marcas_vehiculos')
+    else:
+        form = MarcaVehiculoForm()
+    return render(request, 'inventario/agregar_marca_vehiculo.html', {'form': form})
+
+@revisar_permiso('inventario.listar_marcas_vehiculos')
+def lista_marcas_vehiculos(request):
+    marcas = MarcaVehiculo.objects.all()
+    query = request.GET.get('search_query', '')
+    if query:
+        marcas = marcas.filter(nombre__icontains=query)
+    return render(request, 'inventario/lista_marcas_vehiculos.html', {
+        'marcas': marcas,
+        'query': query
+    })
+
+@revisar_permiso('inventario.detallar_marcas_vehiculos')
+def detalle_marca_vehiculo(request, marca_id):
+    marca = MarcaVehiculo.objects.get(id=marca_id)
+    return render(request, 'inventario/detalle_marca_vehiculo.html', {'marca': marca})
+
+@revisar_permiso('inventario.editar_marcas_vehiculos')
+def editar_marca_vehiculo(request, marca_id):
+    marca = MarcaVehiculo.objects.get(id=marca_id)
+    if request.method == 'POST':
+        form = MarcaVehiculoForm(request.POST, instance=marca)
+        if form.is_valid():
+            form.save()
+            return redirect('detalle_marca_vehiculo', marca_id=marca.id)
+    else:
+        form = MarcaVehiculoForm(instance=marca)
+    return render(request, 'inventario/editar_marca_vehiculo.html', {'form': form, 'marca': marca})
+
+@revisar_permiso('inventario.eliminar_marcas_vehiculos')
+def eliminar_marca_vehiculo(request, marca_id):
+    marca = MarcaVehiculo.objects.get(id=marca_id)
+    marca.delete()
+    return redirect('lista_marcas_vehiculos')
+
+# --------------------------------------------------------------------------
+# Vistas para la gestión de Tipos de Vehículos
+# --------------------------------------------------------------------------
+
+@revisar_permiso('inventario.agregar_tipos_vehiculos')
+def agregar_tipo_vehiculo(request):
+    if request.method == 'POST':
+        form = TipoVehiculoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_tipos_vehiculos')
+    else:
+        form = TipoVehiculoForm()
+    return render(request, 'inventario/agregar_tipo_vehiculo.html', {'form': form})
+
+@revisar_permiso('inventario.listar_tipos_vehiculos')
+def lista_tipos_vehiculos(request):
+    tipos = TipoVehiculo.objects.all()
+    query = request.GET.get('search_query', '')
+    if query:
+        tipos = tipos.filter(nombre__icontains=query)
+    return render(request, 'inventario/lista_tipos_vehiculos.html', {
+        'tipos': tipos,
+        'query': query
+    })
+
+@revisar_permiso('inventario.detallar_tipos_vehiculos')
+def detalle_tipo_vehiculo(request, tipo_id):
+    tipo = TipoVehiculo.objects.get(id=tipo_id)
+    return render(request, 'inventario/detalle_tipo_vehiculo.html', {'tipo': tipo})
+
+@revisar_permiso('inventario.editar_tipos_vehiculos')
+def editar_tipo_vehiculo(request, tipo_id):
+    tipo = TipoVehiculo.objects.get(id=tipo_id)
+    if request.method == 'POST':
+        form = TipoVehiculoForm(request.POST, instance=tipo)
+        if form.is_valid():
+            form.save()
+            return redirect('detalle_tipo_vehiculo', tipo_id=tipo.id)
+    else:
+        form = TipoVehiculoForm(instance=tipo)
+    return render(request, 'inventario/editar_tipo_vehiculo.html', {'form': form, 'tipo': tipo})
+
+@revisar_permiso('inventario.eliminar_tipos_vehiculos')
+def eliminar_tipo_vehiculo(request, tipo_id):
+    tipo = TipoVehiculo.objects.get(id=tipo_id)
+    tipo.delete()
+    return redirect('lista_tipos_vehiculos')
+
+# --------------------------------------------------------------------------
+# Vistas para la gestión de Tipos de Transmisión
+# --------------------------------------------------------------------------
+
+@revisar_permiso('inventario.agregar_tipos_transmision')
+def agregar_tipo_transmision(request):
+    if request.method == 'POST':
+        form = TipoTransmisionForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_tipos_transmision')
+    else:
+        form = TipoTransmisionForm()
+    return render(request, 'inventario/agregar_tipo_transmision.html', {'form': form})
+
+@revisar_permiso('inventario.listar_tipos_transmision')
+def lista_tipos_transmision(request):
+    tipos = TipoTransmision.objects.all()
+    query = request.GET.get('search_query', '')
+    if query:
+        tipos = tipos.filter(nombre__icontains=query)
+    return render(request, 'inventario/lista_tipos_transmision.html', {
+        'tipos': tipos,
+        'query': query
+    })
+
+@revisar_permiso('inventario.detallar_tipos_transmision')
+def detalle_tipo_transmision(request, tipo_id):
+    tipo = TipoTransmision.objects.get(id=tipo_id)
+    return render(request, 'inventario/detalle_tipo_transmision.html', {'tipo': tipo})
+
+@revisar_permiso('inventario.editar_tipos_transmision')
+def editar_tipo_transmision(request, tipo_id):
+    tipo = TipoTransmision.objects.get(id=tipo_id)
+    if request.method == 'POST':
+        form = TipoTransmisionForm(request.POST, instance=tipo)
+        if form.is_valid():
+            form.save()
+            return redirect('detalle_tipo_transmision', tipo_id=tipo.id)
+    else:
+        form = TipoTransmisionForm(instance=tipo)
+    return render(request, 'inventario/editar_tipo_transmision.html', {'form': form, 'tipo': tipo})
+
+@revisar_permiso('inventario.eliminar_tipos_transmision')
+def eliminar_tipo_transmision(request, tipo_id):
+    tipo = TipoTransmision.objects.get(id=tipo_id)
+    tipo.delete()
+    return redirect('lista_tipos_transmision')
+
+# --------------------------------------------------------------------------
+# Vistas para la gestión de Modelos de Vehículos
+# --------------------------------------------------------------------------
+
+@revisar_permiso('inventario.agregar_modelos_vehiculos')
+def agregar_modelo_vehiculo(request):
+    if request.method == 'POST':
+        form = ModeloVehiculoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_modelos_vehiculos')
+    else:
+        form = ModeloVehiculoForm()
+    return render(request, 'inventario/agregar_modelo_vehiculo.html', {'form': form})
+
+@revisar_permiso('inventario.listar_modelos_vehiculos')
+def lista_modelos_vehiculos(request):
+    modelos = ModeloVehiculo.objects.all()
+    query = request.GET.get('search_query', '')
+    if query:
+        modelos = modelos.filter(nombre__icontains=query)
+    return render(request, 'inventario/lista_modelos_vehiculos.html', {
+        'modelos': modelos,
+        'query': query
+    })
+
+@revisar_permiso('inventario.detallar_modelos_vehiculos')
+def detalle_modelo_vehiculo(request, modelo_id):
+    modelo = ModeloVehiculo.objects.get(id=modelo_id)
+    return render(request, 'inventario/detalle_modelo_vehiculo.html', {'modelo': modelo})
+
+@revisar_permiso('inventario.editar_modelos_vehiculos')
+def editar_modelo_vehiculo(request, modelo_id):
+    modelo = ModeloVehiculo.objects.get(id=modelo_id)
+    if request.method == 'POST':
+        form = ModeloVehiculoForm(request.POST, instance=modelo)
+        if form.is_valid():
+            form.save()
+            return redirect('detalle_modelo_vehiculo', modelo_id=modelo.id)
+    else:
+        form = ModeloVehiculoForm(instance=modelo)
+    return render(request, 'inventario/editar_modelo_vehiculo.html', {'form': form, 'modelo': modelo})
+
+@revisar_permiso('inventario.eliminar_modelos_vehiculos')
+def eliminar_modelo_vehiculo(request, modelo_id):
+    modelo = ModeloVehiculo.objects.get(id=modelo_id)
+    modelo.delete()
+    return redirect('lista_modelos_vehiculos')
+
 permisos_iniciales_inventario = [
     {
         'codename': 'inventario.listar_inventario',
@@ -613,6 +848,126 @@ permisos_iniciales_inventario = [
         'codename': 'inventario.editar_unidad_medida',
         'nombre': 'Editar Unidad de Medida',
         'descripcion': 'Permite editar una unidad de medida en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.agregar_marcas_vehiculos',
+        'nombre': 'Agregar Marcas de Vehículos',
+        'descripcion': 'Permite agregar nuevas marcas de vehículos al inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.listar_marcas_vehiculos',
+        'nombre': 'Listar Marcas de Vehículos',
+        'descripcion': 'Permite ver la lista de marcas de vehículos en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.detallar_marcas_vehiculos',
+        'nombre': 'Detalle Marca de Vehículo',
+        'descripcion': 'Permite ver los detalles de una marca de vehículo en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.editar_marcas_vehiculos',
+        'nombre': 'Editar Marcas de Vehículos',
+        'descripcion': 'Permite editar una marca de vehículo en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.eliminar_marcas_vehiculos',
+        'nombre': 'Eliminar Marcas de Vehículos',
+        'descripcion': 'Permite eliminar una marca de vehículo del inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.agregar_tipos_vehiculos',
+        'nombre': 'Agregar Tipos de Vehículos',
+        'descripcion': 'Permite agregar nuevos tipos de vehículos al inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.listar_tipos_vehiculos',
+        'nombre': 'Listar Tipos de Vehículos',
+        'descripcion': 'Permite ver la lista de tipos de vehículos en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.detallar_tipos_vehiculos',
+        'nombre': 'Detalle Tipo de Vehículo',
+        'descripcion': 'Permite ver los detalles de un tipo de vehículo en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.editar_tipos_vehiculos',
+        'nombre': 'Editar Tipos de Vehículos',
+        'descripcion': 'Permite editar un tipo de vehículo en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.eliminar_tipos_vehiculos',
+        'nombre': 'Eliminar Tipos de Vehículos',
+        'descripcion': 'Permite eliminar un tipo de vehículo del inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.agregar_modelos_vehiculos',
+        'nombre': 'Agregar Modelos de Vehículos',
+        'descripcion': 'Permite agregar nuevos modelos de vehículos al inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.listar_modelos_vehiculos',
+        'nombre': 'Listar Modelos de Vehículos',
+        'descripcion': 'Permite ver la lista de modelos de vehículos en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.detallar_modelos_vehiculos',
+        'nombre': 'Detalle Modelo de Vehículo',
+        'descripcion': 'Permite ver los detalles de un modelo de vehículo en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.editar_modelos_vehiculos',
+        'nombre': 'Editar Modelos de Vehículos',
+        'descripcion': 'Permite editar un modelo de vehículo en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.eliminar_modelos_vehiculos',
+        'nombre': 'Eliminar Modelos de Vehículos',
+        'descripcion': 'Permite eliminar un modelo de vehículo del inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.agregar_tipos_transmision',
+        'nombre': 'Agregar Tipos de Transmisión',
+        'descripcion': 'Permite agregar nuevos tipos de transmisión al inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.listar_tipos_transmision',
+        'nombre': 'Listar Tipos de Transmisión',
+        'descripcion': 'Permite ver la lista de tipos de transmisión en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.detallar_tipos_transmision',
+        'nombre': 'Detalle Tipo de Transmisión',
+        'descripcion': 'Permite ver los detalles de un tipo de transmisión en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.editar_tipos_transmision',
+        'nombre': 'Editar Tipos de Transmisión',
+        'descripcion': 'Permite editar un tipo de transmisión en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.eliminar_tipos_transmision',
+        'nombre': 'Eliminar Tipos de Transmisión',
+        'descripcion': 'Permite eliminar un tipo de transmisión del inventario.',
         'sector': 'Inventario'
     },
 ]

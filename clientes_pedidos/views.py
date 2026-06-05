@@ -20,24 +20,34 @@ def realizar_pedido(request, cliente_id):
     empleado = usuario_vendedor.empleado if usuario_vendedor else None
     if request.method == 'POST':
         pedido_form = PedidoCreateForm(request.POST)
-        formset = ItemPedidoFormSet(request.POST)
+        # Define prefix='items' para sincronizar con el JavaScript
+        formset = ItemPedidoFormSet(request.POST, prefix='items')
         if pedido_form.is_valid() and formset.is_valid():
             pedido = pedido_form.save(commit=False)
             pedido.cliente = cliente
             tipo = 'stock'
             pedido.tipo = tipo
-            pedido.save()
+            pedido.save()  # Guardar la cabecera del pedido primero
             formset.instance = pedido
-            formset.save()
+            formset.save()  # Luego guardar todos los ítems vinculados
             return redirect('detalle_pedido', pedido.id)
+        else:
+            # Imprimir errores en consola para depuración
+            print("Errores del formulario de pedido:", pedido_form.errors)
+            print("Errores del formset:", formset.errors)
     else:
         tipo = 'stock'
         pedido_form = PedidoCreateForm(initial={'cliente': cliente, 'vendedor': empleado, 'tipo': tipo})
-        formset = ItemPedidoFormSet()
+        # Define prefix='items' también en GET para mantener consistencia
+        formset = ItemPedidoFormSet(prefix='items')
+    vehiculos = Vehiculo.objects.all()
+    repuestos = Repuesto.objects.all()
     return render(request, 'clientes_pedidos/realizar_pedido.html', {
         'pedido_form': pedido_form,
         'formset': formset,
-        'cliente': cliente, 'tipo': tipo
+        'cliente': cliente, 'tipo': tipo,
+        'vehiculos': vehiculos,
+        'repuestos': repuestos
     })
 
 @revisar_permiso('clientes_pedidos.realizar_pedido_a_medida')
@@ -76,10 +86,14 @@ def editar_pedido(request, pedido_id):
     else:
         pedido_form = PedidoCreateForm(instance=pedido)
         formset = ItemPedidoFormSet(instance=pedido)
+    vehiculos = Vehiculo.objects.all()
+    repuestos = Repuesto.objects.all()
     return render(request, 'clientes_pedidos/editar_pedido.html', {
         'pedido_form': pedido_form,
         'formset': formset,
-        'pedido': pedido
+        'pedido': pedido,
+        'vehiculos': vehiculos,
+        'repuestos': repuestos
     })
 
 @revisar_permiso('clientes_pedidos.agregar_pedido')
@@ -98,9 +112,13 @@ def agregar_pedido(request):
     else:
         pedido_form = PedidoCreateForm()
         formset = ItemPedidoFormSet()
+    vehiculos = Vehiculo.objects.all()
+    repuestos = Repuesto.objects.all()
     return render(request, 'clientes_pedidos/agregar_pedido.html', {
         'pedido_form': pedido_form,
-        'formset': formset
+        'formset': formset,
+        'vehiculos': vehiculos,
+        'repuestos': repuestos
     })
 
 @revisar_permiso('clientes_pedidos.listar_pedidos')
@@ -229,10 +247,14 @@ def realizar_pedido(request, cliente_id):
         else:
             pedido_form = PedidoCreateForm(initial={'cliente': cliente})
         formset = ItemPedidoFormSet()
+    vehiculos = Vehiculo.objects.all()
+    repuestos = Repuesto.objects.all()
     return render(request, 'clientes_pedidos/realizar_pedido.html', {
         'pedido_form': pedido_form,
         'formset': formset,
-        'cliente': cliente
+        'cliente': cliente,
+        'vehiculos': vehiculos,
+        'repuestos': repuestos
     })
 # --------------------------------------------------------------------------
 # Vistas para la gestión de Pedidos 2
@@ -307,6 +329,7 @@ def lista_items_pedido(request, pedido_id):
 
 @revisar_permiso('clientes_pedidos.agregar_item_pedido')
 def agregar_item_pedido(request):
+
     if request.method == 'POST':
         form = ItemPedidoForm(request.POST)
         if form.is_valid():

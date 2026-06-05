@@ -1,7 +1,7 @@
 # configuraciones_maestras/models.py
 
 from django.db import models
-from seguridad_usuarios.models import Persona
+from seguridad_usuarios.models import Persona, Rol
 from django.contrib.auth.models import User
 
 # --------------------------------------------------------------------------
@@ -93,7 +93,7 @@ class TasaCambio(models.Model):
 
 class Departamento(models.Model):
     '''
-    Modelo que representa un Departamento en la empresa.
+    Modelo que representa la Dependencia en la empresa.
     '''
 
     nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre del Departamento")
@@ -104,6 +104,9 @@ class Departamento(models.Model):
     def activar(self):
         self.estado = True
         self.save()
+
+    def eliminable(self):
+        return not self.cargos.exists()  # Solo se puede eliminar si no tiene cargos asociados
 
     def inactivar(self):
         self.estado = False
@@ -130,9 +133,15 @@ class Cargo(models.Model):
     estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
     vacantes = models.IntegerField(default=1, verbose_name="Número de Vacantes")
     salario = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="Salario")
+    roles = models.ManyToManyField(Rol, blank=True, related_name='cargos', verbose_name="Roles Asociados")
     
+
     def __str__(self):
         return f'{self.nombre} - {self.departamento.nombre}'
+    
+    def eliminable(self):
+        return not self.empleados.exists()  # Solo se puede eliminar si no tiene empleados asociados
+    
 
     def abrir_vacante(self):
         self.vacantes += 1
@@ -192,3 +201,42 @@ class ConfiguracionApariencia(models.Model):
     def __str__(self):
         return f'{self.get_tema_display()} — {self.tamanio}px'
 
+class Empresa(models.Model):
+    """
+    Modelo que representa la información de la empresa.
+    """
+    nombre = models.CharField(max_length=255, verbose_name="Nombre de la Empresa")
+    direccion = models.CharField(max_length=255, blank=True, null=True, verbose_name="Dirección")
+    telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
+    email = models.EmailField(blank=True, null=True, verbose_name="Correo Electrónico")
+    logo = models.ImageField(upload_to='logos/', blank=True, null=True, verbose_name="Logo de la Empresa")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
+    usuario_modifico = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='modificaciones_empresa')
+    sucursales = models.ManyToManyField('Sucursal', blank=True, related_name='empresas', verbose_name="Sucursales")
+
+    class Meta:
+        verbose_name = "Empresa"
+        verbose_name_plural = "Empresas"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+class Sucursal(models.Model):
+    """
+    Modelo que representa una Sucursal de la empresa.
+    """
+    nombre = models.CharField(max_length=255, verbose_name="Nombre de la Sucursal")
+    direccion = models.CharField(max_length=255, blank=True, null=True, verbose_name="Dirección")
+    telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
+    email = models.EmailField(blank=True, null=True, verbose_name="Correo Electrónico")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
+    usuario_modifico = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='modificaciones_sucursal')
+
+    class Meta:
+        verbose_name = "Sucursal"
+        verbose_name_plural = "Sucursales"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre    

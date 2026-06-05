@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Agregar Cargo{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Agregar Cargo</h1>
+
+  <form method="post" action="{% url 'agregar_cargo' %}">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        <ul class="mb-0">
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <div class="mb-3">
+      <label class="form-label">Nombre</label>
+      {{ form.nombre }}
+      {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors }}</div>{% endif %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Departamento</label>
+      {{ form.departamento }}
+      {% if form.departamento.errors %}<div class="text-danger small">{{ form.departamento.errors }}</div>{% endif %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Descripción</label>
+      {{ form.descripcion }}
+      {% if form.descripcion.errors %}<div class="text-danger small">{{ form.descripcion.errors }}</div>{% endif %}
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Vacantes</label>
+        {{ form.vacantes }}
+        {% if form.vacantes.errors %}<div class="text-danger small">{{ form.vacantes.errors }}</div>{% endif %}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Salario</label>
+        {{ form.salario }}
+        {% if form.salario.errors %}<div class="text-danger small">{{ form.salario.errors }}</div>{% endif %}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Roles asociados</label>
+        {{ form.roles }}
+        {% if form.roles.errors %}<div class="text-danger small">{{ form.roles.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-primary">Guardar Cargo</button>
+      <a href="{% url 'lista_cargos' %}" class="btn btn-secondary ms-2">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

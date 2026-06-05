@@ -702,9 +702,9 @@ def crear_usuario_para_empleado(request, empleado_id):
             form = PerfilUsuarioForm(request.POST, request.FILES)
             if form.is_valid():
                 username = empleado.email
-                password = empleado.documento_identidad
                 nombre = empleado.nombre
                 apellidos = empleado.apellidos
+                password = User.objects.make_random_password()  # Genera una contraseña aleatoria
                 usuario = User.objects.create_user(
                     username=username,
                     email=empleado.email,
@@ -715,6 +715,7 @@ def crear_usuario_para_empleado(request, empleado_id):
                 perfil_usuario = form.save(commit=False)
                 perfil_usuario.empleado = empleado
                 perfil_usuario.user = usuario
+                perfil_usuario.Contrasena_temporal = password
                 perfil_usuario.save()
                 # Guardar los roles seleccionados
                 perfil_usuario.roles.set(form.cleaned_data['roles'])

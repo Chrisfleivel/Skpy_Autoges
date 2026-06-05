@@ -1,119 +1,232 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block content %}
-<div class="container-fluid py-5" style="min-height: 100vh;">
-  <div class="row justify-content-center">
-    <div class="col-12 col-lg-8">
-      <div class="card shadow-lg border-0">
-        <div class="card-body">
-          <h2 class="fw-bold mb-4" style="color: #292929;">
-            Realizar Pedido para {{ cliente.nombre }} {{ cliente.apellidos }}
-          </h2>
-          <form method="post">
-            {% csrf_token %}
-            {{ pedido_form.as_p }}
-            <hr>
-            <h4 class="mb-3">Ítems del Pedido</h4>
-            {{ formset.management_form }}
-            <table class="table table-bordered">
-              <thead>
-                <tr>
-                  <th>Articulo</th>
-                  <th>Item</th>
-                  <th>Cantidad</th>
-                  <th>Precio Unitario</th>
-                  <th>Eliminar</th>
-                </tr>
-              </thead>
-              <tbody id="formset-body">
-                {% for form in formset %}
-                  <tr class="formset-row">
-                    <td>
-                      {{ form.tipo_item }}
-                    </td>
-                    <td>
-                      <div class="vehiculo-field">{% if form.vehiculo %}{{ form.vehiculo }}{% endif %}</div>
-                      <div class="repuesto-field">{% if form.repuesto %}{{ form.repuesto }}{% endif %}</div>
-                    </td>
-                    <td>{{ form.cantidad }}</td>
-                    <td>{{ form.precio_unitario }}</td>
-                    <td>
-                      {% if form.instance.pk %}
-                        {{ form.DELETE }}
-                      {% endif %}
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-            <button type="button" class="btn btn-success mb-3" id="add-item">
-              <i class="bi bi-plus-circle"></i> Agregar Ítem
-            </button>
-            <button type="submit" class="btn btn-primary">Guardar Pedido</button>
-            <a href="{% url 'lista_clientes' %}" class="btn btn-secondary ms-2">Cancelar</a>
-          </form>
+<div class="container-fluid py-4 {{ theme_class }}">
+    <div class="card shadow {% if theme_class == 'theme-dark' %}bg-dark text-light border-secondary{% endif %}">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Registrar Pedido para: {{ cliente.nombre }} {{ cliente.apellidos }}</h3>
         </div>
-      </div>
+        <div class="card-body">
+            <form method="post" id="pedido-form">
+                {% csrf_token %}
+
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        {{ pedido_form.observaciones.label_tag }}
+                        {{ pedido_form.observaciones }}
+                    </div>
+                    <div class="col-md-4">
+                        <label>Total Estimado (Gs.)</label>
+                        <input type="text" id="total_display" class="form-control" readonly value="0">
+                        {{ pedido_form.monto_total.as_hidden }}
+                        {{ pedido_form.iva.as_hidden }}
+                    </div>
+                </div>
+
+                <hr class="{% if theme_class == 'theme-dark' %}border-secondary{% endif %}">
+
+                <!-- Mostrar errores del formset si los hay -->
+                {% if formset.errors or formset.non_form_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        <h5><i class="bi bi-exclamation-triangle"></i> Hay errores en los ítems del pedido:</h5>
+                        {% for error in formset.non_form_errors %}
+                            <p class="mb-2">{{ error }}</p>
+                        {% endfor %}
+                        {% for form in formset %}
+                            {% if form.errors %}
+                                <hr class="bg-danger">
+                                <p class="mb-1"><strong>Ítem #{{ forloop.counter }}:</strong></p>
+                                {% for field, errors in form.errors.items %}
+                                    <ul class="mb-1">
+                                        {% for error in errors %}
+                                            <li>{{ field }}: {{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <h4 class="mb-3">Detalle de Ítems</h4>
+                {{ formset.management_form }}
+                <div class="table-responsive">
+                    <table class="table {% if theme_class == 'theme-dark' %}table-dark{% endif %}">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Producto (Vehículo/Repuesto)</th>
+                                <th>Cantidad</th>
+                                <th>Precio Unitario</th>
+                                <th>Subtotal</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="item-formset-container">
+                            {% for form in formset %}
+                                {% if not form.DELETE.value %}
+                                <tr class="item-row">
+                                    <td>{{ form.tipo_item }}</td>
+                                    <td>
+                                        <div class="div-vehiculo">
+                                            {{ form.vehiculo }}
+                                        </div>
+                                        <div class="div-repuesto d-none" style="display: none;">
+                                            {{ form.repuesto }}
+                                        </div>
+                                    </td>
+                                    <td>{{ form.cantidad }}</td>
+                                    <td>{{ form.precio_unitario }}</td>
+                                    <td class="subtotal-cell">0</td>
+                                    <td>
+                                        {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                                        <button type="button" class="btn btn-danger btn-sm remove-form">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="button" class="btn btn-success mb-4" id="add-item-btn">
+                    <i class="bi bi-plus-circle"></i> Agregar Ítem
+                </button>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'lista_clientes' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary px-5">Guardar Pedido</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 </div>
+
+<table style="display:none;">
+    <tr id="empty-row-template" class="item-row">
+        <td>{{ formset.empty_form.tipo_item }}</td>
+        <td>
+            <div class="div-vehiculo">
+                {{ formset.empty_form.vehiculo }}
+            </div>
+            <div class="div-repuesto d-none" style="display: none;">
+                {{ formset.empty_form.repuesto }}
+            </div>
+        </td>
+        <td>{{ formset.empty_form.cantidad }}</td>
+        <td>{{ formset.empty_form.precio_unitario }}</td>
+        <td class="subtotal-cell">0</td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm remove-form">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    </tr>
+</table>
 {% endblock %}
 
 <script>
-function actualizarCamposTipoItem(row) {
-  const tipoSelect = row.querySelector('select[name$="tipo_item"]');
-  const vehiculoDiv = row.querySelector('.vehiculo-field');
-  const repuestoDiv = row.querySelector('.repuesto-field');
-  if (!tipoSelect) return;
-  tipoSelect.addEventListener('change', function() {
-    if (this.value === 'vehiculo') {
-      vehiculoDiv.style.display = '';
-      repuestoDiv.style.display = 'none';
-    } else if (this.value === 'repuesto') {
-      vehiculoDiv.style.display = 'none';
-      repuestoDiv.style.display = '';
-    } else {
-      vehiculoDiv.style.display = 'none';
-      repuestoDiv.style.display = 'none';
-    }
-  });
-  // Inicializa al cargar
-  tipoSelect.dispatchEvent(new Event('change'));
-}
+    document.addEventListener('DOMContentLoaded', function() {
+        const addBtn = document.getElementById('add-item-btn');
+        const container = document.getElementById('item-formset-container');
+        // IMPORTANTE: El ID debe coincidir con el prefix definido en la vista (prefix='items')
+        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+        const emptyRow = document.getElementById('empty-row-template');
 
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.formset-row').forEach(actualizarCamposTipoItem);
+        addBtn.addEventListener('click', function() {
+            if (!totalForms) {
+                console.error("No se encontró el campo TOTAL_FORMS. Verifica el prefix en el view.");
+                return;
+            }
+            const formNum = parseInt(totalForms.value);
+            const newRow = emptyRow.cloneNode(true);
 
-  // Si agregas nuevas filas dinámicamente, llama a actualizarCamposTipoItem(newRow) después de agregar la fila
-  const addBtn = document.getElementById('add-item');
-  const formsetBody = document.getElementById('formset-body');
-  const totalForms = document.getElementById('id_itempedido_set-TOTAL_FORMS');
+            // Reemplazar el marcador __prefix__ por el número del formulario
+            newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, formNum);
+            newRow.removeAttribute('id');
+            newRow.style.display = 'table-row'; // Asegurar visibilidad de la fila nueva
 
-  addBtn.addEventListener('click', function() {
-    const rows = formsetBody.getElementsByClassName('formset-row');
-    const lastRow = rows[rows.length - 1];
-    const newRow = lastRow.cloneNode(true);
+            container.appendChild(newRow);
+            totalForms.value = formNum + 1;
 
-    Array.from(newRow.querySelectorAll('input, select')).forEach(function(input) {
-      if (input.type === 'checkbox' || input.type === 'radio') {
-        input.checked = false;
-      } else {
-        input.value = '';
-      }
+            // CRÍTICO: Vinculamos el comportamiento a la nueva fila
+            attachTipoItemHandler(newRow);
+        });
+
+        // Eliminar fila
+        container.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-form')) {
+                e.target.closest('.item-row').remove();
+                actualizarTotalGeneral();
+            }
+        });
+
+        // Lógica para calcular totales
+        container.addEventListener('input', function(e) {
+            if (e.target.name.includes('cantidad') || e.target.name.includes('precio_unitario')) {
+                const row = e.target.closest('.item-row');
+                const cant = parseFloat(row.querySelector('[name*="cantidad"]').value) || 0;
+                const precio = parseFloat(row.querySelector('[name*="precio_unitario"]').value) || 0;
+                row.querySelector('.subtotal-cell').innerText = (cant * precio).toLocaleString('es-PY');
+                actualizarTotalGeneral();
+            }
+        });
+
+        // Mostrar/ocultar divs de vehículo y repuesto según tipo_item
+        function attachTipoItemHandler(row) {
+            // Selectores específicos: usamos $= (termina con) para evitar conflictos
+            const tipoSelect = row.querySelector('select[name$="-tipo_item"]');
+            const divVehiculo = row.querySelector('.div-vehiculo');
+            const divRepuesto = row.querySelector('.div-repuesto');
+
+            // Selectores de los inputs reales dentro de los divs para limpiar valores
+            const selectVehiculo = divVehiculo ? divVehiculo.querySelector('select') : null;
+            const selectRepuesto = divRepuesto ? divRepuesto.querySelector('select') : null;
+
+            if (!tipoSelect || !divVehiculo || !divRepuesto) {
+                console.error('No se encontraron los contenedores de Vehículo/Repuesto en la fila:', row);
+                return;
+            }
+
+            const toggle = function() {
+                if (!tipoSelect.value) {
+                    tipoSelect.value = 'vehiculo';
+                }
+
+                const valor = tipoSelect.value;
+                console.log('Valor seleccionado:', valor);
+
+                if (valor === 'vehiculo') {
+                    divVehiculo.style.setProperty('display', 'block', 'important');
+                    divRepuesto.style.setProperty('display', 'none', 'important');
+                    if (selectRepuesto) selectRepuesto.value = ''; // Limpiar valor no seleccionado
+                } else if (valor === 'repuesto') {
+                    divVehiculo.style.setProperty('display', 'none', 'important');
+                    divRepuesto.style.setProperty('display', 'block', 'important');
+                    if (selectVehiculo) selectVehiculo.value = ''; // Limpiar valor no seleccionado
+                } else {
+                    divVehiculo.style.setProperty('display', 'none', 'important');
+                    divRepuesto.style.setProperty('display', 'none', 'important');
+                }
+            };
+
+            tipoSelect.addEventListener('change', toggle);
+            toggle(); // Ejecutar una vez al inicio para el estado inicial
+        }
+
+        function actualizarTotalGeneral() {
+            let total = 0;
+            document.querySelectorAll('.subtotal-cell').forEach(cell => {
+                total += parseFloat(cell.innerText.replace(/\./g, '')) || 0;
+            });
+            document.getElementById('total_display').value = total.toLocaleString('es-PY');
+            document.getElementById('id_monto_total').value = total;
+            document.getElementById('id_iva').value = total * 0.10; // IVA 10% Paraguay
+        }
+
+        // Inicializar handlers para filas existentes
+        document.querySelectorAll('.item-row').forEach(attachTipoItemHandler);
     });
-
-    const formIdx = parseInt(totalForms.value);
-    Array.from(newRow.querySelectorAll('input, select')).forEach(function(input) {
-      input.name = input.name.replace(/-\d+-/, '-' + formIdx + '-');
-      input.id = input.id.replace(/-\d+-/, '-' + formIdx + '-');
-    });
-
-    formsetBody.appendChild(newRow);
-    totalForms.value = formIdx + 1;
-
-    // Inicializa el comportamiento en la nueva fila
-    actualizarCamposTipoItem(newRow);
-  });
-});
 </script>

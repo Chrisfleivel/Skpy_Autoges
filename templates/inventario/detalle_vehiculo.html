@@ -83,7 +83,12 @@
                 <div class="col-md-6">
                   <div class="border-start border-warning border-4 ps-3">
                     <small class="text-muted">Color</small>
-                    <div class="fw-semibold">{{ vehiculo.color|default:'N/A' }}</div>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="fw-semibold">{{ vehiculo.color|default:'N/A' }}</div>
+                      {% if vehiculo.color %}
+                      <div style="width: 50px; height: 50px; background-color: {{ vehiculo.color }}; border-radius: 50%; border: 1px solid #ccc;"></div>
+                      {% endif %}
+                    </div>
                   </div>
                 </div>
                 <div class="col-md-6">

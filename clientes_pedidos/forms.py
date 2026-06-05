@@ -26,9 +26,10 @@ class PedidoCreateForm(BootstrapFormMixin, forms.ModelForm):
 class ItemPedidoForm(BootstrapFormMixin, forms.ModelForm):
     tipo_item = forms.ChoiceField(
         choices=[('vehiculo', 'Vehículo'), ('repuesto', 'Repuesto')],
+        initial='vehiculo',
         required=True,
         label='Tipo de Ítem',
-        widget=forms.Select()
+        widget=forms.Select(attrs={'class': 'form-select tipo-item-select'})
     )
 
     class Meta:
@@ -41,6 +42,33 @@ class ItemPedidoForm(BootstrapFormMixin, forms.ModelForm):
             'cantidad': forms.NumberInput(attrs={'step': '1', 'min': '1'}),
             'precio_unitario': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrar opciones según el tipo, pero por simplicidad, mostrar todos
+        from inventario.models import Vehiculo, Repuesto
+        self.fields['vehiculo'].queryset = Vehiculo.objects.all()
+        self.fields['repuesto'].queryset = Repuesto.objects.all()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo_item = cleaned_data.get('tipo_item')
+        vehiculo = cleaned_data.get('vehiculo')
+        repuesto = cleaned_data.get('repuesto')
+
+        # Validación según el tipo seleccionado
+        if tipo_item == 'vehiculo':
+            if not vehiculo:
+                self.add_error('vehiculo', 'Debe seleccionar un vehículo.')
+            # Limpieza de seguridad: eliminar repuesto si es vehículo
+            cleaned_data['repuesto'] = None
+        elif tipo_item == 'repuesto':
+            if not repuesto:
+                self.add_error('repuesto', 'Debe seleccionar un repuesto.')
+            # Limpieza de seguridad: eliminar vehículo si es repuesto
+            cleaned_data['vehiculo'] = None
+
+        return cleaned_data
 
 
 ItemPedidoFormSet = inlineformset_factory(
@@ -131,6 +159,4 @@ class CarritoForm(forms.ModelForm):
         widgets = {
             'cliente': forms.HiddenInput(),
         }
-
-
-
+        

@@ -19,12 +19,23 @@
                     </div>
 
                     <div class="card-body p-4 p-md-5">
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <h4 class="alert-heading">Errores en el formulario:</h4>
+                            <ul class="mb-0">
+                                {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
                         <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                             {% csrf_token %}
                             
                             {{ form.tipo }}
 
-                            <div class="form-section-title mt-2">Información de Marca y Modelo</div>
+                            <div class="form-section-title">Información de Marca y Modelo</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label">Marca</label>
@@ -34,54 +45,41 @@
                                 <div class="col-md-4">
                                     <label class="form-label">Modelo</label>
                                     {{ form.modelo }}
+                                    {% if form.modelo.errors %}<div class="text-danger small">{{ form.modelo.errors }}</div>{% endif %}
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Año de Fabricación</label>
                                     {{ form.año }}
+                                    {% if form.año.errors %}<div class="text-danger small">{{ form.año.errors }}</div>{% endif %}
                                 </div>
                             </div>
 
                             <div class="form-section-title">Especificaciones del Vehículo</div>
                             <div class="row g-3 mb-4">
-                                <div class="col-md-3">
+                                <div class="col-md-6">
                                     <label class="form-label">Color</label>
                                     {{ form.color }}
+                                    {% if form.color.errors %}<div class="text-danger small">{{ form.color.errors }}</div>{% endif %}
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Combustible</label>
                                     {{ form.combustible }}
+                                    {% if form.combustible.errors %}<div class="text-danger small">{{ form.combustible.errors }}</div>{% endif %}
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Transmisión</label>
                                     {{ form.transmision }}
+                                    {% if form.transmision.errors %}<div class="text-danger small">{{ form.transmision.errors }}</div>{% endif %}
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Kilometraje</label>
                                     {{ form.kilometraje }}
+                                    {% if form.kilometraje.errors %}<div class="text-danger small">{{ form.kilometraje.errors }}</div>{% endif %}
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Nro. de Chasis (VIN)</label>
                                     {{ form.codigo_chasis }}
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Motorización</label>
-                                    {{ form.motorizacion }}
-                                </div>
-                            </div>
-
-                            <div class="form-section-title">Valores y Estado Actual</div>
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-4">
-                                    <label class="form-label">Costo de Compra (Gs.)</label>
-                                    {{ form.costo_compra }}
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Precio de Venta (Gs.)</label>
-                                    {{ form.precio_venta }}
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Estado de Disponibilidad</label>
-                                    {{ form.estado }}
+                                    {% if form.codigo_chasis.errors %}<div class="text-danger small">{{ form.codigo_chasis.errors }}</div>{% endif %}
                                 </div>
                             </div>
 
@@ -90,11 +88,13 @@
                                 <div class="col-md-6">
                                     <label class="form-label">Fotografía del Vehículo</label>
                                     {{ form.imagen }}
+                                    {% if form.imagen.errors %}<div class="text-danger small">{{ form.imagen.errors }}</div>{% endif %}
                                     <div class="form-text text-muted">Formatos permitidos: JPG, PNG. Máx 5MB.</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Ubicación en Depósito</label>
                                     {{ form.ubicacion }}
+                                    {% if form.ubicacion.errors %}<div class="text-danger small">{{ form.ubicacion.errors }}</div>{% endif %}
                                 </div>
                             </div>
 
@@ -134,5 +134,47 @@
           }, false)
         })
     })()
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const marcaSelect = document.getElementById('id_marca');
+    const modeloSelect = document.getElementById('id_modelo');
+
+    function clearOptions() {
+        while (modeloSelect.options.length > 0) {
+            modeloSelect.remove(0);
+        }
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.text = '--- Seleccione un modelo ---';
+        modeloSelect.add(opt);
+    }
+
+    function populateModelos(marcaId) {
+        clearOptions();
+        if (!marcaId) return;
+        fetch(`/inventario/ajax/modelos_por_marca/?marca_id=${marcaId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.modelos && data.modelos.length) {
+                    data.modelos.forEach(function(m) {
+                        const opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.text = m.nombre;
+                        modeloSelect.add(opt);
+                    });
+                }
+            });
+    }
+
+    if (marcaSelect) {
+        marcaSelect.addEventListener('change', function () {
+            populateModelos(this.value);
+        });
+        // cargar inicialmente si hay marca seleccionada
+        if (marcaSelect.value) populateModelos(marcaSelect.value);
+    }
+});
 </script>
 {% endblock %}
