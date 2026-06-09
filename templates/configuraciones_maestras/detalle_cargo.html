@@ -42,7 +42,9 @@
           <h5 class="mb-2">Roles asociados</h5>
           <p class="text-muted">
             {% if cargo.roles.all %}
-              {{ cargo.roles.all|join:", " }}
+              {% for rol in cargo.roles.all %}
+                <span class="badge bg-secondary bg-opacity-10 text-secondary me-1">{{ rol }}</span>
+              {% endfor %}
             {% else %}
               No hay roles asociados.
             {% endif %}

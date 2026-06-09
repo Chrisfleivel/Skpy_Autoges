@@ -11,6 +11,7 @@ from .decorators import revisar_permiso
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 import logging
+import json
 #from .decorators import requiere_privilegio
 from django.http import JsonResponse
 
@@ -583,6 +584,35 @@ def editar_permiso(request, permiso_id):
         logger.error(f"Error al editar permiso: {e}")
         messages.error(request, "Ocurrió un error al editar el permiso.")
         return redirect('lista_permisos')
+
+@login_required
+def cambiar_tema(request):
+    """
+    Guarda la preferencia de tema del usuario en su perfil.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Método no permitido.'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        nuevo_tema = data.get('tema')
+    except (ValueError, TypeError):
+        return JsonResponse({'status': 'error', 'message': 'JSON inválido.'}, status=400)
+
+    if not nuevo_tema:
+        return JsonResponse({'status': 'error', 'message': 'Tema no especificado.'}, status=400)
+
+    perfil = getattr(request.user, 'perfil', None)
+    if not perfil:
+        perfil = UsuarioPerfil.objects.create(user=request.user)
+
+    opciones = [opcion[0] for opcion in UsuarioPerfil._meta.get_field('tema').choices]
+    if nuevo_tema not in opciones:
+        return JsonResponse({'status': 'error', 'message': 'Tema no válido.'}, status=400)
+
+    perfil.tema = nuevo_tema
+    perfil.save()
+    return JsonResponse({'status': 'success', 'tema': nuevo_tema})
 
 # --------------------------------------------------------------------------
 # Vista de Perfil de Usuario

@@ -128,9 +128,10 @@ class PerfilUsuarioForm(forms.ModelForm):
     """
     class Meta: 
         model = UsuarioPerfil
-        fields = ['empleado', 'roles', 'foto_perfil']
+        fields = ['empleado', 'roles', 'foto_perfil', 'tema']
         widgets = {
             'roles': forms.CheckboxSelectMultiple(),
+            'tema': forms.Select(attrs={'class': 'form-select'}),
         }
     def clean(self):
         cleaned_data = super().clean()

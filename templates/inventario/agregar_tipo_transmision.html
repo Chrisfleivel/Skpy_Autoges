@@ -40,8 +40,12 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="{{ form.estado.id_for_label }}" class="form-label fw-semibold">Estado</label>
-                            {{ form.estado }}
+                            <div class="form-check">
+                                {{ form.estado }}
+                                <label class="form-check-label" for="{{ form.estado.id_for_label }}">
+                                    {{ form.estado.label }}
+                                </label>
+                            </div>
                             {% if form.estado.errors %}
                                 <div class="text-danger small mt-1">{{ form.estado.errors|join:', ' }}</div>
                             {% endif %}

@@ -30,6 +30,13 @@ from .views import (
     detalle_departamento,
     inactivar_departamento,
     activar_departamento,
+    lista_cargos,
+    agregar_cargo,
+    editar_cargo,
+    eliminar_cargo,
+    detalle_cargo,
+    inactivar_cargo,
+    activar_cargo,
 )
 
 urlpatterns = [

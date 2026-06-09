@@ -12,16 +12,25 @@
                     <div>
                         <h1 class="h3 mb-1 fw-bold text-dark">{{ marca.nombre }}</h1>
                         <p class="text-muted mb-0">Detalles de la marca de vehículo.</p>
+                        {% if marca.estado %}
+                            <span class="badge bg-success mt-2">
+                                <i class="bi bi-toggle-on me-1"></i>Activa
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary mt-2">
+                                <i class="bi bi-toggle-off me-1"></i>Inactiva
+                            </span>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{% url 'lista_marcas_vehiculos' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'lista_marcas_vehiculos' %}" class="btn btn-outline-secondary" title="Volver" aria-label="Volver a la lista de marcas">
                         <i class="bi bi-arrow-left me-2"></i>Volver
                     </a>
-                    <a href="{% url 'editar_marca_vehiculo' marca.id %}" class="btn btn-primary">
+                    <a href="{% url 'editar_marca_vehiculo' marca.id %}" class="btn btn-primary" title="Editar" aria-label="Editar marca">
                         <i class="bi bi-pencil me-2"></i>Editar
                     </a>
-                    <a href="{% url 'eliminar_marca_vehiculo' marca.id %}" class="btn btn-outline-danger" onclick="return confirm('¿Eliminar esta marca? Esta acción no se puede deshacer.');">
+                    <a href="{% url 'eliminar_marca_vehiculo' marca.id %}" class="btn btn-outline-danger" title="Eliminar" aria-label="Eliminar marca" onclick="return confirm('¿Eliminar esta marca? Esta acción no se puede deshacer.');">
                         <i class="bi bi-trash me-2"></i>Eliminar
                     </a>
                 </div>
@@ -57,6 +66,12 @@
                         </div>
                         <div class="col-12">
                             <div class="border-start border-warning border-4 ps-3">
+                                <small class="text-muted">Estado</small>
+                                <div class="fw-semibold">{{ marca.estado|yesno:'Activo,Inactivo' }}</div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border-start border-secondary border-4 ps-3">
                                 <small class="text-muted">Modelos asociados</small>
                                 <div class="fw-semibold">{{ marca.modelos.count }} modelo{{ marca.modelos.count|pluralize }}</div>
                             </div>

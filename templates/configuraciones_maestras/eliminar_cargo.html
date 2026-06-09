@@ -8,9 +8,14 @@
     <div class="card-body">
       <h1 class="mb-3">Eliminar Cargo</h1>
       <p class="text-muted">¿Estás seguro de que deseas eliminar el cargo <strong>{{ cargo.nombre }}</strong>?</p>
+      {% if not eliminable %}
+        <div class="alert alert-warning">
+          Este cargo no puede eliminarse porque tiene empleados asociados.
+        </div>
+      {% endif %}
       <form method="post" action="{% url 'eliminar_cargo' cargo.id %}">
         {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <button type="submit" class="btn btn-danger" {% if not eliminable %}disabled{% endif %}>Eliminar</button>
         <a href="{% url 'lista_cargos' %}" class="btn btn-secondary ms-2">Cancelar</a>
       </form>
     </div>

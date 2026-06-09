@@ -49,6 +49,20 @@ class UnidadMedida(models.Model):
         verbose_name_plural = "Unidades de Medida"
         ordering = ['nombre']
 
+    def eliminable(self):
+        return not self.repuesto_set.exists()  # Solo se puede eliminar si no tiene repuestos asociados
+    
+    def activar(self):
+        self.estado = True
+        self.save()
+    
+    def inactivar(self):
+        self.estado = False
+        self.save()
+    
+    def esta_activo(self):
+        return self.estado
+
     def __str__(self):
         return f"{self.nombre} ({self.abreviatura})"
     
@@ -69,6 +83,18 @@ class Deposito(models.Model):
         verbose_name_plural = "Depósitos"
         ordering = ['nombre']
 
+    def eliminable(self):
+        return not self.vehiculos.exists() and not self.repuesto_set.exists()  # Solo se puede eliminar si no tiene vehículos ni repuestos asociados
+    
+    def activar(self):
+        self.estado = True
+        self.save()
+    
+    def inactivar(self):
+        self.estado = False
+        self.save()
+        
+
     def __str__(self):
         return self.nombre
 
@@ -80,6 +106,8 @@ class MarcaVehiculo(models.Model):
     nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la Marca")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción Adicional")
     estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
+    pais_origen = models.CharField(max_length=100, blank=True, null=True, verbose_name="País de Origen", default='Korea del Sur')
+    
 
     def eliminable(self):
         return not self.modelos.exists()  # Solo se puede eliminar si no tiene modelos asociados

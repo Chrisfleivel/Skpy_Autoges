@@ -53,6 +53,7 @@ urlpatterns = [
     # perfil usuario para el admin
     path('perfil/e/<int:empleado_id>/', views.perfil_usuario, name='perfil_usuario'),
     path('perfil/e/<int:empleado_id>/editar/', views.editar_perfil_usuario, name='editar_perfil_usuario'),
+    path('perfil/cambiar-tema/', views.cambiar_tema, name='cambiar_tema'),
     # path('perfil/crear/', views.crear_perfil, name='crear_perfil'),
     #lista perfiles
     #path('perfiles/', views.lista_perfiles, name='lista_perfiles'),

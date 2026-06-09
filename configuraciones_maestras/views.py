@@ -1,5 +1,6 @@
 # configuraciones_maestras/views.py
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
 from .models import Proveedor, AgenteTransporte, DespachanteAduana, TasaCambio, Departamento, Cargo
 from .forms import ProveedorForm, AgenteTransporteForm, DespachanteAduanaForm, TasaCambioForm, DepartamentoForm, CargoForm
 from seguridad_usuarios.decorators import revisar_permiso
@@ -321,10 +322,13 @@ def editar_cargo(request, pk):
 @revisar_permiso('configuraciones_maestras.eliminar_cargo')
 def eliminar_cargo(request, pk):
     cargo = get_object_or_404(Cargo, pk=pk)
+    eliminable = cargo.eliminable()
     if request.method == 'POST':
-        cargo.delete()
-        return redirect('lista_cargos')
-    return render(request, 'configuraciones_maestras/eliminar_cargo.html', {'cargo': cargo})
+        if eliminable:
+            cargo.delete()
+            return redirect('lista_cargos')
+        messages.error(request, 'No se puede eliminar este cargo porque tiene empleados asociados.')
+    return render(request, 'configuraciones_maestras/eliminar_cargo.html', {'cargo': cargo, 'eliminable': eliminable})
 
 @revisar_permiso('configuraciones_maestras.detallar_cargo')
 def detalle_cargo(request, pk):

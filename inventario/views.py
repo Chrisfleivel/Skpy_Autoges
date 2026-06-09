@@ -430,7 +430,10 @@ def detalle_deposito(request, deposito_id):
 @revisar_permiso('inventario.eliminar_deposito')
 def eliminar_deposito(request, deposito_id):
     deposito = Deposito.objects.get(id=deposito_id)
-    deposito.delete()
+    if deposito.eliminable():
+        deposito.delete()
+    else:
+        messages.error(request, 'No se puede eliminar este depósito porque tiene vehículos o repuestos asociados.')
     return redirect('lista_depositos')
 
 @revisar_permiso('inventario.editar_deposito')
@@ -488,7 +491,10 @@ def detalle_unidad_medida(request, unidad_id):
 @revisar_permiso('inventario.eliminar_unidad_medida')
 def eliminar_unidad_medida(request, unidad_id):
     unidad = UnidadMedida.objects.get(id=unidad_id)
-    unidad.delete()
+    if unidad.eliminable():
+        unidad.delete()
+    else:
+        messages.error(request, 'No se puede eliminar esta unidad de medida porque tiene repuestos asociados.')
     return redirect('lista_unidades_medida')
 
 @revisar_permiso('inventario.editar_unidad_medida')
@@ -549,7 +555,10 @@ def editar_marca_vehiculo(request, marca_id):
 @revisar_permiso('inventario.eliminar_marcas_vehiculos')
 def eliminar_marca_vehiculo(request, marca_id):
     marca = MarcaVehiculo.objects.get(id=marca_id)
-    marca.delete()
+    if marca.eliminable():
+        marca.delete()
+    else:
+        messages.error(request, 'No se puede eliminar esta marca de vehículo porque tiene modelos asociados.')
     return redirect('lista_marcas_vehiculos')
 
 # --------------------------------------------------------------------------
@@ -598,7 +607,10 @@ def editar_tipo_vehiculo(request, tipo_id):
 @revisar_permiso('inventario.eliminar_tipos_vehiculos')
 def eliminar_tipo_vehiculo(request, tipo_id):
     tipo = TipoVehiculo.objects.get(id=tipo_id)
-    tipo.delete()
+    if tipo.eliminable:
+        tipo.delete()
+    else:
+        messages.error(request, 'No se puede eliminar este tipo de vehículo porque tiene modelos asociados.')
     return redirect('lista_tipos_vehiculos')
 
 # --------------------------------------------------------------------------
@@ -647,7 +659,10 @@ def editar_tipo_transmision(request, tipo_id):
 @revisar_permiso('inventario.eliminar_tipos_transmision')
 def eliminar_tipo_transmision(request, tipo_id):
     tipo = TipoTransmision.objects.get(id=tipo_id)
-    tipo.delete()
+    if tipo.eliminable:
+        tipo.delete()
+    else:
+        messages.error(request, 'No se puede eliminar este tipo de transmisión porque tiene modelos asociados.')
     return redirect('lista_tipos_transmision')
 
 # --------------------------------------------------------------------------
@@ -667,13 +682,25 @@ def agregar_modelo_vehiculo(request):
 
 @revisar_permiso('inventario.listar_modelos_vehiculos')
 def lista_modelos_vehiculos(request):
-    modelos = ModeloVehiculo.objects.all()
+    modelos = ModeloVehiculo.objects.select_related('marca').all()
+    marcas = MarcaVehiculo.objects.all()
     query = request.GET.get('search_query', '')
+    marca_id = request.GET.get('marca_id', '')
+
     if query:
-        modelos = modelos.filter(nombre__icontains=query)
+        modelos = modelos.filter(
+            models.Q(nombre__icontains=query) |
+            models.Q(marca__nombre__icontains=query)
+        )
+
+    if marca_id:
+        modelos = modelos.filter(marca_id=marca_id)
+
     return render(request, 'inventario/lista_modelos_vehiculos.html', {
         'modelos': modelos,
-        'query': query
+        'query': query,
+        'marca_id': marca_id,
+        'marcas': marcas,
     })
 
 @revisar_permiso('inventario.detallar_modelos_vehiculos')
