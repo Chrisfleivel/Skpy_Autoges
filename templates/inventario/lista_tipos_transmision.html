@@ -14,7 +14,7 @@
                         <p class="text-muted mb-0">Administra las transmisiones disponibles para tus vehículos.</p>
                     </div>
                 </div>
-                <a href="{% url 'agregar_tipo_transmision' %}" class="btn btn-primary shadow-sm">
+                <a href="{% url 'agregar_tipo_transmision' %}" class="btn btn-primary shadow-sm" title="Agregar nuevo tipo de transmisión">
                     <i class="bi bi-plus-circle-fill me-2"></i>Agregar Tipo
                 </a>
             </div>
@@ -25,14 +25,16 @@
         <div class="card-body">
             <form method="GET" class="row g-3 align-items-end">
                 <div class="col-md-8">
-                    <label for="search_query" class="form-label fw-semibold">Buscar tipo</label>
+                    <label for="search_query" class="form-label fw-semibold" >Buscar tipo</label>
                     <input type="text" id="search_query" name="search_query" class="form-control" placeholder="Nombre de la transmisión..." value="{{ query }}">
                 </div>
                 <div class="col-md-4 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary mt-3">
+                    <button type="submit" class="btn btn-primary mt-3" title="Buscar Tipo de Trasmision">
                         <i class="bi bi-search me-2"></i>Buscar
                     </button>
-                    <a href="{% url 'lista_tipos_transmision' %}" class="btn btn-outline-secondary mt-3">Limpiar</a>
+                    <a href="{% url 'lista_tipos_transmision' %}" class="btn btn-outline-secondary mt-3" title="Limpiar búsqueda">
+                        <i class="bi bi-x-circle me-2"></i>Limpiar
+                    </a>
                 </div>
             </form>
         </div>

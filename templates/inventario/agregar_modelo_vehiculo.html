@@ -55,7 +55,17 @@
                             {% endif %}
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.estado }}
+                                <label class="form-check-label" for="{{ form.estado.id_for_label }}">
+                                    {{ form.estado.label }}
+                                </label>
+                            </div>
+                            {% if form.estado.errors %}
+                                <div class="text-danger small mt-1">{{ form.estado.errors|join:', ' }}</div>
+                            {% endif %}
+                        </div>
                             <a href="{% url 'lista_modelos_vehiculos' %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle me-2"></i>Cancelar
                             </a>

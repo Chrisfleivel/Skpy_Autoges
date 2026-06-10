@@ -55,8 +55,6 @@
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#">Tasas de Cambio</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'configurar_apariencia' %}">Apariencia</a></li>
-                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'lista_marcas_vehiculos' %}">Marcas de Vehículos</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'lista_modelos_vehiculos' %}">Modelos de Vehículos</a></li>
@@ -88,6 +86,18 @@
                         <i class="bi bi-person-circle"></i> Mi Perfil
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li class="px-3 py-2">
+                            <label for="theme-selector" class="form-label mb-1">Tema</label>
+                            <select id="theme-selector" class="form-select form-select-sm">
+                                <option value="theme-default" {% if theme_class == 'theme-default' %}selected{% endif %}>Predeterminado</option>
+                                <option value="theme-dark" {% if theme_class == 'theme-dark' %}selected{% endif %}>Oscuro</option>
+                                <option value="theme-light" {% if theme_class == 'theme-light' %}selected{% endif %}>Claro</option>
+                                <option value="theme-emerald" {% if theme_class == 'theme-emerald' %}selected{% endif %}>Verde</option>
+                                <option value="theme-ocean" {% if theme_class == 'theme-ocean' %}selected{% endif %}>Ocean</option>
+                                <option value="theme-sunset" {% if theme_class == 'theme-sunset' %}selected{% endif %}>Sunset</option>
+                            </select>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'perfil' user.id %}">Ver Perfil</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>

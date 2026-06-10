@@ -24,6 +24,27 @@ class Proveedor(Persona):
     def __str__(self):
         return self.nombre
 
+
+
+class ContactoProveedor(Persona):
+    """
+    Modelo que representa un Contacto específico de un Proveedor.
+    """
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, related_name='contactos', verbose_name="Proveedor")
+    usuario_modifico = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='modificaciones_contacto_proveedor')
+    cargo = models.CharField(max_length=100, blank=True, null=True, verbose_name="Cargo del Contacto")
+    telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono del Contacto")
+    email = models.EmailField(blank=True, null=True, verbose_name="Correo Electrónico del Contacto")
+
+    class Meta:
+        verbose_name = "Contacto de Proveedor"
+        verbose_name_plural = "Contactos de Proveedores"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f'{self.nombre} ({self.proveedor.nombre})'
+    
+    
 # --------------------------------------------------------------------------
 # Modelo para representar un Agente de Transporte
 # --------------------------------------------------------------------------

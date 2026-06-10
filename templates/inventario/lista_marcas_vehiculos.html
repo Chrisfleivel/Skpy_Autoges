@@ -14,7 +14,7 @@
                         <p class="text-muted mb-0">Administra las marcas usadas en tu inventario de vehículos.</p>
                     </div>
                 </div>
-                <a href="{% url 'agregar_marca_vehiculo' %}" class="btn btn-primary shadow-sm">
+                <a href="{% url 'agregar_marca_vehiculo' %}" class="btn btn-primary shadow-sm" title="Agregar nueva marca">
                     <i class="bi bi-plus-circle-fill me-2"></i>Agregar Marca
                 </a>
             </div>
@@ -32,7 +32,9 @@
                     <button type="submit" class="btn btn-primary mt-3">
                         <i class="bi bi-search me-2"></i>Buscar
                     </button>
-                    <a href="{% url 'lista_marcas_vehiculos' %}" class="btn btn-outline-secondary mt-3">Limpiar</a>
+                    <a href="{% url 'lista_marcas_vehiculos' %}" class="btn btn-outline-secondary mt-3" title="Limpiar búsqueda">
+                        <i class="bi bi-x-circle me-2"></i>Limpiar
+                    </a>
                 </div>
             </form>
         </div>
@@ -54,6 +56,7 @@
                             <th class="border-0 fw-semibold ps-4">#</th>
                             <th class="border-0 fw-semibold">Marca</th>
                             <th class="border-0 fw-semibold">Descripción</th>
+                            <th class="border-0 fw-semibold">País de Origen</th>
                             <th class="border-0 fw-semibold text-end pe-4">Acciones</th>
                         </tr>
                     </thead>
@@ -67,15 +70,16 @@
                                 </a>
                             </td>
                             <td class="text-muted">{{ marca.descripcion|default:'Sin descripción' }}</td>
+                            <td class="text-muted">{{ marca.pais_origen|default:'No especificado' }}</td>
                             <td class="text-end pe-4">
                                 <div class="btn-group" role="group">
-                                    <a href="{% url 'detalle_marca_vehiculo' marca.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                    <a href="{% url 'detalle_marca_vehiculo' marca.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalles" aria-label="Ver detalles de la marca">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{% url 'editar_marca_vehiculo' marca.id %}" class="btn btn-sm btn-outline-secondary" title="Editar">
+                                    <a href="{% url 'editar_marca_vehiculo' marca.id %}" class="btn btn-sm btn-outline-secondary" title="Editar" aria-label="Editar marca">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <a href="{% url 'eliminar_marca_vehiculo' marca.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Eliminar esta marca? Esta acción no se puede deshacer.');">
+                                    <a href="{% url 'eliminar_marca_vehiculo' marca.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" aria-label="Eliminar marca" onclick="return confirm('¿Eliminar esta marca? Esta acción no se puede deshacer.');">
                                         <i class="bi bi-trash"></i>
                                     </a>
                                 </div>
@@ -92,9 +96,10 @@
                 </div>
                 <h5 class="text-muted mb-3">No hay marcas registradas</h5>
                 <p class="text-muted mb-4">Agrega tu primera marca de vehículo para organizar mejor el inventario.</p>
-                <a href="{% url 'agregar_marca_vehiculo' %}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-2"></i>Agregar Marca
+                <a href="{% url 'agregar_marca_vehiculo' %}" class="btn btn-primary shadow-sm">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Agregar Marca
                 </a>
+                
             </div>
             {% endif %}
         </div>

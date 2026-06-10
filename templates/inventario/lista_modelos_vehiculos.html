@@ -24,18 +24,24 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <form method="GET" class="row g-3 align-items-end">
-                <div class="col-md-8">
-                    <label for="search_query" class="form-label fw-semibold">Buscar modelo</label>
-                    <input type="text" id="search_query" name="search_query" class="form-control" placeholder="Nombre del modelo..." value="{{ query }}">
-                </div>
-                <div class="col-md-4 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary mt-3">
-                        <i class="bi bi-search me-2"></i>Buscar
-                    </button>
-                    <a href="{% url 'lista_modelos_vehiculos' %}" class="btn btn-outline-secondary mt-3">Limpiar</a>
-                </div>
-            </form>
-        </div>
+                    <div class="col-md-5">
+                        <label for="search_query" class="form-label fw-semibold">Buscar modelo</label>
+                        <input type="text" id="search_query" name="search_query" class="form-control" placeholder="Nombre del modelo o marca..." value="{{ query }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="marca_id" class="form-label fw-semibold">Filtrar por marca</label>
+                        <select id="marca_id" name="marca_id" class="form-select">
+                            <option value="">Todas las marcas</option>
+                            {% for marca in marcas %}
+                            <option value="{{ marca.id }}" {% if marca_id == marca.id|stringformat:"s" %}selected{% endif %}>{{ marca.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary mt-3 w-100">
+                            <i class="bi bi-search me-2"></i>Buscar
+                        </button>
+                        <a href="{% url 'lista_modelos_vehiculos' %}" class="btn btn-outline-secondary mt-3 w-100">Limpiar</a>
     </div>
 
     <div class="card border-0 shadow-sm">

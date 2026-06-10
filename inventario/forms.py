@@ -6,8 +6,18 @@ from .models import Vehiculo, Repuesto, MantenimientoVehiculo, Deposito, UnidadM
 class MarcaVehiculoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.widget.attrs.update({'class': 'form-control'})
+        for field_name, field in self.fields.items():
+            if field_name == 'estado':
+                # Checkbox con clase custom
+                field.widget = forms.CheckboxInput(attrs={
+                    'class': 'form-check-input',
+                })
+                field.label = 'Estado Activo'
+            else:
+                field.widget.attrs.update({'class': 'form-control'})
+        # Valor inicial para estado
+        if 'estado' in self.fields:
+            self.fields['estado'].initial = True
 
     class Meta:
         model = MarcaVehiculo
@@ -16,8 +26,18 @@ class MarcaVehiculoForm(forms.ModelForm):
 class ModeloVehiculoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.widget.attrs.update({'class': 'form-control'})
+        for field_name, field in self.fields.items():
+            if field_name == 'estado':
+                # Checkbox con clase custom
+                field.widget = forms.CheckboxInput(attrs={
+                    'class': 'form-check-input',
+                })
+                field.label = 'Estado Activo'
+            else:
+                field.widget.attrs.update({'class': 'form-control'})
+        # Valor inicial para estado
+        if 'estado' in self.fields:
+            self.fields['estado'].initial = True
 
     class Meta:
         model = ModeloVehiculo
@@ -26,8 +46,18 @@ class ModeloVehiculoForm(forms.ModelForm):
 class TipoVehiculoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.widget.attrs.update({'class': 'form-control'})
+        for field_name, field in self.fields.items():
+            if field_name == 'estado':
+                # Checkbox con clase custom
+                field.widget = forms.CheckboxInput(attrs={
+                    'class': 'form-check-input',
+                })
+                field.label = 'Estado Activo'
+            else:
+                field.widget.attrs.update({'class': 'form-control'})
+        # Valor inicial para estado
+        if 'estado' in self.fields:
+            self.fields['estado'].initial = True
 
     class Meta:
         model = TipoVehiculo
@@ -36,8 +66,18 @@ class TipoVehiculoForm(forms.ModelForm):
 class TipoTransmisionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.widget.attrs.update({'class': 'form-control'})
+        for field_name, field in self.fields.items():
+            if field_name == 'estado':
+                # Checkbox con clase custom
+                field.widget = forms.CheckboxInput(attrs={
+                    'class': 'form-check-input',
+                })
+                field.label = 'Estado Activo'
+            else:
+                field.widget.attrs.update({'class': 'form-control'})
+        # Valor inicial para estado
+        if 'estado' in self.fields:
+            self.fields['estado'].initial = True
 
     class Meta:
         model = TipoTransmision

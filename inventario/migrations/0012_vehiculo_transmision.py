@@ -9,11 +9,8 @@ class Migration(migrations.Migration):
     dependencies = [
         ('inventario', '0011_remove_vehiculo_motorizacion'),
     ]
-
-    operations = [
-        migrations.AddField(
-            model_name='vehiculo',
-            name='transmision',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='vehiculos', to='inventario.tipotransmision', verbose_name='Tipo de Transmisión'),
-        ),
-    ]
+    # Esta migración quedó duplicada respecto a 0011_remove_vehiculo_motorizacion
+    # (ambas añadían el campo `transmision`). Para evitar crear la columna
+    # dos veces en SQLite, dejamos esta migración como no-op ya que 0011
+    # ya añade el campo correctamente.
+    operations = []

@@ -68,3 +68,68 @@ body.theme-sunset .btn-save:hover {
     border-color: #c2410c;
     filter: brightness(90%);
 }
+
+/* === Configuración de Tabla Moderna === */
+body.theme-sunset .table {
+    border-collapse: separate !important;
+    border-spacing: 0 10px !important;
+    background-color: transparent !important;
+}
+
+body.theme-sunset .table tbody tr {
+    background-color: var(--bg-form);
+    box-shadow: 0 2px 4px rgba(234, 88, 12, 0.1);
+    border-radius: 10px !important;
+    transition: all 0.3s ease;
+}
+
+body.theme-sunset .table tbody tr:hover {
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+    transform: translateY(-2px);
+}
+
+body.theme-sunset .table tbody tr td:first-child {
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+body.theme-sunset .table tbody tr td:last-child {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+body.theme-sunset .table thead th {
+    border: none !important;
+    background-color: transparent !important;
+    color: var(--text-label);
+    padding-bottom: 10px;
+    font-weight: 600;
+}
+
+body.theme-sunset .table td {
+    border: none !important;
+    padding: 15px !important;
+    color: var(--text-label);
+}
+
+body.theme-sunset .table tbody tr td {
+    vertical-align: middle;
+}
+
+body.theme-sunset .badge {
+    --bs-badge-padding-y: 0.5rem;
+    --bs-badge-padding-x: 1rem;
+    border-radius: 50px !important;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+body.theme-sunset .card {
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+body.theme-sunset .table-responsive {
+    border-radius: 12px !important;
+    overflow: hidden;
+}

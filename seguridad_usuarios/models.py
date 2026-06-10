@@ -3,6 +3,8 @@
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from abc import ABC
 from django.core.mail import send_mail
 email = 'christianfleitas97@gmail.com' # Correo electrónico del remitente
@@ -153,19 +155,17 @@ class Empleado(Persona):
     """
     Modelo que representa un Empleado de SKPY.
     """
-    from configuraciones_maestras.models import Departamento, Cargo
-
-    departamento = models.ForeignKey(Departamento, on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Departamento")
-    cargo = models.ForeignKey(Cargo, on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Cargo")
+    departamento = models.ForeignKey('configuraciones_maestras.Departamento', on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Departamento")
+    cargo = models.ForeignKey('configuraciones_maestras.Cargo', on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Cargo")
     fecha_contratacion = models.DateField(blank=True, null=True, verbose_name="Fecha de Contratación")
     fecha_terminacion = models.DateField(blank=True, null=True, verbose_name="Fecha de Terminación")
     descripcion_trabajo = models.TextField(blank=True, null=True, verbose_name="Descripción del Trabajo")
     tiene_usuario = models.BooleanField(default=False, verbose_name="Tiene Usuario")
+    
     class Meta:
         verbose_name = "Empleado"
         verbose_name_plural = "Empleados"
         ordering = ['nombre']
-
 
     def __str__(self):
         nombre = self.nombre or ""
@@ -182,6 +182,20 @@ class UsuarioPerfil(models.Model):
     roles = models.ManyToManyField(Rol, blank=True, related_name='usuarios')
     debe_cambiar_contrasena = models.BooleanField(default=True) # Indica si el usuario debe cambiar su contraseña en el próximo inicio de sesión
     rol_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Rol")
+    tema = models.CharField(
+        max_length=50,
+        choices=[
+            ('theme-default', 'Tema Predeterminado'),
+            ('theme-dark', 'Modo Oscuro'),
+            ('theme-light', 'Modo Claro'),
+            ('theme-emerald', 'Verde'),
+            ('theme-ocean', 'Ocean'),
+            ('theme-sunset', 'Sunset'),
+        ],
+        default='theme-default',
+        verbose_name="Tema",
+        help_text="Preferencia de tema del usuario"
+    )
     foto_perfil = models.ImageField(upload_to='fotos_perfil/', blank=True, null=True, verbose_name="Foto de Perfil")
     Contrasena_temporal = models.CharField(max_length=255, blank=True, null=True, verbose_name="Contraseña Temporal")
 
@@ -199,6 +213,19 @@ class UsuarioPerfil(models.Model):
         verbose_name = "Usuario Perfil"
         verbose_name_plural = "Usuarios Perfil"
         ordering = ['user__username']
+
+
+@receiver(post_save, sender=User)
+def crear_usuario_perfil(sender, instance, created, **kwargs):
+    if created:
+        UsuarioPerfil.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def asegurar_usuario_perfil(sender, instance, **kwargs):
+    if not hasattr(instance, 'perfil'):
+        UsuarioPerfil.objects.create(user=instance)
+
 
 def enviar_contrasena_temporal(email_destino):
     asunto = "Contraseña Temporal para tu Cuenta en SKPY"
