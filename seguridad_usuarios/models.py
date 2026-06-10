@@ -155,19 +155,17 @@ class Empleado(Persona):
     """
     Modelo que representa un Empleado de SKPY.
     """
-    from configuraciones_maestras.models import Departamento, Cargo
-
-    departamento = models.ForeignKey(Departamento, on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Departamento")
-    cargo = models.ForeignKey(Cargo, on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Cargo")
+    departamento = models.ForeignKey('configuraciones_maestras.Departamento', on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Departamento")
+    cargo = models.ForeignKey('configuraciones_maestras.Cargo', on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Cargo")
     fecha_contratacion = models.DateField(blank=True, null=True, verbose_name="Fecha de Contratación")
     fecha_terminacion = models.DateField(blank=True, null=True, verbose_name="Fecha de Terminación")
     descripcion_trabajo = models.TextField(blank=True, null=True, verbose_name="Descripción del Trabajo")
     tiene_usuario = models.BooleanField(default=False, verbose_name="Tiene Usuario")
+    
     class Meta:
         verbose_name = "Empleado"
         verbose_name_plural = "Empleados"
         ordering = ['nombre']
-
 
     def __str__(self):
         nombre = self.nombre or ""

@@ -1,11 +1,28 @@
 # configuraciones_maestras/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from .models import Proveedor, AgenteTransporte, DespachanteAduana, TasaCambio, Departamento, Cargo
-from .forms import ProveedorForm, AgenteTransporteForm, DespachanteAduanaForm, TasaCambioForm, DepartamentoForm, CargoForm
+from django.forms import inlineformset_factory
+from .models import Proveedor, ContactoProveedor, AgenteTransporte, DespachanteAduana, TasaCambio, Departamento, Cargo
+from .forms import (
+    ProveedorForm,
+    ContactoProveedorForm,
+    AgenteTransporteForm,
+    DespachanteAduanaForm,
+    TasaCambioForm,
+    DepartamentoForm,
+    CargoForm,
+)
 from seguridad_usuarios.decorators import revisar_permiso
 # login_required
 from django.contrib.auth.decorators import login_required
+
+ContactoProveedorFormSet = inlineformset_factory(
+    Proveedor,
+    ContactoProveedor,
+    form=ContactoProveedorForm,
+    extra=1,
+    can_delete=True,
+)
 
 # Vista principal de datos maestros
 def home_maestras(request):
@@ -16,24 +33,48 @@ def home_maestras(request):
 def agregar_proveedor(request):
     if request.method == 'POST':
         form = ProveedorForm(request.POST)
-        if form.is_valid():
-            form.save()
+        formset = ContactoProveedorFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            proveedor = form.save()
+            contactos = formset.save(commit=False)
+            for contacto in contactos:
+                contacto.proveedor = proveedor
+                contacto.save()
+            for contacto in formset.deleted_objects:
+                contacto.delete()
             return redirect('lista_proveedores')
     else:
         form = ProveedorForm()
-    return render(request, 'configuraciones_maestras/agregar_proveedor.html', {'form': form})
+        formset = ContactoProveedorFormSet()
+    return render(
+        request,
+        'configuraciones_maestras/agregar_proveedor.html',
+        {'form': form, 'contact_formset': formset},
+    )
 
 @revisar_permiso('configuraciones_maestras.editar_proveedor')
 def editar_proveedor(request, pk):
     proveedor = get_object_or_404(Proveedor, pk=pk)
     if request.method == 'POST':
         form = ProveedorForm(request.POST, instance=proveedor)
-        if form.is_valid():
-            form.save()
+        formset = ContactoProveedorFormSet(request.POST, instance=proveedor)
+        if form.is_valid() and formset.is_valid():
+            proveedor = form.save()
+            contactos = formset.save(commit=False)
+            for contacto in contactos:
+                contacto.proveedor = proveedor
+                contacto.save()
+            for contacto in formset.deleted_objects:
+                contacto.delete()
             return redirect('lista_proveedores')
     else:
         form = ProveedorForm(instance=proveedor)
-    return render(request, 'configuraciones_maestras/editar_proveedor.html', {'form': form, 'proveedor': proveedor})
+        formset = ContactoProveedorFormSet(instance=proveedor)
+    return render(
+        request,
+        'configuraciones_maestras/editar_proveedor.html',
+        {'form': form, 'proveedor': proveedor, 'contact_formset': formset},
+    )
 
 @revisar_permiso('configuraciones_maestras.inactivar_proveedor')
 def inactivar_proveedor(request, pk):
