@@ -46,6 +46,8 @@ urlpatterns = [
     path('empleados/<int:pk>/', views.detalle_empleado, name='detalle_empleado'),
     path('empleados/<int:pk>/activar/', views.activar_empleado, name='activar_empleado'),
     path('empleados/<int:pk>/desactivar/', views.desactivar_empleado, name='desactivar_empleado'),
+    path('empleados/reporte/', views.reporte_empleados, name='reporte_empleados'),
+    path('empleados/reporte/pdf/', views.reporte_empleados_pdf, name='reporte_empleados_pdf'),
     # path('empleados/<int:pk>/eliminar/', views.eliminar_empleado, name='eliminar_empleado'),
 
     # Perfiles

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Contenedor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card border-danger">
+    <div class="card-body">
+      <h3 class="text-danger">Eliminar Contenedor</h3>
+      <p>¿Está seguro que desea eliminar el contenedor <strong>{{ contenedor.numero }}</strong>?</p>
+      <form method="post">
+        {% csrf_token %}
+        <button class="btn btn-danger">Sí, eliminar</button>
+        <a href="{% url 'detalle_contenedor' contenedor.id %}" class="btn btn-secondary ms-2">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

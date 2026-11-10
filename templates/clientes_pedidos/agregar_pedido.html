@@ -1,196 +1,361 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Agregar Pedido{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-5">
+<div class="container-fluid py-4">
   <div class="row justify-content-center">
-    <div class="col-12 col-xl-10">
-      <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+    <div class="col-xl-10">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
           <div>
-            <h1 class="h4 fw-bold mb-1">Agregar Nuevo Pedido</h1>
-            <p class="text-muted mb-0">Registra un pedido con items detallados y controla el importe total.</p>
+            <h5 class="mb-0 fw-bold">Registrar Nuevo Pedido</h5>
+            <p class="text-muted mb-0">Crea un pedido con todos sus detalles y productos.</p>
           </div>
-          <a href="{% url 'lista_pedidos' %}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
-            <i class="bi bi-arrow-left"></i>Volver a Pedidos
+          <a href="{% url 'lista_pedidos' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver
           </a>
         </div>
-      </div>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          
+          {% if pedido_form.non_field_errors %}
+          <div class="alert alert-danger m-4 mb-3">
+            {{ pedido_form.non_field_errors }}
+          </div>
+          {% endif %}
 
-      <div class="card border-0 shadow-sm">
-        <div class="card-body p-4">
-          <form method="post" novalidate>
-            {% csrf_token %}
+          <div class="card-body">
+            <h6 class="mb-3 fw-semibold text-primary">Información del Pedido</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ pedido_form.cliente.id_for_label }}">Cliente</label>
+                {{ pedido_form.cliente }}
+                {% if pedido_form.cliente.errors %}
+                  <div class="text-danger small mt-1">{{ pedido_form.cliente.errors|join:', ' }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ pedido_form.observaciones.id_for_label }}">Observaciones</label>
+                {{ pedido_form.observaciones }}
+                {% if pedido_form.observaciones.errors %}
+                  <div class="text-danger small mt-1">{{ pedido_form.observaciones.errors|join:', ' }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Total Estimado </label>
+                <input type="text" id="total_display" class="form-control" readonly value="0">
+                {{ pedido_form.monto_total.as_hidden }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">IVA 10% </label>
+                <input type="text" id="iva_display" class="form-control" readonly value="0">
+                {{ pedido_form.iva.as_hidden }}
+              </div>
+            </div>
 
-            {% if pedido_form.non_field_errors %}
-            <div class="alert alert-danger mb-4" role="alert">
-              <i class="bi bi-exclamation-triangle-fill me-2"></i>
-              {% for error in pedido_form.non_field_errors %}{{ error }}{% endfor %}
+            <hr class="my-4">
+
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <div>
+                <h6 class="mb-1 fw-semibold">Productos del Pedido</h6>
+                <p class="text-muted small mb-0">Agrega uno o varios productos (vehículos o repuestos) a este pedido.</p>
+              </div>
+              <button type="button" id="agregar-item" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-plus-circle me-1"></i>Agregar Producto
+              </button>
+            </div>
+
+            {{ formset.management_form }}
+            {% if formset.non_form_errors %}
+            <div class="alert alert-danger">
+              {{ formset.non_form_errors }}
             </div>
             {% endif %}
 
-            <div class="row g-3 mb-4">
-              {% for field in pedido_form.visible_fields %}
-              <div class="col-md-6">
-                <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
-                  {{ field.label }}{% if field.field.required %}<span class="text-danger">*</span>{% endif %}
-                </label>
-                {{ field }}
-                {% if field.help_text %}
-                <div class="form-text">{{ field.help_text }}</div>
-                {% endif %}
-                {% if field.errors %}
-                <div class="text-danger small mt-1">
-                  {% for error in field.errors %}{{ error }}{% endfor %}
+            <div id="items-container">
+              {% for form in formset.forms %}
+                <div class="item-form border rounded-3 p-3 mb-3 position-relative">
+                  <div class="d-flex justify-content-between mb-3">
+                    <h6 class="mb-0">Producto {{ forloop.counter }}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                  {% if form.non_field_errors %}
+                  <div class="alert alert-danger small">
+                    {{ form.non_field_errors }}
+                  </div>
+                  {% endif %}
+                  {{ form.id }}
+                  <div class="d-none">{{ form.DELETE }}</div>
+                  <div class="row g-3">
+                    <div class="col-md-3">
+                      <label class="form-label fw-semibold" for="{{ form.tipo_producto.id_for_label }}">Tipo de Producto</label>
+                      {{ form.tipo_producto }}
+                      {% if form.tipo_producto.errors %}
+                      <div class="text-danger small mt-1">{{ form.tipo_producto.errors|join:', ' }}</div>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label fw-semibold">Vehículo</label>
+                      <div class="div-vehiculo">
+                        {{ form.vehiculo }}
+                        {% if form.vehiculo.errors %}
+                        <div class="text-danger small mt-1">{{ form.vehiculo.errors|join:', ' }}</div>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label fw-semibold">Repuesto</label>
+                      <div class="div-repuesto" style="display: none;">
+                        {{ form.repuesto }}
+                        {% if form.repuesto.errors %}
+                        <div class="text-danger small mt-1">{{ form.repuesto.errors|join:', ' }}</div>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label fw-semibold" for="{{ form.cantidad.id_for_label }}">Cantidad</label>
+                      {{ form.cantidad }}
+                      {% if form.cantidad.errors %}
+                      <div class="text-danger small mt-1">{{ form.cantidad.errors|join:', ' }}</div>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label fw-semibold" for="{{ form.precio_unitario.id_for_label }}">Precio Unitario </label>
+                      {{ form.precio_unitario }}
+                      {% if form.precio_unitario.errors %}
+                      <div class="text-danger small mt-1">{{ form.precio_unitario.errors|join:', ' }}</div>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label fw-semibold">Subtotal</label>
+                      <input type="text" class="form-control subtotal-cell" readonly value="0">
+                    </div>
+                  </div>
                 </div>
-                {% endif %}
-              </div>
               {% endfor %}
             </div>
+          </div>
 
-            <div class="mb-4">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                  <h5 class="fw-semibold mb-1">Items del Pedido</h5>
-                  <p class="text-muted mb-0">Agrega cada vehículo o repuesto con cantidad y precio unitario.</p>
-                </div>
-                <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ formset.total_form_count }} items</span>
-              </div>
-
-              {{ formset.management_form }}
-              <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                  <thead class="table-light text-center">
-                    <tr>
-                      <th class="fw-semibold">Tipo</th>
-                      <th class="fw-semibold">Vehículo</th>
-                      <th class="fw-semibold">Repuesto</th>
-                      <th class="fw-semibold">Cantidad</th>
-                      <th class="fw-semibold">Precio Unitario</th>
-                      <th class="fw-semibold">Eliminar</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for form in formset %}
-                    <tr>
-                      <td>{{ form.tipo_item }}</td>
-                      <td>
-                        <div class="vehiculo-field" style="display: none;">
-                          {{ form.vehiculo_search }}
-                          {{ form.vehiculo }}
-                        </div>
-                      </td>
-                      <td>
-                        <div class="repuesto-field" style="display: none;">
-                          {{ form.repuesto_search }}
-                          {{ form.repuesto }}
-                        </div>
-                      </td>
-                      <td>{{ form.cantidad }}</td>
-                      <td>{{ form.precio_unitario }}</td>
-                      <td class="text-center">{{ form.DELETE }}</td>
-                    </tr>
-                    {% if form.non_field_errors %}
-                    <tr>
-                      <td colspan="6">
-                        <div class="alert alert-danger mb-0 py-2" role="alert">
-                          {% for error in form.non_field_errors %}{{ error }}{% endfor %}
-                        </div>
-                      </td>
-                    </tr>
-                    {% endif %}
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-end gap-2">
+          <div class="card-footer bg-light border-0 py-3">
+            <div class="d-flex gap-2 justify-content-end">
               <a href="{% url 'lista_pedidos' %}" class="btn btn-outline-secondary">Cancelar</a>
-              <button type="submit" class="btn btn-primary">Guardar Pedido</button>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-2"></i>Guardar Pedido
+              </button>
             </div>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 </div>
 
+<div id="item-form-template" class="d-none">
+  <div class="item-form border rounded-3 p-3 mb-3 position-relative">
+    <div class="d-flex justify-content-between mb-3">
+      <h6 class="mb-0">Producto</h6>
+      <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+        <i class="bi bi-trash"></i>
+      </button>
+    </div>
+    <div class="d-none">__DELETE__</div>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Tipo de Producto</label>
+        __TIPO_PRODUCTO__
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Vehículo</label>
+        <div class="div-vehiculo">__VEHICULO__</div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Repuesto</label>
+        <div class="div-repuesto" style="display: none;">__REPUESTO__</div>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label fw-semibold">Cantidad</label>
+        __CANTIDAD__
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Precio Unitario </label>
+        __PRECIO_UNITARIO__
+      </div>
+      <div class="col-md-2">
+        <label class="form-label fw-semibold">Subtotal</label>
+        <input type="text" class="form-control subtotal-cell" readonly value="0">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const addItemButton = document.getElementById('agregar-item');
+  const itemsContainer = document.getElementById('items-container');
+  const formTemplate = document.getElementById('item-form-template').innerHTML;
+  const totalForms = document.querySelector('[name$="-TOTAL_FORMS"]');
+
+  // Función para generar selectores de vehículos y repuestos dinámicamente
+  function getVehiculosSelect(index) {
+    const options = '{% for v in vehiculos %}<option value="{{ v.id }}">{{ v.nombre }} ({{ v.modelo }})</option>{% endfor %}';
+    return `<select name="items-${index}-vehiculo" class="form-select"><option value="">--- Seleccionar ---</option>${options}</select>`;
+  }
+
+  function getRepuestosSelect(index) {
+    const options = '{% for r in repuestos %}<option value="{{ r.id }}">{{ r.nombre }} ({{ r.codigo_repuesto }})</option>{% endfor %}';
+    return `<select name="items-${index}-repuesto" class="form-select"><option value="">--- Seleccionar ---</option>${options}</select>`;
+  }
+
+  function updateTipoProductoHandlers() {
+    itemsContainer.querySelectorAll('.item-form').forEach(form => {
+      const tipoSelect = form.querySelector('select[name$="-tipo_producto"]');
+      const divVehiculo = form.querySelector('.div-vehiculo');
+      const divRepuesto = form.querySelector('.div-repuesto');
+
+      if (tipoSelect && divVehiculo && divRepuesto) {
+        tipoSelect.addEventListener('change', function() {
+          try {
+            if (this.value === 'vehiculo') {
+              divVehiculo.style.display = 'block';
+              divRepuesto.style.display = 'none';
+              const sel = divRepuesto.querySelector('select'); if (sel) sel.value = '';
+            } else if (this.value === 'repuesto') {
+              divVehiculo.style.display = 'none';
+              divRepuesto.style.display = 'block';
+              const sel = divVehiculo.querySelector('select'); if (sel) sel.value = '';
+            }
+          } catch (err) {
+            console.error('Error en tipo_producto handler:', err);
+          }
+        });
+        // Ejecutar el handler de forma segura para inicializar la vista del formulario
+        try { tipoSelect.dispatchEvent(new Event('change')); } catch(e){/* ignore */}
+      }
+    });
+  }
+
+  function updateDeleteButtons() {
+    itemsContainer.querySelectorAll('.remove-item').forEach(button => {
+      button.onclick = function(e) {
+        e.preventDefault();
+        const row = this.closest('.item-form');
+        const deleteInput = row.querySelector('input[name$="-DELETE"]');
+        if (deleteInput) {
+          deleteInput.checked = true;
+          row.style.display = 'none';
+        } else {
+          row.remove();
+          const total = parseInt(totalForms.value, 10) - 1;
+          totalForms.value = total;
+        }
+        actualizarTotales();
+      };
+    });
+  }
+
+  function updateSubtotalHandlers() {
+    itemsContainer.querySelectorAll('.item-form').forEach(form => {
+      const cantidadInput = form.querySelector('input[name$="-cantidad"]');
+      const precioInput = form.querySelector('input[name$="-precio_unitario"]');
+      const subtotalCell = form.querySelector('.subtotal-cell');
+
+      if (cantidadInput && precioInput && subtotalCell) {
+        const updateSubtotal = function() {
+          const cant = parseFloat(cantidadInput.value) || 0;
+          const precio = parseFloat(precioInput.value) || 0;
+          subtotalCell.value = (cant * precio).toLocaleString('es-PY');
+          actualizarTotales();
+        };
+        cantidadInput.addEventListener('input', updateSubtotal);
+        precioInput.addEventListener('input', updateSubtotal);
+        updateSubtotal();
+      }
+    });
+  }
+
+  function actualizarTotales() {
+    let totalGeneral = 0;
+    itemsContainer.querySelectorAll('.item-form').forEach(form => {
+      if (form.style.display !== 'none') {
+        const subtotalText = form.querySelector('.subtotal-cell').value;
+        const subtotal = parseFloat(subtotalText.replace(/\./g, '')) || 0;
+        totalGeneral += subtotal;
+      }
+    });
+    document.getElementById('total_display').value = totalGeneral.toLocaleString('es-PY');
+    document.getElementById('id_monto_total').value = totalGeneral;
+    document.getElementById('iva_display').value = (totalGeneral * 0.10).toLocaleString('es-PY');
+    document.getElementById('id_iva').value = totalGeneral * 0.10;
+  }
+
+  function addItemForm() {
+    const index = parseInt(totalForms.value, 10);
+    const newHtml = formTemplate
+      .replace(/__DELETE__/g, `<input type="hidden" name="items-${index}-DELETE" id="id_items-${index}-DELETE">`)
+      .replace(/__TIPO_PRODUCTO__/g, `<select name="items-${index}-tipo_producto" class="form-select"><option value="">--- Seleccionar ---</option><option value="vehiculo">Vehículo</option><option value="repuesto">Repuesto</option></select>`)
+      .replace(/__VEHICULO__/g, getVehiculosSelect(index))
+      .replace(/__REPUESTO__/g, getRepuestosSelect(index))
+      .replace(/__CANTIDAD__/g, `<input type="number" name="items-${index}-cantidad" class="form-control" value="1" min="1">`)
+      .replace(/__PRECIO_UNITARIO__/g, `<input type="number" name="items-${index}-precio_unitario" class="form-control" value="0" step="0.01" min="0">`);
+    
+    itemsContainer.insertAdjacentHTML('beforeend', newHtml);
+    totalForms.value = index + 1;
+    updateDeleteButtons();
+    updateTipoProductoHandlers();
+    updateSubtotalHandlers();
+  }
+  // Inicio: validaciones y logs para depuración
+  console.log('agregar_pedido:init', { addItemButton, itemsContainer, totalForms });
+  updateDeleteButtons();
+  updateTipoProductoHandlers();
+  updateSubtotalHandlers();
+
+  if (addItemButton) {
+    addItemButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      try {
+        if (!totalForms) {
+          console.error('TOTAL_FORMS no encontrado. Asegúrate de que formset.management_form está presente y prefix coincide.');
+          return;
+        }
+        addItemForm();
+      } catch (err) {
+        console.error('Error al agregar item dinámico:', err);
+        alert('Ocurrió un error al agregar el producto. Revisa la consola del navegador.');
+      }
+    });
+  } else {
+    console.warn('Botón agregar-item no encontrado en la página');
+  }
+});
+</script>
+
 <style>
 .form-control, .form-select {
-  border-radius: 0.75rem;
+  border-radius: 0.375rem;
 }
 
-.table-hover tbody tr:hover {
-  background-color: rgba(13, 110, 253, 0.05);
+.item-form {
+  background-color: #f9f9f9;
+  transition: background-color 0.2s;
 }
 
-.card {
-  border-radius: 1rem;
+.item-form:hover {
+  background-color: #f5f5f5;
 }
 
-@media (max-width: 767px) {
-  .table-responsive {
-    overflow-x: auto;
+@media (max-width: 768px) {
+  .item-form {
+    padding: 1rem !important;
+  }
+  
+  .item-form .row {
+    font-size: 0.9rem;
   }
 }
 </style>
 {% endblock %}
-
-<datalist id="vehiculos-list">
-  {% for vehiculo in vehiculos %}
-  <option value="{{ vehiculo.id }}">{{ vehiculo.nombre }}</option>
-  {% endfor %}
-</datalist>
-
-<datalist id="repuestos-list">
-  {% for repuesto in repuestos %}
-  <option value="{{ repuesto.id }}">{{ repuesto.nombre }}</option>
-  {% endfor %}
-</datalist>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Función para mostrar/ocultar campos basados en tipo_item
-  function toggleFields(row) {
-    const tipoItem = row.querySelector('select[name*="tipo_item"]').value;
-    const vehiculoField = row.querySelector('.vehiculo-field');
-    const repuestoField = row.querySelector('.repuesto-field');
-    
-    if (tipoItem === 'vehiculo') {
-      vehiculoField.style.display = 'block';
-      repuestoField.style.display = 'none';
-    } else if (tipoItem === 'repuesto') {
-      vehiculoField.style.display = 'none';
-      repuestoField.style.display = 'block';
-    } else {
-      vehiculoField.style.display = 'none';
-      repuestoField.style.display = 'none';
-    }
-  }
-
-  // Aplicar a filas existentes
-  document.querySelectorAll('tbody tr').forEach(toggleFields);
-
-  // Escuchar cambios en tipo_item
-  document.addEventListener('change', function(e) {
-    if (e.target.name && e.target.name.includes('tipo_item')) {
-      const row = e.target.closest('tr');
-      toggleFields(row);
-    }
-  });
-
-  // Sincronizar búsqueda con hidden fields (ya no necesario, el input tiene el ID)
-  // document.addEventListener('input', function(e) {
-  //   if (e.target.name && e.target.name.includes('vehiculo_search')) {
-  //     const row = e.target.closest('tr');
-  //     const hidden = row.querySelector('input[name*="vehiculo"]');
-  //     if (hidden) hidden.value = e.target.value;
-  //   }
-  //   if (e.target.name && e.target.name.includes('repuesto_search')) {
-  //     const row = e.target.closest('tr');
-  //     const hidden = row.querySelector('input[name*="repuesto"]');
-  //     if (hidden) hidden.value = e.target.value;
-  //   }
-  // });
-});
-</script>

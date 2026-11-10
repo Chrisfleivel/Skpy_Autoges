@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="mb-0 fw-bold">Registrar Despachante</h5>
+                        <p class="text-muted mb-0">Agrega un nuevo despachante / agente de despacho</p>
+                    </div>
+                    <a href="{% url 'lista_despachantes' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Volver
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <label for="{{ form.nombre_razon_social.id_for_label }}" class="form-label fw-semibold">Nombre o Razón Social</label>
+                            {{ form.nombre_razon_social }}
+                            {% if form.nombre_razon_social.errors %}
+                                <div class="text-danger small mt-1">{{ form.nombre_razon_social.errors|join:', ' }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.pais_codigo.id_for_label }}" class="form-label fw-semibold">País</label>
+                                {{ form.pais_codigo }}
+                                {% if form.pais_codigo.errors %}
+                                    <div class="text-danger small mt-1">{{ form.pais_codigo.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.tipo_representacion.id_for_label }}" class="form-label fw-semibold">Tipo de Representación</label>
+                                {{ form.tipo_representacion }}
+                                {% if form.tipo_representacion.errors %}
+                                    <div class="text-danger small mt-1">{{ form.tipo_representacion.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.ruc_o_brn.id_for_label }}" class="form-label fw-semibold">RUC / BRN</label>
+                                {{ form.ruc_o_brn }}
+                                {% if form.ruc_o_brn.errors %}
+                                    <div class="text-danger small mt-1">{{ form.ruc_o_brn.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.sistema_gestion.id_for_label }}" class="form-label fw-semibold">Sistema de Gestión</label>
+                                {{ form.sistema_gestion }}
+                                {% if form.sistema_gestion.errors %}
+                                    <div class="text-danger small mt-1">{{ form.sistema_gestion.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.fecha_vencimiento_mandato.id_for_label }}" class="form-label fw-semibold">Fecha Vencimiento Mandato</label>
+                                {{ form.fecha_vencimiento_mandato }}
+                                {% if form.fecha_vencimiento_mandato.errors %}
+                                    <div class="text-danger small mt-1">{{ form.fecha_vencimiento_mandato.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.contacto_email.id_for_label }}" class="form-label fw-semibold">Email de Contacto</label>
+                                {{ form.contacto_email }}
+                                {% if form.contacto_email.errors %}
+                                    <div class="text-danger small mt-1">{{ form.contacto_email.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.es_activo }}
+                                <label class="form-check-label" for="{{ form.es_activo.id_for_label }}">
+                                    {{ form.es_activo.label }}
+                                </label>
+                            </div>
+                            {% if form.es_activo.errors %}
+                                <div class="text-danger small mt-1">{{ form.es_activo.errors|join:', ' }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'lista_despachantes' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle-fill me-2"></i>Guardar Despachante
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

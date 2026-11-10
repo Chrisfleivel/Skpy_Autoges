@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Cargar factura del pedido{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card shadow-sm border-0">
+    <div class="card-header d-flex justify-content-between align-items-center bg-white">
+      <div>
+        <h5 class="mb-0">Cargar factura para pedido #{{ pedido.id }}</h5>
+        <p class="text-muted mb-0">Sube el número de factura y/o el archivo PDF.</p>
+      </div>
+      <a href="{% url 'detalle_pedido' pedido.id %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Volver al pedido
+      </a>
+    </div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="mb-3">
+          <label class="form-label" for="id_proveedor">Proveedor</label>
+          {{ form.proveedor }}
+          {{ form.proveedor.errors }}
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label" for="id_numero_factura">Número de factura</label>
+            {{ form.numero_factura }}
+            {{ form.numero_factura.errors }}
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label" for="id_fecha_factura">Fecha de factura</label>
+            {{ form.fecha_factura }}
+            {{ form.fecha_factura.errors }}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="id_factura_pdf">Factura PDF</label>
+          {{ form.factura_pdf }}
+          {{ form.factura_pdf.errors }}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="id_observaciones">Observaciones</label>
+          {{ form.observaciones }}
+          {{ form.observaciones.errors }}
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">Guardar factura</button>
+          <a href="{% url 'detalle_pedido' pedido.id %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

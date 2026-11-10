@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}{{ fase.get_fase_display }} - {{ importacion.codigo_seguimiento }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <h2>{{ fase.get_fase_display }}</h2>
+            <p class="text-muted">
+                Importación: <strong>{{ importacion.codigo_seguimiento }}</strong> | 
+                Estado: 
+                {% if fase.estado_completado %}
+                    <span class="badge bg-success">Completado</span>
+                {% else %}
+                    <span class="badge bg-warning">En Progreso</span>
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-2 text-end">
+            {% if perms.importaciones.agregar_documento %}
+                <a href="{% url 'agregar_documento_fase' fase.id %}" class="btn btn-primary">
+                    <i class="bi bi-file-earmark-arrow-up"></i> Subir Documento
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Información de la Fase -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Información de la Fase</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Descripción:</strong></p>
+                    <p>{{ fase.descripcion|default:"Sin descripción" }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>Fecha de Inicio:</strong></p>
+                    <p>{{ fase.fecha_inicio|date:"d/m/Y H:i" }}</p>
+                </div>
+                {% if fase.fecha_completado %}
+                    <div class="col-md-3">
+                        <p><strong>Fecha de Finalización:</strong></p>
+                        <p>{{ fase.fecha_completado|date:"d/m/Y H:i" }}</p>
+                    </div>
+                {% endif %}
+            </div>
+            {% if fase.notas %}
+                <hr>
+                <p><strong>Notas:</strong></p>
+                <p>{{ fase.notas }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Documentos de la Fase -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Documentos de la Fase</h5>
+            <span class="badge bg-info">{{ documentos.count }} documento(s)</span>
+        </div>
+        <div class="card-body">
+            {% if documentos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tipo de Documento</th>
+                                <th>Referencia</th>
+                                <th>Estado</th>
+                                <th>Cargado por</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in documentos %}
+                                <tr>
+                                    <td>{{ doc.get_tipo_display }}</td>
+                                    <td>
+                                        {% if doc.numero_referencia %}
+                                            <code>{{ doc.numero_referencia }}</code>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if doc.estado == 'validado' %}success{% elif doc.estado == 'rechazado' %}danger{% elif doc.estado == 'cargado' %}info{% else %}secondary{% endif %}">
+                                            {{ doc.get_estado_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if doc.cargado_por %}
+                                            {{ doc.cargado_por.get_full_name|default:doc.cargado_por.username }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ doc.fecha_carga|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="#doc-{{ doc.id }}" class="btn btn-outline-secondary" data-bs-toggle="collapse">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if perms.importaciones.editar_importacion %}
+                                                {% if doc.estado != 'validado' %}
+                                                    <form method="post" action="{% url 'validar_documento' doc.id %}" style="display:inline;">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-outline-success btn-sm" title="Validar">
+                                                            <i class="bi bi-check-circle"></i>
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                                {% if doc.estado != 'rechazado' %}
+                                                    <form method="post" action="{% url 'rechazar_documento' doc.id %}" style="display:inline;">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Rechazar" onclick="return confirm('¿Rechazar este documento?')">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                                {% if perms.importaciones.eliminar_importacion %}
+                                                    <form method="post" action="{% url 'eliminar_documento' doc.id %}" style="display:inline;">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Eliminar" onclick="return confirm('¿Eliminar este documento?')">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- Detalle colapsible del documento -->
+                                <tr class="collapse" id="doc-{{ doc.id }}">
+                                    <td colspan="6">
+                                        <div class="p-3 bg-light">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <p><strong>Archivo:</strong> <a href="{{ doc.archivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-download"></i> Descargar
+                                                    </a></p>
+                                                    {% if doc.fecha_documento %}
+                                                        <p><strong>Fecha del Documento:</strong> {{ doc.fecha_documento|date:"d/m/Y" }}</p>
+                                                    {% endif %}
+                                                    {% if doc.monto_asociado %}
+                                                        <p><strong>Monto:</strong> {{ doc.monto_asociado|floatformat:2 }}</p>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {% if doc.validado_por %}
+                                                        <p><strong>Validado por:</strong> {{ doc.validado_por.get_full_name|default:doc.validado_por.username }}</p>
+                                                        <p><strong>Fecha de Validación:</strong> {{ doc.fecha_validacion|date:"d/m/Y H:i" }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% if doc.descripcion %}
+                                                <hr>
+                                                <p><strong>Observaciones:</strong></p>
+                                                <p>{{ doc.descripcion }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> No hay documentos cargados en esta fase aún.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        {% if perms.importaciones.editar_importacion and not fase.estado_completado %}
+            <a href="{% url 'editar_fase_importacion' fase.id %}" class="btn btn-secondary me-2">
+                <i class="bi bi-pencil"></i> Editar Fase
+            </a>
+            <form method="post" action="{% url 'marcar_fase_completada' fase.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning me-2" onclick="return confirm('¿Marcar esta fase como completada?')">
+                    <i class="bi bi-check-circle"></i> Completar Fase
+                </button>
+            </form>
+        {% endif %}
+        <a href="{% url 'listar_fases_importacion' importacion.id %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a Fases
+        </a>
+    </div>
+</div>
+
+<script>
+    // Auto-abrir el primer documento si viene con un hash
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.location.hash) {
+            const el = document.querySelector(window.location.hash);
+            if (el && el.classList.contains('collapse')) {
+                const collapse = new bootstrap.Collapse(el, { toggle: true });
+            }
+        }
+    });
+</script>
+{% endblock %}

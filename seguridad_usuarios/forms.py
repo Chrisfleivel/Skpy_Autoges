@@ -2,7 +2,8 @@
 
 from django import forms
 from django.contrib.auth.models import User
-from .models import Rol, Permiso, Empleado, UsuarioPerfil
+from django.forms import inlineformset_factory
+from .models import Rol, Permiso, Empleado, UsuarioPerfil, ContactoEmpleado
 
 class UserRegisterForm(forms.ModelForm):
     """
@@ -89,7 +90,7 @@ class EmpleadoForm(forms.ModelForm):
 
     class Meta:
         model = Empleado
-        fields = ['nombre', 'apellidos', 'documento_identidad', 'ruc', 'telefono', 'email', 'direccion', 'departamento', 'cargo', 'estado']
+        fields = ['tipo_persona', 'nombre', 'apellidos', 'documento_identidad', 'ruc', 'email', 'departamento', 'cargo', 'estado']
         widgets = {
             'nombre': forms.TextInput(attrs={'required': 'required','class': 'form-control', 'placeholder': 'Ej: Jose Luis'}),
             'apellidos': forms.TextInput(attrs={'required': 'required', 'class': 'form-control', 'placeholder': 'Ej: Perez Gomez'}),
@@ -98,9 +99,8 @@ class EmpleadoForm(forms.ModelForm):
             'departamento': forms.Select(attrs={'id': 'id_departamento', 'class': 'form-control'}),
             'cargo': forms.Select(attrs={'id': 'id_cargo', 'class': 'form-control'}),
             'ruc': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 1234567-7'}),
-            'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 0987654321'}),
-            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Dirección completa...'}),
             'estado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'tipo_persona': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def clean(self):
@@ -109,10 +109,21 @@ class EmpleadoForm(forms.ModelForm):
         nombre = cleaned_data.get('nombre')
         apellidos = cleaned_data.get('apellidos')
         documento_identidad = cleaned_data.get('documento_identidad')
+        ruc = cleaned_data.get('ruc')
         email = cleaned_data.get('email')
         
    
-        if not nombre:
+        if tipo_persona == 'FISICA':
+            if not nombre:
+                self.add_error('nombre', 'El nombre es obligatorio para persona física')
+            if not documento_identidad:
+                self.add_error('documento_identidad', 'El documento de identidad es obligatorio para persona física')
+        
+        if tipo_persona == 'JURIDICA':
+            if not ruc:
+                self.add_error('ruc', 'El RUC es obligatorio para persona jurídica')
+
+        if not nombre and tipo_persona != 'JURIDICA':
             self.add_error('nombre', 'El nombre es obligatorio')
         if not apellidos:
             self.add_error('apellidos', 'Los apellidos son obligatorios')
@@ -120,22 +131,60 @@ class EmpleadoForm(forms.ModelForm):
                 self.add_error('documento_identidad', 'El documento de identidad es obligatorio ')
         if not email:
                 self.add_error('email', 'El correo electrónico es obligatorio')
+        # Validaciones de unicidad para documento_identidad y ruc
+        qs = Empleado.objects.all()
+        if self.instance and getattr(self.instance, 'pk', None):
+            qs = qs.exclude(pk=self.instance.pk)
+
+        if documento_identidad:
+            if qs.filter(documento_identidad=documento_identidad).exists():
+                self.add_error('documento_identidad', 'El documento de identidad ya está registrado para otro empleado.')
+
+        if ruc:
+            if qs.filter(ruc=ruc).exists():
+                self.add_error('ruc', 'El RUC ya está registrado para otro empleado.')
+
         return cleaned_data
 
 class PerfilUsuarioForm(forms.ModelForm):
     """
     Formulario para editar el perfil del usuario, incluyendo la foto de perfil.
     """
-    class Meta: 
+    class Meta:
         model = UsuarioPerfil
-        fields = ['empleado', 'roles', 'foto_perfil', 'tema']
+        fields = ['empleado', 'foto_perfil', 'tema']
         widgets = {
-            'roles': forms.CheckboxSelectMultiple(),
             'tema': forms.Select(attrs={'class': 'form-select'}),
         }
-    def clean(self):
-        cleaned_data = super().clean()
-        roles = cleaned_data.get('roles')
-        if not roles or roles.count() == 0:
-            self.add_error('roles', 'Debe asignar al menos un rol al usuario.')
-        return cleaned_data
+
+
+class ContactoEmpleadoForm(forms.ModelForm):
+    class Meta:
+        model = ContactoEmpleado
+        fields = ['categoria', 'tipo_persona', 'nombre', 'apellidos', 'telefono', 'direccion', 'email']
+        widgets = {
+            'categoria': forms.Select(attrs={'class': 'form-select'}),
+            'tipo_persona': forms.Select(attrs={'class': 'form-select'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del contacto'}),
+            'apellidos': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellidos del contacto'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'}),
+            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Dirección completa...'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if not isinstance(field.widget, forms.Select):
+                field.widget.attrs.update({
+                    'class': field.widget.attrs.get('class', '') + ' form-control'
+                })
+
+
+ContactoEmpleadoFormSet = inlineformset_factory(
+    Empleado,
+    ContactoEmpleado,
+    form=ContactoEmpleadoForm,
+    extra=1,
+    can_delete=True,
+)

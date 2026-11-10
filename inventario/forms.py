@@ -1,6 +1,19 @@
 # inventario/forms.py
 from django import forms
-from .models import Vehiculo, Repuesto, MantenimientoVehiculo, Deposito, UnidadMedida, MarcaVehiculo, ModeloVehiculo, TipoVehiculo, TipoTransmision
+from core.models import Moneda as MonedaFacade
+from configuraciones_maestras.models import Moneda as MonedaCatalogo
+from .models import Vehiculo, Repuesto, MantenimientoVehiculo, Deposito, UnidadMedida, MarcaVehiculo, ModeloVehiculo, TipoVehiculo, TipoTransmision, CategoriaRepuesto
+
+
+def _aplicar_moneda_choices(form, *field_names):
+    MonedaFacade.ensure_defaults()
+    queryset = MonedaCatalogo.objects.order_by('codigo')
+    for field_name in field_names:
+        if field_name in form.fields:
+            field = form.fields[field_name]
+            field.queryset = queryset
+            field.empty_label = 'Seleccione una moneda'
+            field.widget.attrs.update({'class': 'form-select'})
 
 
 class MarcaVehiculoForm(forms.ModelForm):
@@ -107,6 +120,7 @@ class VehiculoForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             if field_name != 'tipo' and field.widget.__class__ != forms.HiddenInput:
                 field.widget.attrs.update({'class': 'form-control'})
+        _aplicar_moneda_choices(self, 'moneda_venta')
         # Color picker especial
         if 'color' in self.fields:
             self.fields['color'].widget = forms.TextInput(attrs={
@@ -133,14 +147,58 @@ class RepuestoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['tipo'].initial = 'repuesto'
         self.fields['tipo'].widget = forms.HiddenInput()
+        self.fields['estado'].initial = 'elegible_importacion'
+        self.fields['estado'].widget = forms.HiddenInput()
+        self.fields['estado'].required = False
         for field in self.fields.values():
             field.widget.attrs.update({'class': 'form-control'})
+        _aplicar_moneda_choices(self, 'moneda_venta')
 
     class Meta:
         model = Repuesto
         exclude = ['fecha_ultima_entrada']
         widgets = {
             'descripcion': forms.Textarea(attrs={'rows': 3}),
+        }
+
+
+class RepuestoProveedorForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['tipo'].initial = 'repuesto'
+        self.fields['tipo'].widget = forms.HiddenInput()
+        self.fields['estado'].initial = 'elegible_importacion'
+        self.fields['estado'].widget = forms.HiddenInput()
+        self.fields['estado'].required = False
+        self.fields['costo_compra'].initial = 0
+        self.fields['costo_compra'].required = False
+        self.fields['costo_compra'].widget = forms.HiddenInput()
+        self.fields['costo_unitario_proveedor'].initial = 0
+        self.fields['cantidad_a_comprar'].initial = 1
+
+        self.fields['categoria'].queryset = CategoriaRepuesto.objects.filter(estado=True).order_by('nombre')
+        self.fields['categoria'].empty_label = 'Seleccione una categoría'
+
+        _aplicar_moneda_choices(self, 'moneda_compra_proveedor', 'moneda_venta')
+        self.fields['unidad_medida'].widget.attrs.update({'class': 'form-select'})
+
+        for field_name, field in self.fields.items():
+            if field.widget.__class__ != forms.HiddenInput and field_name not in ['moneda_compra_proveedor', 'unidad_medida', 'moneda_venta']:
+                field.widget.attrs.update({'class': 'form-control'})
+
+        if 'imagen' in self.fields:
+            self.fields['imagen'].widget.attrs.update({'class': 'form-control'})
+
+    class Meta:
+        model = Repuesto
+        fields = [
+            'nombre', 'codigo_repuesto', 'proveedor', 'categoria', 'unidad_medida',
+            'cantidad_a_comprar', 'costo_unitario_proveedor', 'moneda_compra_proveedor', 'moneda_venta',
+            'compatibilidad', 'descripcion', 'imagen', 'tipo', 'estado', 'costo_compra'
+        ]
+        widgets = {
+            'descripcion': forms.Textarea(attrs={'rows': 3}),
+            'compatibilidad': forms.Textarea(attrs={'rows': 3}),
         }
 
 class MantenimientoForm(forms.ModelForm):

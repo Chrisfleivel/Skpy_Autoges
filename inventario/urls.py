@@ -10,13 +10,18 @@ urlpatterns = [
     path('vehiculos/agregar/', views.agregar_vehiculo, name='agregar_vehiculo'),
     path('vehiculos/<int:vehiculo_id>/', views.detalle_vehiculo, name='detalle_vehiculo'),
     path('vehiculos/<int:vehiculo_id>/editar/', views.editar_vehiculo, name='editar_vehiculo'),
+    path('vehiculos/<int:vehiculo_id>/editar_costos/', views.editar_costos_vehiculo, name='editar_costos_vehiculo'),
+    path('vehiculos/<int:vehiculo_id>/editar_precio/', views.editar_precio_vehiculo, name='editar_precio_vehiculo'),
     path('vehiculos/<int:vehiculo_id>/eliminar/', views.eliminar_vehiculo, name='eliminar_vehiculo'),
     
     # Vistas para la gestión de Repuestos
     path('repuestos/', views.lista_repuestos, name='lista_repuestos'),
     path('repuestos/agregar/', views.agregar_repuesto, name='agregar_repuesto'),
+    path('repuestos/proveedor/agregar/', views.agregar_repuesto_proveedor, name='agregar_repuesto_proveedor'),
     path('repuestos/<int:repuesto_id>/', views.detalle_repuesto, name='detalle_repuesto'),
     path('repuestos/<int:repuesto_id>/editar/', views.editar_repuesto, name='editar_repuesto'),
+    path('repuestos/<int:repuesto_id>/editar_costos/', views.editar_costos_repuesto, name='editar_costos_repuesto'),
+    path('repuestos/<int:repuesto_id>/editar_precio/', views.editar_precio_repuesto, name='editar_precio_repuesto'),
     path('repuestos/<int:repuesto_id>/eliminar/', views.eliminar_repuesto, name='eliminar_repuesto'),
 
     # Vistas para la gestión de Mantenimientos

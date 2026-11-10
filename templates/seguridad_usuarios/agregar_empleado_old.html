@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-page-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="custom-card">
+                    <div class="custom-card-header">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-plus fs-3 me-3"></i>
+                            <div>
+                                <h2 class="h4 mb-0">Registrar Empleado</h2>
+                                <small class="opacity-75">Complete los datos para agregar el empleado al sistema</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4 p-md-5">
+                        <form method="POST" class="needs-validation" novalidate>
+                            {% csrf_token %}
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            {% endif %}
+
+                            <div class="form-section-title">Datos Personales</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 mb-2">
+                                    <label class="form-label">Tipo de Persona</label>
+                                    {{ form.tipo_persona }}
+                                </div>
+                                <div id="extra-datos-fisica" class="col-12"></div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Nombre</label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Apellidos</label>
+                                    {{ form.apellidos }}
+                                    {% if form.apellidos.errors %}<div class="text-danger small">{{ form.apellidos.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Correo Electrónico</label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-section-title">Información Laboral</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Departamento</label>
+                                    {{ form.departamento }}
+                                    {% if form.departamento.errors %}<div class="text-danger small">{{ form.departamento.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Cargo</label>
+                                    {{ form.cargo }}
+                                    {% if form.cargo.errors %}<div class="text-danger small">{{ form.cargo.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-section-title">Contactos del Empleado</div>
+                            {{ contact_formset.management_form }}
+                            <div id="contactos-container" class="mb-3">
+                                {% for contact_form in contact_formset.forms %}
+                                    <div class="contacto-form border rounded-3 p-3 mb-3 position-relative">
+                                        <div class="d-flex justify-content-between mb-3">
+                                            <h6 class="mb-0">Contacto</h6>
+                                            <button type="button" class="btn btn-sm btn-outline-danger remove-contacto">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-semibold">Categoría</label>
+                                                {{ contact_form.categoria }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-semibold">Tipo</label>
+                                                {{ contact_form.tipo_persona }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-semibold">Nombre</label>
+                                                {{ contact_form.nombre }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-semibold">Apellidos</label>
+                                                {{ contact_form.apellidos }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-semibold">Teléfono</label>
+                                                {{ contact_form.telefono }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-semibold">Email</label>
+                                                {{ contact_form.email }}
+                                            </div>
+                                        </div>
+                                        {% for hidden in contact_form.hidden_fields %}
+                                          {{ hidden }}
+                                        {% endfor %}
+                                        {% if contact_form.DELETE %}
+                                            <div class="d-none">{{ contact_form.DELETE }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" id="agregar-contacto" class="btn btn-outline-primary btn-sm mb-4">Agregar contacto</button>
+
+                            <div id="contacto-form-template" class="d-none">
+                                <div class="contacto-form border rounded-3 p-3 mb-3 position-relative">
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <h6 class="mb-0">Contacto</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-contacto">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold">Categoría</label>
+                                            <select name="__PREFIX__-categoria" class="form-select">
+                                                <option value="PERSONAL">Personal</option>
+                                                <option value="PROFESIONAL">Profesional</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold">Tipo</label>
+                                            <select name="__PREFIX__-tipo_persona" class="form-select">
+                                                <option value="FISICA">Persona Física</option>
+                                                <option value="JURIDICA">Persona Jurídica</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold">Nombre</label>
+                                            <input type="text" name="__PREFIX__-nombre" class="form-control">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold">Apellidos</label>
+                                            <input type="text" name="__PREFIX__-apellidos" class="form-control">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold">Teléfono</label>
+                                            <input type="text" name="__PREFIX__-telefono" class="form-control">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-semibold">Email</label>
+                                            <input type="email" name="__PREFIX__-email" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% for field in form %}
+                                {% if not field.name in 'nombre,apellidos,email,departamento,cargo,tipo_persona' %}
+                                    <div class="mb-3">
+                                        <label for="{{ field.id_for_label }}" class="form-label">
+                                            {{ field.label }}
+                                            {% if field.field.required %}
+                                                <span style="color: red;">*</span>
+                                            {% endif %}
+                                        </label>
+                                        {{ field }}
+                                        {% if field.errors %}
+                                            <div class="text-danger small">
+                                                {{ field.errors|striptags }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+
+                            <div class="d-flex flex-column flex-md-row gap-3 pt-3 border-top">
+                                <button type="submit" class="btn btn-primary btn-save shadow-sm">
+                                    <i class="bi bi-check-lg me-2"></i>Guardar Empleado
+                                </button>
+                                <a href="{% url 'lista_empleados' %}" class="btn btn-outline-secondary px-4 d-flex align-items-center justify-content-center">
+                                    Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4 text-muted">
+                    <small>SKPY AutoGest - Módulo de Gestión de Usuarios</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+      'use strict'
+      var forms = document.querySelectorAll('.needs-validation')
+      Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+          form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+          }, false)
+        })
+    })()
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const departamentoSelect = document.getElementById('id_departamento');
+      const cargoSelect = document.getElementById('id_cargo');
+
+      if (departamentoSelect && cargoSelect) {
+        departamentoSelect.addEventListener('change', function() {
+          const departamentoId = this.value;
+          cargoSelect.innerHTML = '<option value="">---------</option>'; // Limpia cargos
+          if (departamentoId) {
+            fetch("{% url 'obtener_cargos' %}?departamento_id=" + departamentoId)
+              .then(response => response.json())
+              .then(data => {
+                data.forEach(function(cargo) {
+                  const option = document.createElement('option');
+                  option.value = cargo.id;
+                  option.text = cargo.nombre;
+                  cargoSelect.appendChild(option);
+                });
+              });
+          }
+        });
+      }
+    });
+
+        // Reordenar y mostrar campos para tipo_persona
+        document.addEventListener('DOMContentLoaded', function() {
+            const tipoPersona = document.getElementById('id_tipo_persona');
+            function moveFields() {
+                const docField = document.querySelector('[for="id_documento_identidad"]')?.closest('.mb-3');
+                const rucField = document.querySelector('[for="id_ruc"]')?.closest('.mb-3');
+                const container = document.getElementById('extra-datos-fisica');
+                if (!container) return;
+                if (tipoPersona && tipoPersona.value === 'FISICA') {
+                    if (docField) container.appendChild(docField);
+                    if (rucField) container.appendChild(rucField);
+                }
+            }
+            if (document.getElementById('id_tipo_persona')) {
+                document.getElementById('id_tipo_persona').addEventListener('change', moveFields);
+                moveFields();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+          const addContactoButton = document.getElementById('agregar-contacto');
+          const contactosContainer = document.getElementById('contactos-container');
+          const formTemplate = document.getElementById('contacto-form-template')?.innerHTML;
+          const totalForms = document.querySelector('input[name="contactoempleado_set-TOTAL_FORMS"]');
+
+          function updateDeleteButtons() {
+            contactosContainer?.querySelectorAll('.remove-contacto').forEach(button => {
+              button.onclick = function() {
+                const row = this.closest('.contacto-form');
+                const deleteInput = row.querySelector('input[name$="-DELETE"]');
+                if (deleteInput) {
+                  deleteInput.checked = true;
+                  row.style.display = 'none';
+                } else {
+                  row.remove();
+                  if (totalForms) {
+                    totalForms.value = parseInt(totalForms.value, 10) - 1;
+                  }
+                }
+              };
+            });
+          }
+
+          function addContactoForm() {
+            if (!totalForms || !formTemplate || !contactosContainer) return;
+            const index = parseInt(totalForms.value, 10);
+            const newHtml = formTemplate.replace(/__PREFIX__/g, 'contactoempleado_set-' + index);
+            contactosContainer.insertAdjacentHTML('beforeend', newHtml);
+            totalForms.value = index + 1;
+            updateDeleteButtons();
+          }
+
+          updateDeleteButtons();
+          if (addContactoButton) {
+            addContactoButton.addEventListener('click', addContactoForm);
+          }
+        });
+</script>
+{% endblock %}

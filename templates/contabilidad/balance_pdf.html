@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        .titulo { margin-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+        th, td { border: 1px solid #333; padding: 6px; }
+        th { background: #f0f0f0; }
+        .text-right { text-align: right; }
+        .grupo-titulo { background: #e8e8e8; font-weight: bold; }
+        .total-fila { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2 class="titulo">Balance General</h2>
+    <p>Fecha de corte: {{ fecha }}</p>
+    {% for tipo, grupo in datos.grupos.items %}
+        <h3>{{ grupo.titulo }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Cuenta</th>
+                    <th class="text-right">Saldo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in grupo.items %}
+                <tr>
+                    <td>{{ item.codigo }}</td>
+                    <td>{{ item.nombre }}</td>
+                    <td class="text-right">{{ item.saldo|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="total-fila">
+                    <td colspan="2">Total {{ grupo.titulo }}</td>
+                    <td class="text-right">{{ grupo.total|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
+    {% endfor %}
+    <table>
+        <tbody>
+            <tr class="total-fila">
+                <td>Total Activos</td>
+                <td class="text-right">{{ datos.total_activos|floatformat:2 }}</td>
+            </tr>
+            <tr class="total-fila">
+                <td>Total Pasivos</td>
+                <td class="text-right">{{ datos.total_pasivos|floatformat:2 }}</td>
+            </tr>
+            <tr class="total-fila">
+                <td>Total Patrimonio</td>
+                <td class="text-right">{{ datos.total_patrimonio|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

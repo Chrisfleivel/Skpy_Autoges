@@ -1,69 +1,134 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block content %}
-<div class="container py-4">
-  <h1 class="text-center mb-4">Listado de Agentes de Transporte</h1>
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <form method="get" class="row g-2 justify-content-center">
-        <div class="col-md-4">
-          <input type="text" name="nombre" class="form-control" placeholder="Buscar por nombre" value="{{ request.GET.nombre }}">
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                        <i class="bi bi-truck text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1 fw-bold text-dark">Agentes de Transporte</h1>
+                        <p class="text-muted mb-0">Administra los agentes y transportistas de importación</p>
+                    </div>
+                </div>
+                <a href="{% url 'agregar_agente_transporte' %}" class="btn btn-primary shadow-sm">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Agregar Agente
+                </a>
+            </div>
         </div>
-        <div class="col-md-3">
-          <select name="estado" class="form-select">
-            <option value="">Todos</option>
-            <option value="True" {% if request.GET.estado == 'True' %}selected{% endif %}>Activo</option>
-            <option value="False" {% if request.GET.estado == 'False' %}selected{% endif %}>Inactivo</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <button type="submit" class="btn btn-success w-100">Buscar</button>
-        </div>
-        <div class="col-md-2">
-          <a href="{% url 'lista_agentes_transporte' %}" class="btn btn-secondary w-100">Limpiar</a>
-        </div>
-      </form>
     </div>
-  </div>
-  <div class="mb-3 text-end">
-    <a href="{% url 'agregar_agente_transporte' %}" class="btn btn-primary">Agregar Agente de Transporte</a>
-  </div>
-  <div class="table-responsive">
-    <table class="table table-bordered table-striped align-middle text-center">
-      <thead class="table-dark">
-        <tr>
-          <th>Nombre</th>
-          <th>Estado</th>
-          <th>Contacto</th>
-          <th>Fecha de Registro</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for agente in agentes %}
-        <tr>
-          <td>{{ agente.nombre }}</td>
-          <td>
-            {% if agente.estado %}
-              <span class="badge bg-success">Activo</span>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="nombre" class="form-label fw-semibold">Buscar por nombre</label>
+                    <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej. Agente XYZ..." value="{{ request.GET.nombre }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="estado" class="form-label fw-semibold">Estado</label>
+                    <select id="estado" name="estado" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="True" {% if request.GET.estado == 'True' %}selected{% endif %}>Activo</option>
+                        <option value="False" {% if request.GET.estado == 'False' %}selected{% endif %}>Inactivo</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-2"></i>Buscar
+                    </button>
+                    <a href="{% url 'lista_agentes_transporte' %}" class="btn btn-outline-secondary w-100">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="mb-0 fw-bold">Lista de Agentes de Transporte</h6>
+            </div>
+            <div class="text-muted small">Total: {{ agentes|length }}</div>
+        </div>
+        <div class="card-body p-0">
+            {% if agentes %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0 fw-semibold ps-4">#</th>
+                            <th class="border-0 fw-semibold">Nombre / Razón Social</th>
+                            <th class="border-0 fw-semibold">País Op.</th>
+                            <th class="border-0 fw-semibold">Tipo Servicio</th>
+                            <th class="border-0 fw-semibold">Contacto</th>
+                            <th class="border-0 fw-semibold">Estado</th>
+                            <th class="border-0 fw-semibold text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for agente in agentes %}
+                        <tr>
+                            <td class="ps-4">{{ agente.id }}</td>
+                            <td>
+                                <a href="{% url 'detalle_agente_transporte' agente.id %}" class="text-decoration-none text-dark fw-semibold">
+                                    {{ agente.nombre }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if agente.pais_operacion == 'KR' %}
+                                    <span class="badge bg-info">Corea</span>
+                                {% elif agente.pais_operacion == 'PY' %}
+                                    <span class="badge bg-success">Paraguay</span>
+                                {% elif agente.pais_operacion == 'OT' %}
+                                    <span class="badge bg-secondary">Otro</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted small">{{ agente.get_tipo_servicio_display|default:"-" }}</td>
+                            <td class="text-muted small">{{ agente.contacto|truncatewords:2|default:"-" }}</td>
+                            <td>
+                                {% if agente.estado %}
+                                    <span class="badge bg-success">Activo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'detalle_agente_transporte' agente.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'editar_agente_transporte' agente.id %}" class="btn btn-sm btn-outline-secondary" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'eliminar_agente_transporte' agente.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Eliminar este agente? Esta acción no se puede deshacer.');">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
-              <span class="badge bg-danger">Inactivo</span>
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-truck display-1 text-muted"></i>
+                </div>
+                <h5 class="text-muted mb-3">No hay agentes de transporte registrados</h5>
+                <p class="text-muted mb-4">Agrega tu primer agente de transporte para gestionar importaciones.</p>
+                <a href="{% url 'agregar_agente_transporte' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Agregar Agente
+                </a>
+            </div>
             {% endif %}
-          </td>
-          <td>{{ agente.contacto }}</td>
-          <td>{{ agente.fecha_registro|date:"d/m/Y H:i" }}</td>
-          <td>
-            <a href="{% url 'detalle_agente_transporte' agente.pk %}" class="btn btn-info btn-sm">Ver</a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5" class="text-muted">No hay agentes de transporte disponibles.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

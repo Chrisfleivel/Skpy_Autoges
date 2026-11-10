@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pedidos Pendientes de Selección{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row justify-content-between align-items-center mb-4">
+    <div class="col">
+      <h4 class="fw-bold mb-0">Pedidos Pendientes de Selección de Producto</h4>
+      <p class="text-muted mb-0">Gestiona los pedidos de búsqueda que requieren selección de producto</p>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'lista_pedidos' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Volver a Pedidos
+      </a>
+    </div>
+  </div>
+
+  {% if pedidos %}
+  <div class="row g-3">
+    {% for pedido in pedidos %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm hover-shadow-lg transition" style="cursor: pointer;">
+        <div class="card-body">
+          <div class="row align-items-start">
+            <div class="col-md-8">
+              <div class="d-flex align-items-center gap-3 mb-2">
+                <h6 class="mb-0 fw-bold">Pedido #{{ pedido.id }}</h6>
+                <span class="badge bg-warning text-dark">{{ pedido.get_estado_display }}</span>
+              </div>
+              <p class="text-muted mb-2 small">
+                <i class="bi bi-person-check me-1"></i>
+                Cliente: <strong>{{ pedido.cliente.nombre }} {{ pedido.cliente.apellidos }}</strong>
+              </p>
+              <div class="small text-muted">
+                <i class="bi bi-calendar-event me-1"></i>
+                Creado: <strong>{{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</strong>
+              </div>
+              
+              <div class="mt-3">
+                <p class="small fw-semibold text-secondary mb-2">Productos Buscados:</p>
+                <div class="d-flex flex-wrap gap-2">
+                  {% for producto in pedido.productos_buscados.all %}
+                  <span class="badge bg-light text-dark border">
+                    {{ producto.descripcion|truncatewords:3 }}
+                    <span class="badge bg-primary ms-1">x{{ producto.cantidad }}</span>
+                  </span>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4 text-end">
+              <div class="mb-3">
+                <p class="text-muted small mb-1">Monto Total</p>
+                <h5 class="fw-bold mb-0">Gs. {{ pedido.monto_total|default:"No calculado" }}</h5>
+              </div>
+              <a href="{% url 'detalle_pedido' pedido.id %}" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-eye me-2"></i>Ver Detalles
+              </a>
+              <a href="{% url 'listar_pedidos_seleccion' %}" class="btn btn-outline-primary btn-sm w-100 mt-2">
+                <i class="bi bi-pencil me-2"></i>Procesar Selección
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="alert alert-info border-0 shadow-sm">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-info-circle me-3 fs-5"></i>
+      <div>
+        <h6 class="mb-1 fw-semibold">Sin Pedidos Pendientes</h6>
+        <p class="mb-0 small">No hay pedidos de búsqueda pendientes de selección en este momento.</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+.hover-shadow-lg {
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-shadow-lg:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.transition {
+  transition: all 0.3s ease;
+}
+
+.transition:hover {
+  transform: translateY(-2px);
+}
+</style>
+{% endblock %}

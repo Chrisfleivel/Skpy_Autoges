@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Contenedor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3>Editar Contenedor</h3>
+  <form method="post">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Número</label>
+        {{ form.numero }}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Estado</label>
+        {{ form.estado }}
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Descripción</label>
+      {{ form.descripcion }}
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Fecha de Embarque</label>
+        {{ form.fecha_embarque }}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Despachante</label>
+        {{ form.despachante }}
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Observaciones</label>
+      {{ form.observaciones }}
+    </div>
+    <div class="text-end">
+      <button class="btn btn-primary">Guardar</button>
+      <a href="{% url 'detalle_contenedor' contenedor.id %}" class="btn btn-secondary ms-2">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,32 +1,120 @@
-# Lista de tasas de cambio
 {% extends 'base.html' %}
 
-{% block title %}Lista de Tasas de Cambio{% endblock %}
+{% block title %}Tasas de Cambio{% endblock %}
 
 {% block content %}
-    <h1>Lista de Tasas de Cambio</h1>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Moneda</th>
-                <th>Tasa de Cambio</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for tasa in tasas %}
-            <tr>
-                <td>{{ tasa.moneda }}</td>
-                <td>{{ tasa.tasa }}</td>
-                <td>
-                    <a href="{% url 'editar_tasa_cambio' tasa.id %}">Editar</a>
-                    <a href="{% url 'eliminar_tasa_cambio' tasa.id %}">Eliminar</a>
-                    <a href="{% url 'detalle_tasa_cambio' tasa.id %}">Ver Detalles</a>
-                    <a href="{% url 'actualizar_tasa_cambio' tasa.id %}">Actualizar Automáticamente</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <a href="{% url 'agregar_tasa_cambio' %}">Agregar Tasa de Cambio</a>
+<div class="container-fluid py-4">
+  <div class="row g-4 mb-4">
+    <div class="col-lg-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 class="mb-1 fw-bold">Tasas de Cambio Diarias</h4>
+          <p class="text-muted mb-0">Registra y consulta las tasas de cambio USD → Gs aplicadas en importaciones.</p>
+        </div>
+        <a href="{% url 'agregar_tasa_cambio' %}" class="btn btn-primary">
+          <i class="bi bi-plus-circle me-2"></i>Cargar Tasa de Hoy
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumen de Tasa Actual -->
+  {% if tasa_actual %}
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm bg-gradient">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <small class="text-muted">Tasa Vigente</small>
+              <h5 class="fw-bold mt-2">1 {{ tasa_actual.moneda_origen }} = <span class="text-primary">{{ tasa_actual.valor|floatformat:4 }}</span> {{ tasa_actual.moneda_destino }}</h5>
+              <p class="text-muted small mb-0">Valida desde {{ tasa_actual.fecha|date:'d/m/Y' }}</p>
+            </div>
+            <span class="badge bg-success">Activa</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% if not existe_tasa_hoy %}
+    <div class="col-md-6">
+      <div class="alert alert-warning border-0 d-flex align-items-center" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-3 flex-shrink-0"></i>
+        <div>
+          <strong>Atencion:</strong> No hay tasa registrada para hoy. 
+          <a href="{% url 'agregar_tasa_cambio' %}" class="alert-link">Cargar tasa del dia</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="alert alert-danger border-0" role="alert">
+    <i class="bi bi-exclamation-circle-fill me-2"></i>
+    <strong>Advertencia:</strong> No hay tasas de cambio registradas. 
+    <a href="{% url 'agregar_tasa_cambio' %}" class="alert-link">Registra la primera tasa ahora</a>
+  </div>
+  {% endif %}
+
+  <!-- Historial de Tasas -->
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="mb-0 fw-bold">Historial de Tasas (Ultimos 30 dias)</h6>
+        </div>
+        <div class="card-body">
+          {% if tasas %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="fw-semibold">Fecha</th>
+                  <th class="fw-semibold">Par de Monedas</th>
+                  <th class="fw-semibold text-end">Tasa</th>
+                  <th class="fw-semibold">Registrado por</th>
+                  <th class="fw-semibold text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for tasa in tasas|slice:":30" %}
+                <tr>
+                  <td><strong>{{ tasa.fecha|date:'d/m/Y' }}</strong></td>
+                  <td><span class="badge bg-light text-dark">{{ tasa.moneda_origen }} → {{ tasa.moneda_destino }}</span></td>
+                  <td class="text-end"><span class="fw-bold text-primary">{{ tasa.valor|floatformat:4 }}</span></td>
+                  <td>
+                    {% if tasa.usuario_creo %}
+                      <small class="text-muted">{{ tasa.usuario_creo.get_full_name|default:tasa.usuario_creo.username }}</small>
+                    {% else %}
+                      <small class="text-muted">Sistema</small>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <a href="{% url 'detalle_tasa_cambio' tasa.id %}" class="btn btn-outline-primary" title="Ver detalle">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                      <a href="{% url 'editar_tasa_cambio' tasa.id %}" class="btn btn-outline-warning" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                      <a href="{% url 'eliminar_tasa_cambio' tasa.id %}" class="btn btn-outline-danger" title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5">
+            <i class="bi bi-graph-up display-4 text-muted"></i>
+            <p class="text-muted mt-3 mb-0">No hay tasas de cambio registradas aun.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard ejecutivo{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Dashboard ejecutivo</h2>
+      <p class="text-muted mb-0">Resumen operativo de caja para {{ fecha|date:'d/m/Y' }}</p>
+    </div>
+    <a href="{% url 'resumen_dia' %}?fecha={{ fecha|date:'Y-m-d' }}" class="btn btn-outline-primary">Ver resumen del día</a>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 h-100 bg-primary-subtle">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Total cobrado</div>
+          <h3 class="mt-2 mb-0">Gs. {{ total_cobrado|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 h-100 bg-success-subtle">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Ticket promedio</div>
+          <h3 class="mt-2 mb-0">Gs. {{ ticket_promedio|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 h-100 bg-warning-subtle">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Crecimiento</div>
+          <h3 class="mt-2 mb-0 {% if crecimiento >= 0 %}text-success{% else %}text-danger{% endif %}">{{ crecimiento|floatformat:1 }}%</h3>
+          <small class="text-muted">vs. ayer: Gs. {{ total_ayer|floatformat:2 }}</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 h-100 bg-dark-subtle">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Cajas abiertas</div>
+          <h3 class="mt-2 mb-0">{{ cajas_abiertas }}</h3>
+          <small class="text-muted">{{ total_pagos_hoy }} cobros hoy</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-dark text-white">
+          <h5 class="mb-0">Tendencia por horario</h5>
+        </div>
+        <div class="card-body">
+          {% for item in tendencia_hora %}
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span>{{ item.hora }}</span>
+            <div class="flex-grow-1 mx-3">
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ item.pct|floatformat:0 }}%;"></div>
+              </div>
+            </div>
+            <strong>Gs. {{ item.total|floatformat:2 }}</strong>
+          </div>
+          {% empty %}
+          <p class="text-muted mb-0">No hay movimiento por horario en este día.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">Medios de pago</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span>Efectivo</span>
+            <strong>Gs. {{ total_efectivo|floatformat:2 }}</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Transferencia</span>
+            <strong>Gs. {{ total_transferencia|floatformat:2 }}</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>Cobros totales</span>
+            <strong>Gs. {{ total_cobrado|floatformat:2 }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-dark text-white">
+          <h5 class="mb-0">Top sucursales</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Sucursal</th>
+                  <th class="text-end">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for fila in top_sucursal %}
+                <tr>
+                  <td>{{ fila.nombre }}</td>
+                  <td class="text-end">Gs. {{ fila.total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="2" class="text-center text-muted py-4">Todavía no hay cobros en esta fecha.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Top empleados</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Empleado</th>
+                  <th class="text-end">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for fila in top_empleado %}
+                <tr>
+                  <td>{{ fila.nombre }}</td>
+                  <td class="text-end">Gs. {{ fila.total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="2" class="text-center text-muted py-4">No hay rendimiento registrado.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Últimos pagos</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Hora</th>
+              <th>Sucursal</th>
+              <th>Empleado</th>
+              <th>Método</th>
+              <th class="text-end">Monto</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pago in pagos %}
+            <tr>
+              <td>{{ pago.fecha_pago|time:'H:i' }}</td>
+              <td>{% if pago.sucursal %}{{ pago.sucursal.nombre }}{% else %}-{% endif %}</td>
+              <td>{% if pago.empleado %}{{ pago.empleado }}{% else %}-{% endif %}</td>
+              <td>{{ pago.metodo_pago }}</td>
+              <td class="text-end">Gs. {{ pago.monto|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">No hay pagos para esta fecha.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

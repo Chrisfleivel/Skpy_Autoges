@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                        <i class="bi bi-briefcase text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1 fw-bold text-dark">{{ despachante.nombre_razon_social }}</h1>
+                        <p class="text-muted mb-0">Detalles del despachante / agente de despacho.</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'lista_despachantes' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Volver
+                    </a>
+                    <a href="{% url 'editar_despachante' despachante.id %}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i>Editar
+                    </a>
+                    <a href="{% url 'eliminar_despachante' despachante.id %}" class="btn btn-outline-danger" onclick="return confirm('¿Eliminar este despachante? Esta acción no se puede deshacer.');">
+                        <i class="bi bi-trash me-2"></i>Eliminar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold">Información General</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="border-start border-primary border-4 ps-3">
+                                <small class="text-muted">ID</small>
+                                <div class="fw-semibold">#{{ despachante.id }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-success border-4 ps-3">
+                                <small class="text-muted">Estado</small>
+                                <div class="fw-semibold">
+                                    {% if despachante.es_activo %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-info border-4 ps-3">
+                                <small class="text-muted">País</small>
+                                <div class="fw-semibold">
+                                    {% if despachante.pais_codigo == 'PY' %}
+                                        <span class="badge bg-info">Paraguay</span>
+                                    {% elif despachante.pais_codigo == 'KR' %}
+                                        <span class="badge bg-info">Corea del Sur</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Otro</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-warning border-4 ps-3">
+                                <small class="text-muted">Tipo de Representación</small>
+                                <div class="fw-semibold">
+                                    {% if despachante.tipo_representacion == 'CUSTOMS_BROKER' %}
+                                        <span class="badge bg-warning text-dark">Customs Broker</span>
+                                    {% elif despachante.tipo_representacion == 'IOR' %}
+                                        <span class="badge bg-primary">IOR</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-secondary border-4 ps-3">
+                                <small class="text-muted">RUC / BRN</small>
+                                <div class="fw-semibold">{{ despachante.ruc_o_brn|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-danger border-4 ps-3">
+                                <small class="text-muted">Sistema de Gestión</small>
+                                <div class="fw-semibold text-muted small">{{ despachante.get_sistema_gestion_display|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-info border-4 ps-3">
+                                <small class="text-muted">Email de Contacto</small>
+                                <div class="fw-semibold">
+                                    {% if despachante.contacto_email %}
+                                        <a href="mailto:{{ despachante.contacto_email }}" class="text-decoration-none">{{ despachante.contacto_email }}</a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-primary border-4 ps-3">
+                                <small class="text-muted">Vencimiento Mandato</small>
+                                <div class="fw-semibold">
+                                    {% if despachante.fecha_vencimiento_mandato %}
+                                        {{ despachante.fecha_vencimiento_mandato|date:"d/m/Y" }}
+                                        {% now "Y-m-d" as today %}
+                                        {% if despachante.fecha_vencimiento_mandato|date:"Y-m-d" < today %}
+                                            <span class="badge bg-danger ms-2">VENCIDO</span>
+                                        {% elif despachante.fecha_vencimiento_mandato|date:"Y-m-d" <= today|add:"30d" %}
+                                            <span class="badge bg-warning ms-2">POR VENCER</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border-start border-secondary border-4 ps-3">
+                                <small class="text-muted">Fecha de Creación</small>
+                                <div class="text-muted small">{{ despachante.fecha_creacion|date:"d/m/Y H:i" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

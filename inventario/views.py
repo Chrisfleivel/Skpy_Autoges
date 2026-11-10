@@ -1,12 +1,14 @@
 # inventario/views.py
 from django.shortcuts import render, redirect
-from .models import Vehiculo, Repuesto, MantenimientoVehiculo, Deposito, UnidadMedida, MarcaVehiculo, TipoVehiculo, ModeloVehiculo, TipoTransmision
+from .models import Vehiculo, Repuesto, MantenimientoVehiculo, Deposito, UnidadMedida, MarcaVehiculo, TipoVehiculo, ModeloVehiculo, TipoTransmision, CategoriaRepuesto
+from configuraciones_maestras.models import Moneda
 from django.contrib import messages
-from .forms import VehiculoForm, RepuestoForm, MantenimientoForm, DepositoForm, UnidadMedidaForm, MarcaVehiculoForm, TipoVehiculoForm, ModeloVehiculoForm, TipoTransmisionForm
+from .forms import VehiculoForm, RepuestoForm, RepuestoProveedorForm, MantenimientoForm, DepositoForm, UnidadMedidaForm, MarcaVehiculoForm, TipoVehiculoForm, ModeloVehiculoForm, TipoTransmisionForm
 from django import forms
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from seguridad_usuarios.decorators import requiere_privilegio
+from decimal import Decimal, InvalidOperation
 
 # Importar el decorador revisar_permiso
 from seguridad_usuarios.decorators import revisar_permiso
@@ -111,10 +113,14 @@ def agregar_vehiculo(request):
             # Debug: imprimir errores del formulario
             print(f"Errores del formulario: {form.errors}")
     else:
-        form = VehiculoForm()
+        proveedor_id = request.GET.get('proveedor')
+        initial = {}
+        if proveedor_id:
+            initial['proveedor'] = int(proveedor_id)
+        form = VehiculoForm(initial=initial)
     return render(request, 'inventario/agregar_vehiculo.html', {'form': form})
 
-
+@login_required
 def ajax_modelos_por_marca(request):
     """Endpoint AJAX que retorna JSON con modelos filtrados por marca."""
     marca_id = request.GET.get('marca_id')
@@ -170,7 +176,8 @@ def lista_vehiculos(request):
 def detalle_vehiculo(request, vehiculo_id):
     """Vista para ver los detalles de un vehículo en el inventario."""
     vehiculo = Vehiculo.objects.get(id=vehiculo_id)
-    return render(request, 'inventario/detalle_vehiculo.html', {'vehiculo': vehiculo})  
+    monedas = Moneda.objects.all().order_by('codigo')
+    return render(request, 'inventario/detalle_vehiculo.html', {'vehiculo': vehiculo, 'monedas': monedas})  
 
 @revisar_permiso('inventario.eliminar_vehiculo')
 def eliminar_vehiculo(request, vehiculo_id):
@@ -197,7 +204,111 @@ def editar_vehiculo(request, vehiculo_id):
             return redirect('detalle_vehiculo', vehiculo_id=vehiculo.id)
     else:
         form = VehiculoForm(instance=vehiculo)
-    return render(request, 'inventario/editar_vehiculo.html', {'form': form, 'vehiculo': vehiculo}) 
+    return render(request, 'inventario/editar_vehiculo.html', {'form': form, 'vehiculo': vehiculo})
+
+def _actualizar_costos_importacion_desde_post(producto, request):
+    if isinstance(producto, Repuesto):
+        costo_unitario = request.POST.get('costo_unitario_proveedor')
+        cantidad = request.POST.get('cantidad_a_comprar')
+        if costo_unitario in ('', None):
+            producto.costo_unitario_proveedor = None
+        else:
+            producto.costo_unitario_proveedor = Decimal(costo_unitario)
+
+        if cantidad in ('', None):
+            producto.cantidad_a_comprar = 0
+        else:
+            producto.cantidad_a_comprar = int(cantidad)
+    else:
+        valor_total = request.POST.get('costo_compra_provedor_total')
+        if valor_total in ('', None):
+            producto.costo_compra_provedor_total = None
+        else:
+            producto.costo_compra_provedor_total = Decimal(valor_total)
+
+    campos_numericos = {
+        'costo_flete1': request.POST.get('costo_flete1'),
+        'costo_aduana_extrangera': request.POST.get('costo_aduana_extrangera'),
+        'costo_extra': request.POST.get('costo_extra'),
+        'costo_aduana_paraguaya': request.POST.get('costo_aduana_paraguaya'),
+        'costo_flete2': request.POST.get('costo_flete2'),
+    }
+    for field_name, value in campos_numericos.items():
+        if value in ('', None):
+            setattr(producto, field_name, None)
+        else:
+            setattr(producto, field_name, Decimal(value))
+
+    producto.descripcion_costo_extra = request.POST.get('descripcion_costo_extra', '')
+
+    campos_moneda = {
+        'moneda_compra_proveedor': request.POST.get('moneda_compra_proveedor'),
+        'moneda_flete1': request.POST.get('moneda_flete1'),
+        'moneda_aduana_extrangera': request.POST.get('moneda_aduana_extrangera'),
+        'moneda_costo_extra': request.POST.get('moneda_costo_extra'),
+        'moneda_costo_aduana_paraguaya': request.POST.get('moneda_costo_aduana_paraguaya'),
+        'moneda_costo_flete2': request.POST.get('moneda_costo_flete2'),
+    }
+    for field_name, value in campos_moneda.items():
+        if value:
+            setattr(producto, field_name, Moneda.objects.get(pk=value))
+        else:
+            setattr(producto, field_name, None)
+
+    tasa = request.POST.get('tasa_aplicada')
+    producto.tasa_aplicada = Decimal(tasa) if tasa else None
+    producto.save()
+
+@revisar_permiso('inventario.editar_vehiculo')
+def editar_costos_vehiculo(request, vehiculo_id):
+    """Vista para editar los costos de importación de un vehículo."""
+    vehiculo = Vehiculo.objects.get(id=vehiculo_id)
+    if request.method == 'POST':
+        _actualizar_costos_importacion_desde_post(vehiculo, request)
+        messages.success(request, 'Costos del vehículo actualizados correctamente.')
+    return redirect('detalle_vehiculo', vehiculo_id=vehiculo_id)
+
+
+@revisar_permiso('inventario.editar_repuesto')
+def editar_costos_repuesto(request, repuesto_id):
+    """Vista para editar los costos de importación de un repuesto."""
+    repuesto = Repuesto.objects.get(id=repuesto_id)
+    if request.method == 'POST':
+        _actualizar_costos_importacion_desde_post(repuesto, request)
+        messages.success(request, 'Costos del repuesto actualizados correctamente.')
+    return redirect('detalle_repuesto', repuesto_id=repuesto_id)
+
+
+@revisar_permiso('inventario.editar_vehiculo')
+def editar_precio_vehiculo(request, vehiculo_id):
+    """Vista para editar solo el precio de venta de un vehículo."""
+    vehiculo = Vehiculo.objects.get(id=vehiculo_id)
+    if request.method == 'POST':
+        precio_venta = request.POST.get('precio_venta')
+        if precio_venta:
+            try:
+                vehiculo.precio_venta = Decimal(precio_venta)
+                vehiculo.save(update_fields=['precio_venta'])
+                messages.success(request, 'Precio de venta actualizado correctamente.')
+            except (ValueError, InvalidOperation):
+                messages.error(request, 'El precio ingresado no es válido.')
+    return redirect('detalle_vehiculo', vehiculo_id=vehiculo_id)
+
+
+@revisar_permiso('inventario.editar_repuesto')
+def editar_precio_repuesto(request, repuesto_id):
+    """Vista para editar solo el precio de venta de un repuesto."""
+    repuesto = Repuesto.objects.get(id=repuesto_id)
+    if request.method == 'POST':
+        precio_venta = request.POST.get('precio_venta')
+        if precio_venta:
+            try:
+                repuesto.precio_venta = Decimal(precio_venta)
+                repuesto.save(update_fields=['precio_venta'])
+                messages.success(request, 'Precio de venta actualizado correctamente.')
+            except (ValueError, InvalidOperation):
+                messages.error(request, 'El precio ingresado no es válido.')
+    return redirect('detalle_repuesto', repuesto_id=repuesto_id)
 
 
 # --------------------------------------------------------------------------
@@ -213,13 +324,47 @@ def agregar_repuesto(request):
             form.save()
             return redirect('lista_repuestos')
     else:
-        form = RepuestoForm()
+        proveedor_id = request.GET.get('proveedor')
+
+        initial = {'estado': 'disponible'}
+        if proveedor_id:
+            initial['proveedor'] = int(proveedor_id)
+        form = RepuestoForm(initial=initial)
     return render(request, 'inventario/agregar_repuesto.html', {'form': form})
+
+
+@revisar_permiso('inventario.agregar_repuesto')
+def agregar_repuesto_proveedor(request):
+    """Vista para registrar un repuesto encontrado para importación desde un proveedor."""
+    if request.method == 'POST':
+        form = RepuestoProveedorForm(request.POST, request.FILES)
+        if form.is_valid():
+            repuesto = form.save(commit=False)
+            repuesto.tipo = 'repuesto'
+            repuesto.estado = 'elegible_importacion'
+            repuesto.costo_compra = repuesto.costo_unitario_proveedor or repuesto.costo_unitario or Decimal('0.00')
+            repuesto.save()
+            messages.success(request, 'Repuesto registrado correctamente para evaluación de importación.')
+            proveedor_id = repuesto.proveedor_id
+            if proveedor_id:
+                return redirect('detalle_proveedor', pk=proveedor_id)
+            return redirect('lista_repuestos')
+    else:
+        proveedor_id = request.GET.get('proveedor')
+        initial = {'estado': 'elegible_importacion', 'tipo': 'repuesto', 'costo_compra': 0}
+        if proveedor_id:
+            initial['proveedor'] = int(proveedor_id)
+        form = RepuestoProveedorForm(initial=initial)
+
+    return render(request, 'inventario/agregar_repuesto_proveedor.html', {'form': form})
 
 @revisar_permiso('inventario.listar_repuestos')
 def lista_repuestos(request):
     """Vista mejorada para ver la lista de repuestos con filtros avanzados."""
-    repuestos = Repuesto.objects.all()
+    repuestos = Repuesto.objects.only(
+        'id', 'nombre', 'codigo_repuesto', 'precio_venta', 'stock_actual',
+        'stock_minimo', 'compatibilidad'
+    ).order_by('nombre')
 
     # Capturar parámetros GET
     query = request.GET.get('search_query', '')
@@ -237,7 +382,7 @@ def lista_repuestos(request):
     
     # Filtro por Categoría exacta
     if categoria:
-        repuestos = repuestos.filter(categoria=categoria)
+        repuestos = repuestos.filter(categoria_id=categoria)
 
     # Filtros de Rango de Precio
     if precio_min:
@@ -249,19 +394,36 @@ def lista_repuestos(request):
     if stock_min:
         repuestos = repuestos.filter(stock_actual__gte=stock_min)
 
-    # Obtener categorías únicas para el select del template
-    categorias_disponibles = Repuesto.objects.values_list('categoria', flat=True).distinct().exclude(categoria__isnull=True).exclude(categoria='')
+    # Obtener categorías activas para el select del template
+    categorias_disponibles = CategoriaRepuesto.objects.filter(estado=True).order_by('nombre').only('id', 'nombre')
+    total_repuestos = repuestos.count()
 
     return render(request, 'inventario/lista_repuestos.html', {
         'repuestos': repuestos,
-        'categorias': categorias_disponibles
+        'categorias': categorias_disponibles,
+        'total_repuestos': total_repuestos,
     })
 
 @revisar_permiso('inventario.detallar_repuesto')
 def detalle_repuesto(request, repuesto_id):
     """Vista para ver los detalles de un repuesto en el inventario."""
     repuesto = Repuesto.objects.get(id=repuesto_id)
-    return render(request, 'inventario/detalle_repuesto.html', {'repuesto': repuesto})
+    monedas = Moneda.objects.all().order_by('codigo')
+    pedido_abastecimiento = (
+        repuesto.pedidos_abastecimiento.filter(tipo='abastecimiento')
+        .exclude(estado__in=['completado', 'cancelado', 'rechazado'])
+        .order_by('-fecha_pedido')
+        .first()
+    )
+    return render(
+        request,
+        'inventario/detalle_repuesto.html',
+        {
+            'repuesto': repuesto,
+            'monedas': monedas,
+            'pedido_abastecimiento': pedido_abastecimiento,
+        },
+    )
 
 @revisar_permiso('inventario.eliminar_repuesto')
 def eliminar_repuesto(request, repuesto_id):
@@ -875,6 +1037,12 @@ permisos_iniciales_inventario = [
         'codename': 'inventario.editar_unidad_medida',
         'nombre': 'Editar Unidad de Medida',
         'descripcion': 'Permite editar una unidad de medida en el inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.eliminar_unidad_medida',
+        'nombre': 'Eliminar Unidad de Medida',
+        'descripcion': 'Permite eliminar una unidad de medida del inventario.',
         'sector': 'Inventario'
     },
     {

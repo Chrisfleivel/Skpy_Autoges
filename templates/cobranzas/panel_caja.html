@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Caja{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h2 class="mb-1">Panel de Caja</h2>
+      <p class="text-muted mb-0">Control de aperturas, cobros y cierres por sucursal.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      {% if empleado %}
+      <span class="badge bg-light text-dark border">Empleado: {{ empleado }}</span>
+      {% endif %}
+      {% if caja_actual %}
+      <span class="badge bg-success">Caja abierta: {{ caja_actual.nombre }}</span>
+      {% endif %}
+      <a href="{% url 'abrir_nueva_caja' %}" class="btn btn-primary">Abrir nueva caja</a>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row g-3">
+    {% for caja in cajas %}
+      <div class="col-md-6 col-xl-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h5 class="card-title mb-1">{{ caja.nombre }}</h5>
+                <small class="text-muted">{{ caja.sucursal }}</small>
+              </div>
+              <span class="badge {% if caja.estado == 'abierta' %}bg-success{% else %}bg-secondary{% endif %}">
+                {{ caja.get_estado_display }}
+              </span>
+            </div>
+
+            <ul class="list-group list-group-flush small mb-3">
+              <li class="list-group-item px-0"><strong>Saldo inicial:</strong> Gs. {{ caja.saldo_inicial }}</li>
+              <li class="list-group-item px-0"><strong>Saldo actual:</strong> Gs. {{ caja.saldo_actual }}</li>
+              <li class="list-group-item px-0"><strong>Empleado:</strong> {{ caja.empleado_actual|default:'Sin asignar' }}</li>
+              <li class="list-group-item px-0"><strong>Última apertura:</strong> {{ caja.fecha_apertura|default:'-' }}</li>
+              <li class="list-group-item px-0"><strong>Último cierre:</strong> {{ caja.fecha_cierre|default:'-' }}</li>
+            </ul>
+
+            <div class="d-grid gap-2">
+              {% if caja.estado == 'cerrada' %}
+                <a href="{% url 'abrir_caja' caja.id %}" class="btn btn-success">Abrir caja</a>
+              {% else %}
+                <a href="{% url 'cerrar_caja' caja.id %}" class="btn btn-warning">Cerrar caja</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-light border">No hay cajas registradas aún.</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

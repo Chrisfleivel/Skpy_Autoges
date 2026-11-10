@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card shadow-sm border-0 mx-auto" style="max-width: 900px;">
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">Cobro a cliente</h3>
+      <span>#{{ pedido.id }}</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="bg-light rounded p-3 h-100">
+            <small class="text-muted d-block">Empleado</small>
+            <strong>{{ empleado|default:'Sin asignar' }}</strong>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="bg-light rounded p-3 h-100">
+            <small class="text-muted d-block">Sucursal</small>
+            <strong>{{ sucursal_seleccionada|default:'Sin sucursal' }}</strong>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="bg-light rounded p-3 h-100">
+            <small class="text-muted d-block">Caja abierta</small>
+            <strong>{{ caja_seleccionada|default:'Sin caja abierta' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <p class="fs-5"><strong>Total a pagar:</strong> Gs. {{ pedido.monto_total }}</p>
+
+      {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
+
+      {% if not empleado %}
+        <div class="alert alert-warning">No se pudo vincular el empleado actual al usuario. Debe existir un empleado asignado para registrar el cobro.</div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="sucursal" class="form-label">Sucursal</label>
+            <select id="sucursal" name="sucursal" class="form-select">
+              {% for sucursal in sucursales %}
+                <option value="{{ sucursal.id }}" {% if sucursal_seleccionada and sucursal.id == sucursal_seleccionada.id %}selected{% endif %}>{{ sucursal.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="caja" class="form-label">Caja abierta</label>
+            <select id="caja" name="caja" class="form-select" {% if not cajas %}disabled{% endif %}>
+              {% if not cajas %}
+                <option value="">No hay cajas abiertas</option>
+              {% else %}
+                {% for caja in cajas %}
+                  <option value="{{ caja.id }}" {% if caja_seleccionada and caja.id == caja_seleccionada.id %}selected{% endif %}>{{ caja.nombre }} - {{ caja.sucursal }}</option>
+                {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-4 form-group">
+          <label for="monto_recibido">Monto recibido</label>
+          <input id="monto_recibido" name="monto_recibido" type="number" step="0.01" min="0" class="form-control" value="{{ pedido.monto_total }}" required {% if not cajas or not empleado %}disabled{% endif %} />
+        </div>
+
+        <div class="mt-3">
+          <strong>Vuelto:</strong> <span id="vuelto_display">0.00</span>
+        </div>
+
+        <div class="mt-3">
+          <label for="metodo_pago">Método de pago</label>
+          <select id="metodo_pago" name="metodo_pago" class="form-select" style="max-width: 260px;" {% if not cajas or not empleado %}disabled{% endif %}>
+            <option value="Efectivo" {% if metodo_pago == 'Efectivo' %}selected{% endif %}>Efectivo</option>
+            <option value="Transferencia" {% if metodo_pago == 'Transferencia' %}selected{% endif %}>Transferencia bancaria</option>
+            <option value="Cheque" {% if metodo_pago == 'Cheque' %}selected{% endif %}>Cheque</option>
+            <option value="Tarjeta" {% if metodo_pago == 'Tarjeta' %}selected{% endif %}>Tarjeta</option>
+          </select>
+        </div>
+
+        <div class="mt-4 d-flex gap-2 flex-wrap">
+          <button type="submit" class="btn btn-primary" {% if not cajas or not empleado %}disabled{% endif %}>Registrar pago</button>
+          <a href="{% url 'lista_pedidos_cobranzas' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+
+        <input type="hidden" id="denoms" value="{{ denominaciones|join:',' }}" />
+      </form>
+
+      <div style="margin-top:14px">
+        <button id="mostrar_desglose" class="btn btn-link" type="button" {% if not cajas or not empleado %}disabled{% endif %}>Mostrar desglose sugerido</button>
+        <div id="desglose_area" style="display:none; margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function toCents(value){ return Math.round(Number(value)*100); }
+  function fromCents(c){ return (c/100).toFixed(2); }
+
+  var total = toCents('{{ pedido.monto_total }}');
+  var montoInput = document.getElementById('monto_recibido');
+  var vueltoDisplay = document.getElementById('vuelto_display');
+  var denoms = (document.getElementById('denoms').value || '').split(',').filter(Boolean).map(Number);
+  var mostrarBtn = document.getElementById('mostrar_desglose');
+  var desgloseArea = document.getElementById('desglose_area');
+
+  if (!montoInput) return;
+
+  function calcular(){
+    var recibido = toCents(montoInput.value || 0);
+    var vuelto = Math.max(0, recibido - total);
+    vueltoDisplay.textContent = fromCents(vuelto);
+  }
+
+  function calcularDesglose(){
+    var recibido = toCents(montoInput.value || 0);
+    var vuelto = Math.max(0, recibido - total);
+    if(vuelto === 0){ desgloseArea.innerHTML = '<em>No hay vuelto.</em>'; return; }
+    var restante = vuelto;
+    var filas = [];
+    denoms.sort(function(a,b){return b-a});
+    denoms.forEach(function(d){
+      var valor = Math.round(d*100);
+      var cant = Math.floor(restante/valor);
+      if(cant>0){ filas.push('<div>'+cant+' x '+d.toFixed(2)+'</div>'); restante -= cant*valor; }
+    });
+    if(restante>0) filas.push('<div>Restante (no representable en las denominaciones): '+fromCents(restante)+'</div>');
+    desgloseArea.innerHTML = filas.join('');
+  }
+
+  montoInput.addEventListener('input', calcular);
+  mostrarBtn.addEventListener('click', function(e){ e.preventDefault(); if(desgloseArea.style.display==='none'){ calcularDesglose(); desgloseArea.style.display='block'; } else { desgloseArea.style.display='none'; } });
+  calcular();
+})();
+</script>
+
+{% endblock %}

@@ -1,158 +1,157 @@
 {% extends 'base.html' %}
 
+{% block title %}Lista de Repuestos{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
-  <div class="row">
-    <!-- SIDEBAR - FILTROS IZQUIERDA -->
-    <div class="col-lg-3 mb-4">
-      <div class="card shadow-sm" style="border: 1px solid var(--border-color); background-color: var(--bg-form);">
-        <div class="card-body">
-          <h5 class="card-title mb-4" style="color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 0.75rem;">
-            <i class="bi bi-funnel"></i> Filtros
-          </h5>
-
-          <form method="get" id="filterForm">
-            <!-- Búsqueda de Texto -->
-            <div class="mb-3">
-              <label class="form-label fw-bold" style="color: var(--text-label); font-size: 0.9rem;">Buscar por Nombre/Código</label>
-              <input type="text" name="search_query" class="form-control" placeholder="Ej: Filtro..." value="{{ request.GET.search_query }}" style="border-color: var(--border-color); font-size: 0.9rem;">
-            </div>
-
-            <!-- Filtro por Categoría -->
-            <div class="mb-3">
-              <label class="form-label fw-bold" style="color: var(--text-label); font-size: 0.9rem;">Categoría</label>
-              <select name="categoria" class="form-select" style="border-color: var(--border-color); font-size: 0.9rem;">
-                <option value="">-- Todas --</option>
-                {% for cat in categorias %}
-                  <option value="{{ cat }}" {% if request.GET.categoria == cat %}selected{% endif %}>{{ cat }}</option>
-                {% endfor %}
-              </select>
-            </div>
-
-            <!-- Rango de Precio -->
-            <div class="mb-3">
-              <label class="form-label fw-bold" style="color: var(--text-label); font-size: 0.9rem;">Precio Mínimo (Gs.)</label>
-              <input type="number" name="precio_min" class="form-control" placeholder="0" value="{{ request.GET.precio_min }}" style="border-color: var(--border-color); font-size: 0.9rem;">
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-bold" style="color: var(--text-label); font-size: 0.9rem;">Precio Máximo (Gs.)</label>
-              <input type="number" name="precio_max" class="form-control" placeholder="999999" value="{{ request.GET.precio_max }}" style="border-color: var(--border-color); font-size: 0.9rem;">
-            </div>
-
-            <!-- Filtro por Stock -->
-            <div class="mb-4">
-              <label class="form-label fw-bold" style="color: var(--text-label); font-size: 0.9rem;">Stock Disponible (mín.)</label>
-              <input type="number" name="stock_min" class="form-control" placeholder="1" value="{{ request.GET.stock_min }}" style="border-color: var(--border-color); font-size: 0.9rem;">
-            </div>
-
-            <!-- Botones de Acción -->
-            <div class="d-grid gap-2">
-              <button type="submit" class="btn fw-bold" style="background-color: var(--primary-color); color: white; border: none; font-size: 0.9rem;">
-                <i class="bi bi-search"></i> Buscar
-              </button>
-              <a href="{% url 'lista_repuestos' %}" class="btn btn-outline-secondary fw-bold" style="border-color: var(--border-color); color: var(--text-label); font-size: 0.9rem;">
-                <i class="bi bi-arrow-counterclockwise"></i> Limpiar
-              </a>
-            </div>
-          </form>
+  <div class="row align-items-center mb-5">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center gap-4">
+        <div class="bg-primary bg-opacity-10 rounded-circle p-4">
+          <i class="bi bi-wrench text-primary" style="font-size: 2rem;"></i>
+        </div>
+        <div>
+          <h1 class="h3 fw-bold mb-1">Repuestos</h1>
+          <p class="text-muted mb-0">Administra el stock de repuestos y filtra por nombre, categoría, precio y disponibilidad.</p>
         </div>
       </div>
     </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <a href="{% url 'agregar_repuesto' %}" class="btn btn-primary shadow-sm">
+        <i class="bi bi-plus-circle-fill me-2"></i>Agregar Repuesto
+      </a>
+    </div>
+  </div>
 
-    <!-- CONTENIDO PRINCIPAL - RESULTADOS DERECHA -->
-    <div class="col-lg-9">
-      <div class="card shadow-sm mb-4" style="border: 1px solid var(--border-color); background-color: var(--bg-form);">
-        <div class="card-body">
-          <h2 class="mb-4" style="color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 1rem;">
-            <i class="bi bi-list"></i> Lista de Repuestos
-          </h2>
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light border-0 py-4">
+      <div class="d-flex align-items-center justify-content-between flex-column flex-md-row gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-funnel-fill text-primary fs-4"></i>
+          <h6 class="mb-0 fw-bold">Filtrar repuestos</h6>
+        </div>
+        <span class="text-muted small">Usa los filtros para encontrar repuestos rápidamente.</span>
+      </div>
+    </div>
+    <div class="card-body p-4">
+      <form method="get" id="filterForm" class="row g-3">
+        <div class="col-lg-4 col-md-6">
+          <label class="form-label fw-semibold">Buscar por Nombre/Código</label>
+          <input type="text" name="search_query" class="form-control" placeholder="Ej: Filtro..." value="{{ request.GET.search_query }}">
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label fw-semibold">Categoría</label>
+          <select name="categoria" class="form-select">
+            <option value="">Todas</option>
+            {% for cat in categorias %}
+              <option value="{{ cat.id }}" {% if request.GET.categoria == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label fw-semibold">Precio Mínimo</label>
+          <input type="number" name="precio_min" class="form-control" placeholder="0" value="{{ request.GET.precio_min }}">
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label fw-semibold">Precio Máximo</label>
+          <input type="number" name="precio_max" class="form-control" placeholder="999999" value="{{ request.GET.precio_max }}">
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label fw-semibold">Stock Mínimo</label>
+          <input type="number" name="stock_min" class="form-control" placeholder="1" value="{{ request.GET.stock_min }}">
+        </div>
+        <div class="col-lg-3 col-md-6 d-grid">
+          <button type="submit" class="btn btn-primary">Buscar</button>
+        </div>
+        <div class="col-lg-3 col-md-6 d-grid">
+          <a href="{% url 'lista_repuestos' %}" class="btn btn-outline-secondary">Limpiar</a>
+        </div>
+      </form>
+    </div>
+  </div>
 
-          <!-- Resultados -->
-          {% if repuestos %}
-            <div class="table-responsive">
-              <table class="table table-hover" style="border-color: var(--border-color); margin-bottom: 0;">
-                <thead style="background-color: var(--primary-color); color: white;">
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Código</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                    <th>Compatibilidad</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for repuesto in repuestos %}
-                    <tr style="border-bottom: 1px solid var(--border-color);">
-                      <td style="color: var(--primary-color); font-weight: 500;">
-                        {{ repuesto.nombre }}
-                      </td>
-                      <td>
-                        <span class="badge" style="background-color: var(--primary-color); font-size: 0.8rem;">{{ repuesto.codigo_repuesto }}</span>
-                      </td>
-                      <td>
-                        <span class="badge bg-success" style="font-size: 0.8rem;">Gs. {{ repuesto.precio_venta|default:"0" }}</span>
-                      </td>
-                      <td>
-                        {% if repuesto.stock_actual > repuesto.stock_minimo %}
-                          <span class="badge bg-success" style="font-size: 0.8rem;">{{ repuesto.stock_actual }} uds</span>
-                        {% elif repuesto.stock_actual > 0 %}
-                          <span class="badge bg-warning" style="font-size: 0.8rem;">{{ repuesto.stock_actual }} uds</span>
-                        {% else %}
-                          <span class="badge bg-danger" style="font-size: 0.8rem;">Agotado</span>
-                        {% endif %}
-                      </td>
-                      <td style="font-size: 0.9rem;">{{ repuesto.compatibilidad|default:"Universal" }}</td>
-                      <td>
-                        <div class="btn-group btn-group-sm" role="group">
-                          <a href="{% url 'detalle_repuesto' repuesto.id %}" class="btn" style="background-color: var(--primary-color); color: white; border: none;" title="Ver detalles">
-                            <i class="bi bi-eye"></i>
-                          </a>
-                          <a href="{% url 'editar_repuesto' repuesto.id %}" class="btn btn-warning" title="Editar">
-                            <i class="bi bi-pencil"></i>
-                          </a>
-                          <a href="{% url 'eliminar_repuesto' repuesto.id %}" class="btn btn-danger" onclick="return confirm('¿Está seguro?');" title="Eliminar">
-                            <i class="bi bi-trash"></i>
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Resumen -->
-            <div class="mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
-              <p style="color: var(--text-label); font-size: 0.9rem; margin: 0;">
-                <strong>Total encontrados:</strong> {{ repuestos.count }} repuesto{{ repuestos.count|pluralize }}
-              </p>
-            </div>
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 py-3">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+        <div>
+          <h3 class="h5 fw-bold mb-1">Lista de Repuestos</h3>
+          <p class="text-muted mb-0">Resultados encontrados: <strong>{{ total_repuestos }}</strong></p>
+        </div>
+        <div class="text-muted small">
+          {% if request.GET.search_query or request.GET.categoria or request.GET.precio_min or request.GET.precio_max or request.GET.stock_min %}
+            Filtros activos
           {% else %}
-            <div class="alert alert-info" style="background-color: rgba(13, 110, 253, 0.1); border-color: var(--border-color); color: var(--text-label); margin-bottom: 0;">
-              <i class="bi bi-info-circle"></i> No hay repuestos que coincidan con los filtros seleccionados.
-            </div>
+            Sin filtros aplicados
           {% endif %}
         </div>
       </div>
-
-      <!-- Botón Agregar -->
-      <div class="text-end">
-        <a href="{% url 'agregar_repuesto' %}" class="btn fw-bold" style="background-color: var(--primary-color); color: white; border: none; padding: 0.75rem 2rem;">
-          <i class="bi bi-plus-circle-fill"></i> Agregar Repuesto
-        </a>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-center">
+            <tr>
+              <th class="border-0 fw-semibold">Nombre</th>
+              <th class="border-0 fw-semibold">Código</th>
+              <th class="border-0 fw-semibold">Precio</th>
+              <th class="border-0 fw-semibold">Stock</th>
+              <th class="border-0 fw-semibold">Compatibilidad</th>
+              <th class="border-0 fw-semibold">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for repuesto in repuestos %}
+              <tr>
+                <td class="text-start fw-semibold text-primary">{{ repuesto.nombre }}</td>
+                <td class="text-center">
+                  <span class="badge bg-primary bg-opacity-10 text-primary">{{ repuesto.codigo_repuesto }}</span>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-success bg-opacity-10 text-success">Gs. {{ repuesto.precio_venta|default:"0" }}</span>
+                </td>
+                <td class="text-center">
+                  {% if repuesto.stock_actual > repuesto.stock_minimo %}
+                    <span class="badge bg-success bg-opacity-10 text-success">{{ repuesto.stock_actual }} uds</span>
+                  {% elif repuesto.stock_actual > 0 %}
+                    <span class="badge bg-warning bg-opacity-10 text-warning">{{ repuesto.stock_actual }} uds</span>
+                  {% else %}
+                    <span class="badge bg-danger bg-opacity-10 text-danger">Agotado</span>
+                  {% endif %}
+                </td>
+                <td class="text-center text-muted">{{ repuesto.compatibilidad|default:"Universal" }}</td>
+                <td class="text-center">
+                  <div class="d-flex justify-content-center gap-1 flex-wrap">
+                    <a href="{% url 'detalle_repuesto' repuesto.id %}" class="btn btn-outline-primary btn-sm" title="Ver detalles">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    {% if repuesto.stock_actual <= repuesto.stock_minimo %}
+                    <a href="{% url 'crear_pedido_abastecimiento' repuesto.id %}" class="btn btn-warning btn-sm" title="Abastecer">
+                      <i class="bi bi-box-seam"></i>
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'editar_repuesto' repuesto.id %}" class="btn btn-outline-warning btn-sm" title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="{% url 'eliminar_repuesto' repuesto.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Está seguro?');" title="Eliminar">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">No hay repuestos que coincidan con los filtros seleccionados.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 </div>
 
 <style>
-  .table {
-    background-color: var(--bg-form);
-  }
-
-  .table tbody tr:hover {
+  .table-hover tbody tr:hover {
     background-color: rgba(13, 110, 253, 0.05);
   }
 
@@ -167,8 +166,9 @@
   }
 
   @media (max-width: 992px) {
-    .col-lg-3, .col-lg-9 {
-      margin-bottom: 1rem;
+    .col-md-6, .col-lg-4, .col-lg-2 {
+      max-width: 100% !important;
+      flex: 0 0 100% !important;
     }
   }
 </style>

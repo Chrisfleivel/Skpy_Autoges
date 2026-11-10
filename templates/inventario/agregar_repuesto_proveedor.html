@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h4 class="mb-1 fw-bold">Registrar repuesto para importación</h4>
+              <p class="text-muted mb-0">Ingrese los datos del repuesto encontrado para evaluación de importación.</p>
+            </div>
+            <a href="{% url 'lista_repuestos' %}" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.tipo }}
+            {{ form.estado }}
+            {{ form.costo_compra }}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Nombre del repuesto</label>
+                {{ form.nombre }}
+                {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Código del repuesto</label>
+                {{ form.codigo_repuesto }}
+                {% if form.codigo_repuesto.errors %}<div class="text-danger small mt-1">{{ form.codigo_repuesto.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Proveedor</label>
+                {{ form.proveedor }}
+                {% if form.proveedor.errors %}<div class="text-danger small mt-1">{{ form.proveedor.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Categoría</label>
+                {{ form.categoria }}
+                {% if form.categoria.errors %}<div class="text-danger small mt-1">{{ form.categoria.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Unidad de medida</label>
+                {{ form.unidad_medida }}
+                {% if form.unidad_medida.errors %}<div class="text-danger small mt-1">{{ form.unidad_medida.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Cantidad a comprar</label>
+                {{ form.cantidad_a_comprar }}
+                {% if form.cantidad_a_comprar.errors %}<div class="text-danger small mt-1">{{ form.cantidad_a_comprar.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Costo unitario proveedor</label>
+                {{ form.costo_unitario_proveedor }}
+                {% if form.costo_unitario_proveedor.errors %}<div class="text-danger small mt-1">{{ form.costo_unitario_proveedor.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Moneda de compra del proveedor</label>
+                {{ form.moneda_compra_proveedor }}
+                {% if form.moneda_compra_proveedor.errors %}<div class="text-danger small mt-1">{{ form.moneda_compra_proveedor.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Moneda de venta</label>
+                {{ form.moneda_venta }}
+                {% if form.moneda_venta.errors %}<div class="text-danger small mt-1">{{ form.moneda_venta.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Costo total del proveedor</label>
+                <input id="id_costo_compra_provedor_total_display" type="text" class="form-control" readonly>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Compatibilidad</label>
+                {{ form.compatibilidad }}
+                {% if form.compatibilidad.errors %}<div class="text-danger small mt-1">{{ form.compatibilidad.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Descripción</label>
+                {{ form.descripcion }}
+                {% if form.descripcion.errors %}<div class="text-danger small mt-1">{{ form.descripcion.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Imagen del repuesto</label>
+                {{ form.imagen }}
+                {% if form.imagen.errors %}<div class="text-danger small mt-1">{{ form.imagen.errors|join:', ' }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <a href="{% url 'lista_repuestos' %}" class="btn btn-outline-secondary">Cancelar</a>
+              <button type="submit" class="btn btn-primary">Guardar para importación</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const cantidadField = document.getElementById('id_cantidad_a_comprar');
+  const costoUnitarioField = document.getElementById('id_costo_unitario_proveedor');
+  const totalDisplay = document.getElementById('id_costo_compra_provedor_total_display');
+
+  function actualizarTotalProveedor() {
+    const cantidad = parseFloat(cantidadField?.value || 0);
+    const costoUnitario = parseFloat(costoUnitarioField?.value || 0);
+    if (!isNaN(cantidad) && !isNaN(costoUnitario)) {
+      totalDisplay.value = (cantidad * costoUnitario).toFixed(2);
+    } else {
+      totalDisplay.value = '0.00';
+    }
+  }
+
+  if (cantidadField && costoUnitarioField && totalDisplay) {
+    cantidadField.addEventListener('input', actualizarTotalProveedor);
+    costoUnitarioField.addEventListener('input', actualizarTotalProveedor);
+    actualizarTotalProveedor();
+  }
+</script>
+{% endblock %}

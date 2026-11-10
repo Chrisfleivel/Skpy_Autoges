@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Previsualizar Factura Pedido #{{ pedido.id }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="h4 mb-1">Previsualizar Factura</h2>
+      <p class="text-muted mb-0">Pedido #{{ pedido.id }} - Cliente: {{ pedido.cliente }}</p>
+    </div>
+    <div>
+      <a href="{% url 'descargar_factura_cobranzas' pedido.id %}" class="btn btn-primary">Descargar PDF</a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      {% include 'cobranzas/_factura_contado_body.html' %}
+    </div>
+  </div>
+</div>
+{% endblock %}

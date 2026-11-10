@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Validar Documento{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Validar Documento</h5>
+                </div>
+                <div class="card-body">
+                    <p>¿Desea validar este documento?</p>
+                    <div class="alert alert-info">
+                        <strong>{{ documento.get_tipo_display }}</strong><br>
+                        {% if documento.numero_referencia %}
+                            Referencia: <code>{{ documento.numero_referencia }}</code><br>
+                        {% endif %}
+                        Cargado: {{ documento.fecha_carga|date:"d/m/Y H:i" }}<br>
+                        Estado: <span class="badge bg-secondary">{{ documento.get_estado_display }}</span>
+                    </div>
+
+                    <p class="text-muted">
+                        <i class="bi bi-check-circle"></i> 
+                        El documento será marcado como validado y podrá usarse para continuar con la importación.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Validar Documento
+                        </button>
+                        <a href="{% url 'detalle_fase_importacion' fase.id %}" class="btn btn-secondary">
+                            <i class="bi bi-x"></i> Cancelar
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

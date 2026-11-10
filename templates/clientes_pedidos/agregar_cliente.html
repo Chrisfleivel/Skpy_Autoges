@@ -1,70 +1,197 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Agregar Cliente{% endblock %}
+
 {% block content %}
-<div class="container py-4">
+<div class="container-fluid py-4">
   <div class="row justify-content-center">
-    <div class="col-lg-7 col-md-9">
-      <div class="card shadow border-0">
-        <div class="card-header bg-primary text-white d-flex align-items-center">
-          <img src="{% static 'img/agregar.png' %}" alt="Agregar" width="32" height="32" class="me-2">
-          <h4 class="mb-0 fw-bold">Agregar Cliente</h4>
+    <div class="col-xl-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+          <div>
+            <h5 class="mb-0 fw-bold">Registrar Cliente</h5>
+            <p class="text-muted mb-0">Crea un cliente y registra sus datos de contacto.</p>
+          </div>
+          <a href="{% url 'lista_clientes' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver
+          </a>
         </div>
-        <div class="card-body">
-          <form method="POST" id="cliente-form" novalidate>
+          <form method="post" novalidate>
             {% csrf_token %}
-            <div class="mb-3">
-              <label for="id_tipo_persona" class="form-label">Tipo de Persona</label>
-              {{ form.tipo_persona.as_widget }}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {{ form.non_field_errors }}
             </div>
-            <div id="campos-fisica" style="display: none;">
-              <div class="mb-3">
-                <label for="id_nombre" class="form-label">Nombre</label>
-                {{ form.nombre }}
+            {% endif %}
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.tipo_persona.id_for_label }}">Tipo de Persona</label>
+                {{ form.tipo_persona }}
+                {% if form.tipo_persona.errors %}
+                  <div class="text-danger small mt-1">{{ form.tipo_persona.errors|join:', ' }}</div>
+                {% endif %}
               </div>
-              <div class="mb-3">
-                <label for="id_apellidos" class="form-label">Apellidos</label>
-                {{ form.apellidos.as_widget }}
+              <div class="col-md-6">
+                <div class="form-check mt-2">
+                  {{ form.estado }}
+                  <label class="form-check-label" for="{{ form.estado.id_for_label }}">{{ form.estado.label }}</label>
+                </div>
+                {% if form.estado.errors %}
+                  <div class="text-danger small mt-1">{{ form.estado.errors|join:', ' }}</div>
+                {% endif %}
               </div>
-              <div class="mb-3">
-                <label for="id_documento_identidad" class="form-label">Documento de Identidad</label>
-                {{ form.documento_identidad.as_widget }}
+
+              <div id="campos-fisica" class="col-12" style="display:none;">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="{{ form.documento_identidad.id_for_label }}">Documento de Identidad</label>
+                    {{ form.documento_identidad }}
+                    {% if form.documento_identidad.errors %}
+                      <div class="text-danger small mt-1">{{ form.documento_identidad.errors|join:', ' }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="col-md-6"">
+                    <label class="form-label fw-semibold" for="{{ form.ruc.id_for_label }}">RUC</label>
+                    {{ form.ruc }}
+                    {% if form.ruc.errors %}
+                      <div class="text-danger small mt-1">{{ form.ruc.errors|join:', ' }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="{{ form.nombre.id_for_label }}">Nombre</label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                      <div class="text-danger small mt-1">{{ form.nombre.errors|join:', ' }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="{{ form.apellidos.id_for_label }}">Apellidos</label>
+                    {{ form.apellidos }}
+                    {% if form.apellidos.errors %}
+                      <div class="text-danger small mt-1">{{ form.apellidos.errors|join:', ' }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div id="campos-juridica" class="col-12" style="display:none;">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="{{ form.razon_social.id_for_label }}">Razón Social</label>
+                    {{ form.razon_social }}
+                    {% if form.razon_social.errors %}
+                      <div class="text-danger small mt-1">{{ form.razon_social.errors|join:', ' }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="{{ form.ruc.id_for_label }}">RUC</label>
+                    {{ form.ruc }}
+                    {% if form.ruc.errors %}
+                      <div class="text-danger small mt-1">{{ form.ruc.errors|join:', ' }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                  <div class="text-danger small mt-1">{{ form.email.errors|join:', ' }}</div>
+                {% endif %}
               </div>
             </div>
-            <div id="campos-juridica" style="display: none;">
-              <div class="mb-3">
-                <label for="id_razon_social" class="form-label">Razón Social</label>
-                {{ form.razon_social.as_widget }}
+
+            <hr class="my-4">
+
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <div>
+                <h6 class="mb-1 fw-semibold">Contactos del Cliente</h6>
+                <p class="text-muted small mb-0">Agrega uno o varios contactos relacionados a este cliente.</p>
               </div>
-              <div class="mb-3">
-                <label for="id_ruc" class="form-label">RUC</label>
-                {{ form.ruc.as_widget }}
-              </div>
-            </div>
-            <div class="mb-3">
-              <label for="id_telefono" class="form-label">Teléfono</label>
-              {{ form.telefono.as_widget }}
-            </div>
-            <div class="mb-3">
-              <label for="id_email" class="form-label">Email</label>
-              {{ form.email.as_widget }}
-            </div>
-            <div class="mb-3">
-              <label for="id_direccion" class="form-label">Dirección</label>
-              {{ form.direccion.as_widget }}
-            </div>
-            <div class="mb-3">
-              <label for="id_estado" class="form-label">Estado</label>
-              {{ form.estado.as_widget }}
-            </div>
-            
-            <div class="d-flex justify-content-end gap-2">
-              <button type="submit" class="btn btn-primary">
-                <i class="bi bi-person-plus-fill"></i> Agregar
+              <button type="button" id="agregar-contacto" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-plus-circle me-1"></i>Agregar contacto
               </button>
-              <a href="{% url 'lista_clientes' %}" class="btn btn-secondary">
-                Cancelar
+            </div>
+
+            {{ contact_formset.management_form }}
+            {% if contact_formset.non_form_errors %}
+            <div class="alert alert-danger">
+              {{ contact_formset.non_form_errors }}
+            </div>
+            {% endif %}
+            <div id="contactos-container">
+              {% for contact_form in contact_formset.forms %}
+                <div class="contacto-form border rounded-3 p-3 mb-3 position-relative">
+                  <div class="d-flex justify-content-between mb-3">
+                    <h6 class="mb-0">Contacto {{ forloop.counter }}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-contacto">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                  {% if contact_form.non_field_errors %}
+                  <div class="alert alert-danger">
+                    {{ contact_form.non_field_errors }}
+                  </div>
+                  {% endif %}
+                  {{ contact_form.id }}
+                  <div class="d-none">{{ contact_form.DELETE }}</div>
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold" for="{{ contact_form.tipo_persona.id_for_label }}">Tipo</label>
+                      {{ contact_form.tipo_persona }}
+                      {% if contact_form.tipo_persona.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.tipo_persona.errors|join:', ' }}</div>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold" for="{{ contact_form.nombre.id_for_label }}">Nombre</label>
+                      {{ contact_form.nombre }}
+                      {% if contact_form.nombre.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.nombre.errors|join:', ' }}</div>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold" for="{{ contact_form.apellidos.id_for_label }}">Apellidos</label>
+                      {{ contact_form.apellidos }}
+                      {% if contact_form.apellidos.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.apellidos.errors|join:', ' }}</div>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold" for="{{ contact_form.telefono.id_for_label }}">Teléfono</label>
+                      {{ contact_form.telefono }}
+                      {% if contact_form.telefono.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.telefono.errors|join:', ' }}</div>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold" for="{{ contact_form.email.id_for_label }}">Email</label>
+                      {{ contact_form.email }}
+                      {% if contact_form.email.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.email.errors|join:', ' }}</div>
+                      {% endif %}
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label fw-semibold" for="{{ contact_form.direccion.id_for_label }}">Dirección</label>
+                      {{ contact_form.direccion }}
+                      {% if contact_form.direccion.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.direccion.errors|join:', ' }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+              <a href="{% url 'lista_clientes' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle me-2"></i>Cancelar
               </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-2"></i>Guardar Cliente
+              </button>
             </div>
           </form>
         </div>
@@ -97,4 +224,87 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const addContactoButton = document.getElementById('agregar-contacto');
+  const contactosContainer = document.getElementById('contactos-container');
+  const formTemplate = document.getElementById('contacto-form-template').innerHTML;
+  const totalForms = document.querySelector('[name$="-TOTAL_FORMS"]');
+
+  function updateDeleteButtons() {
+    contactosContainer.querySelectorAll('.remove-contacto').forEach(button => {
+      button.onclick = function() {
+        const row = this.closest('.contacto-form');
+        const deleteInput = row.querySelector('input[name$="-DELETE"]');
+        if (deleteInput) {
+          deleteInput.checked = true;
+          row.style.display = 'none';
+        } else {
+          row.remove();
+          const total = parseInt(totalForms.value, 10) - 1;
+          totalForms.value = total;
+        }
+      };
+    });
+  }
+
+  function addContactoForm() {
+    const index = parseInt(totalForms.value, 10);
+    const newHtml = formTemplate
+      .replace(/__DELETE__/g, '<input type="hidden" name="contactocliente_set-' + index + '-DELETE" id="id_contactocliente_set-' + index + '-DELETE">')
+      .replace(/__TIPO_PERSONA__/g, '<select name="contactocliente_set-' + index + '-tipo_persona" class="form-select"><option value="FISICA">Persona Física</option><option value="JURIDICA">Persona Jurídica</option></select>')
+      .replace(/__NOMBRE__/g, '<input type="text" name="contactocliente_set-' + index + '-nombre" class="form-control">')
+      .replace(/__APELLIDOS__/g, '<input type="text" name="contactocliente_set-' + index + '-apellidos" class="form-control">')
+      .replace(/__TELEFONO__/g, '<input type="text" name="contactocliente_set-' + index + '-telefono" class="form-control">')
+      .replace(/__EMAIL__/g, '<input type="email" name="contactocliente_set-' + index + '-email" class="form-control">')
+      .replace(/__DIRECCION__/g, '<textarea name="contactocliente_set-' + index + '-direccion" class="form-control" rows="2"></textarea>');
+    contactosContainer.insertAdjacentHTML('beforeend', newHtml);
+    totalForms.value = index + 1;
+    updateDeleteButtons();
+  }
+
+  updateDeleteButtons();
+  if (addContactoButton) {
+    addContactoButton.addEventListener('click', addContactoForm);
+  }
+});
+</script>
+
+<div id="contacto-form-template" class="d-none">
+  <div class="contacto-form border rounded-3 p-3 mb-3 position-relative">
+    <div class="d-flex justify-content-between mb-3">
+      <h6 class="mb-0">Contacto</h6>
+      <button type="button" class="btn btn-sm btn-outline-danger remove-contacto">
+        <i class="bi bi-trash"></i>
+      </button>
+    </div>
+    <div class="d-none">__DELETE__</div>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Tipo</label>
+        __TIPO_PERSONA__
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Nombre</label>
+        __NOMBRE__
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Apellidos</label>
+        __APELLIDOS__
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Teléfono</label>
+        __TELEFONO__
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Email</label>
+        __EMAIL__
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-semibold">Dirección</label>
+        __DIRECCION__
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

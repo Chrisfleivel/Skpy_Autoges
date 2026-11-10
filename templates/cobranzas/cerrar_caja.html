@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Cerrar Caja{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card shadow-sm border-0 mx-auto" style="max-width: 760px;">
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Arqueo / cierre de caja</h4>
+      <span class="badge bg-dark text-warning">Cierre de turno</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="bg-light rounded p-3 h-100">
+            <small class="text-muted d-block">Caja</small>
+            <strong>{{ caja.nombre }}</strong>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="bg-light rounded p-3 h-100">
+            <small class="text-muted d-block">Sucursal</small>
+            <strong>{{ caja.sucursal }}</strong>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="bg-light rounded p-3 h-100">
+            <small class="text-muted d-block">Saldo esperado</small>
+            <strong id="saldo_esperado">Gs. {{ caja.saldo_actual }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-light border mb-4">
+        <div class="d-flex justify-content-between flex-wrap gap-3">
+          <div>
+            <strong>Saldo esperado:</strong> Gs. {{ caja.saldo_actual }}
+          </div>
+          <div>
+            <strong>Saldo real:</strong> <span id="saldo_real_display">Gs. {{ caja.saldo_actual }}</span>
+          </div>
+          <div>
+            <strong>Diferencia:</strong> <span id="diferencia_display" class="fw-bold">Gs. 0.00</span>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-info border-0 mb-4">
+        Verifica el efectivo real, confirma la diferencia y deja la caja lista para el próximo turno.
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Monto real en caja</label>
+            {{ form.monto_real }}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Observaciones</label>
+            {{ form.observaciones }}
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+          <a href="{% url 'panel_caja' %}" class="btn btn-outline-secondary">Volver</a>
+          <button type="submit" class="btn btn-warning">Cerrar caja</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const saldoEsperado = Number('{{ caja.saldo_actual }}') || 0;
+  const inputMonto = document.querySelector('#id_monto_real');
+  const saldoRealDisplay = document.getElementById('saldo_real_display');
+  const diferenciaDisplay = document.getElementById('diferencia_display');
+
+  function formatMoney(value) {
+    return 'Gs. ' + Number(value).toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function updateSummary() {
+    const montoReal = Number(inputMonto.value || saldoEsperado);
+    const diferencia = montoReal - saldoEsperado;
+    saldoRealDisplay.textContent = formatMoney(montoReal);
+    diferenciaDisplay.textContent = formatMoney(diferencia);
+    diferenciaDisplay.classList.toggle('text-success', diferencia >= 0);
+    diferenciaDisplay.classList.toggle('text-danger', diferencia < 0);
+  }
+
+  if (inputMonto) {
+    inputMonto.addEventListener('input', updateSummary);
+    updateSummary();
+  }
+})();
+</script>
+{% endblock %}

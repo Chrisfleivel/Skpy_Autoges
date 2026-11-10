@@ -1,0 +1,23 @@
+{% extends 'importaciones/base.html' %}
+{% block title %}Unidades en tránsito{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>Unidades en tránsito</h1>
+    {% if embarques %}
+      <table>
+        <tr><th>Embarque</th><th>ETA</th><th>Estado</th><th>Unidades</th></tr>
+        {% for embarque in embarques %}
+          <tr>
+            <td>{{ embarque.referencia_interna|default:embarque.pk }}</td>
+            <td>{{ embarque.eta|default:'-' }}</td>
+            <td>{{ embarque.get_estado_display }}</td>
+            <td>{{ embarque.unidades|default:0 }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>No hay embarques en tránsito.</p>
+    {% endif %}
+  </div>
+{% endblock %}

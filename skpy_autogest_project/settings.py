@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-005o$^h^c3!h#@u)n3c9--nd6_h7tt9mib!gh38n%@_zwhex=!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
 
 # Application definition
@@ -38,17 +38,28 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'core',
     'seguridad_usuarios',
     'configuraciones_maestras',
+    #'catalogo.apps.CatalogoConfig',
+    'compras',
+    'ventas.apps.VentasConfig',
+    'finanzas.apps.FinanzasConfig',
+    # 'contabilidad',  # Deshabilitado por ahora: no necesario en esta etapa del proyecto
+    # 'documentos_financieros',  # Deshabilitado porque depende de contabilidad y no es necesario en esta etapa
     'inventario',
     'clientes_pedidos',
-    #'cobranza',
-    #'documentos_financieros',
-    #'importaciones',
+    'cobranzas',
+    'pedido_busqueda',
+    'importaciones.apps.ImportacionesConfig',
     #'reportes',
     'reposicion_stock',
     'colorfield',
 ]
+
+MIGRATION_MODULES = {
+    'catalogo': None,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -142,6 +153,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+MONEDA_BASE = 'USD'
 
 # Configuración del sistema de correo electrónico
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

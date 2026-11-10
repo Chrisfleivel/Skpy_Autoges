@@ -1,34 +1,523 @@
-# Detalle de Pedido
 {% extends 'base.html' %}
 
+{% block title %}Detalle del Pedido{% endblock %}
+
 {% block content %}
-  <h2>Detalle del Pedido #{{ pedido.id }}</h2>
-  <p><strong>Cliente:</strong> {{ pedido.cliente.nombre }}</p>
-  <p><strong>Fecha:</strong> {{ pedido.fecha }}</p>
-  <p><strong>Total:</strong> {{ pedido.total }}</p>
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-xl-10">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+          <div>
+            <h5 class="mb-0 fw-bold">Pedido #{{ pedido.id }}</h5>
+            <p class="text-muted mb-0">Información completa del pedido</p>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{% url 'editar_pedido' pedido.id %}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-pencil me-2"></i>Editar
+            </a>
+            {% if pedido.estado == 'abastecimiento_aprobado' and pedido.es_pedido_abastecimiento %}
+            <a href="{% url 'cargar_factura_pedido' pedido.id %}" class="btn btn-outline-success btn-sm">
+              <i class="bi bi-file-earmark-arrow-up me-2"></i>Cargar factura
+            </a>
+            {% elif pedido.estado == 'buqueda_concluida_aprobada' and pedido.es_pedido_busqueda %}
+            <a href="{% url 'cargar_factura_pedido' pedido.id %}" class="btn btn-outline-success btn-sm">
+              <i class="bi bi-file-earmark-arrow-up me-2"></i>Cargar factura
+            </a>
+            {% endif %}
+            {% if pedido.es_pedido_abastecimiento and pedido.estado == 'busqueda_abastecimiento' %}
+            <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#aprobarRechazarAbastecimientoModal{{ pedido.id }}">
+              <i class="bi bi-check-circle me-1"></i>Aprobar / rechazar abastecimiento
+            </button>
+            {% endif %}
+            <a href="{% url 'lista_pedidos' %}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-arrow-left me-2"></i>Volver
+            </a>
+          </div>
+        </div>
+      </div>
 
-  <h3>Items del Pedido</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th>Cantidad</th>
-        <th>Precio Unitario</th>
-        <th>Subtotal</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in pedido.items.all %}
-      <tr>
-        <td>{{ item.producto.nombre }}</td>
-        <td>{{ item.cantidad }}</td>
-        <td>{{ item.precio_unitario }}</td>
-        <td>{{ item.subtotal }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      <div class="row gy-4">
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3">
+              <h6 class="mb-0 fw-bold">
+                <i class="bi bi-receipt text-primary me-2"></i>Información del Pedido
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Cliente:</div>
+                <div class="col-6">{{ pedido.cliente }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Tipo:</div>
+                <div class="col-6">{{ pedido.get_tipo_display }}</div>
+              </div>
+              {% if pedido.tipo == 'venta' and pedido.venta_tipo %}
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Venta:</div>
+                <div class="col-6">{{ pedido.get_venta_tipo_display|default:pedido.venta_tipo_inferido }}</div>
+              </div>
+              {% endif %}
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Estado:</div>
+                <div class="col-6">
+                      {% if pedido.estado == 'aprobado' %}
+                    <span class="badge bg-success">Aprobado</span>
+                  {% elif pedido.estado == 'rechazado' %}
+                    <span class="badge bg-danger">Rechazado</span>
+                  {% elif pedido.estado == 'cobranzas' %}
+                    <span class="badge bg-warning text-dark">En Cobranzas</span>
+                  {% elif pedido.estado == 'pendiente_cobro' %}
+                    <span class="badge bg-warning text-dark">Pendiente de Cobro</span>
+                  {% elif pedido.estado == 'facturado_contado' %}
+                    <span class="badge bg-primary">Facturado Contado</span>
+                  {% elif pedido.estado == 'transferencia_en_tramite' %}
+                    <span class="badge bg-info text-dark">Transferencia en Trámite</span>
+                  {% elif pedido.estado == 'completado' %}
+                    <span class="badge bg-primary">Completado</span>
+                  {% elif pedido.estado == 'en_proceso' %}
+                    <span class="badge bg-info text-dark">En Proceso</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ pedido.get_estado_display }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Fecha:</div>
+                <div class="col-6">{{ pedido.fecha_pedido|date:'d/m/Y H:i' }}</div>
+              </div>
+              {% if pedido.es_pedido_abastecimiento and pedido.repuesto_a_abastecer %}
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Repuesto a abastecer:</div>
+                <div class="col-6">{{ pedido.repuesto_a_abastecer }}</div>
+              </div>
+              {% endif %}
+              <div class="row mb-0">
+                <div class="col-6 fw-semibold text-muted">Vendedor:</div>
+                <div class="col-6">{{ pedido.vendedor|default:'Sin asignar' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  <a href="{% url 'editar_pedido' pedido.id %}">Editar Pedido</a>
-  <a href="{% url 'lista_pedidos' %}">Volver a la Lista de Pedidos</a>
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3">
+              <h6 class="mb-0 fw-bold">
+                <i class="bi bi-cash-coin text-primary me-2"></i>Totales en : {{ pedido.moneda|default:"-" }}
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Monto Total: </div>
+                <div class="col-6 text-primary fw-bold">{{ pedido.monto_total|default:0 }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">IVA: </div>
+                <div class="col-6 text-primary fw-bold"> {{ pedido.iva|default:0 }}</div>
+              </div>
+              <div class="row mb-0">
+                <div class="col-6 fw-semibold text-muted">Observaciones:</div>
+                <div class="col-6">{{ pedido.observaciones|default:'-' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-light border-0 py-3 d-flex align-items-center justify-content-between">
+          <h6 class="mb-0 fw-bold">
+            <i class="bi bi-box-seam text-primary me-2"></i>Items del Pedido
+          </h6>
+          <div class="d-flex gap-2 flex-wrap">
+            {% if pedido.es_pedido_busqueda %}
+              {% if pedido.estado == 'espera_de_busqueda' %}
+                <form method="post" action="{% url 'avanzar_pedido_busqueda' pedido.id 'buscar' %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-info btn-sm">
+                    <i class="bi bi-search me-1"></i>Buscar
+                  </button>
+                </form>
+                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelarBusquedaModal{{ pedido.id }}">
+                  <i class="bi bi-x-circle me-1"></i>Cancelar búsqueda
+                </button>
+              {% elif pedido.estado == 'buscando' %}
+                <form method="post" action="{% url 'avanzar_pedido_busqueda' pedido.id 'ingresar_repuesto' %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-sm">
+                    <i class="bi bi-box-seam me-1"></i>Ingresar repuesto
+                  </button>
+                </form>
+                <form method="post" action="{% url 'avanzar_pedido_busqueda' pedido.id 'ingresar_lista_vehiculos' %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-car-front me-1"></i>Ingresar lista vehículo
+                  </button>
+                </form>
+                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rechazarBusquedaModal{{ pedido.id }}">
+                  <i class="bi bi-x-circle me-1"></i>Rechazar búsqueda
+                </button>
+              {% elif pedido.estado == 'espera_aprovacion' %}
+                <form method="post" action="{% url 'avanzar_pedido_busqueda' pedido.id 'aprobar_repuesto' %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-sm">
+                    <i class="bi bi-check-circle me-1"></i>Aprobar búsqueda
+                  </button>
+                </form>
+                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rechazarBusquedaModal{{ pedido.id }}">
+                  <i class="bi bi-x-circle me-1"></i>Rechazar búsqueda
+                </button>
+              {% elif pedido.estado == 'seleccion_pendiente' %}
+                <form method="post" action="{% url 'avanzar_pedido_busqueda' pedido.id 'confirmar_eleccion' %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-sm">
+                    <i class="bi bi-check-circle me-1"></i>Confirmar elección
+                  </button>
+                </form>
+              {% elif pedido.estado == 'buqueda_concluida_aprobada' %}
+                <span class="badge bg-success">Búsqueda concluida/aprobada</span>
+              {% endif %}
+            {% elif pedido.estado == 'pendiente' %}
+              {% if pedido.es_pedido_busqueda or pedido.es_pedido_abastecimiento %}
+                <form method="post" action="{% url 'enviar_a_seleccion' pedido.id %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-info btn-sm">
+                    <i class="bi bi-search me-1"></i>Enviar a Selección
+                  </button>
+                </form>
+              {% else %}
+                <form method="post" action="{% url 'aprobar_pedido' pedido.id %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-sm">
+                    <i class="bi bi-check-circle me-1"></i>Aprobar pedido
+                  </button>
+                </form>
+                <form method="post" action="{% url 'rechazar_pedido' pedido.id %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-x-circle me-1"></i>Rechazar pedido
+                  </button>
+                </form>
+              {% endif %}
+            {% elif pedido.estado == 'seleccion_pendiente' %}
+              <span class="badge bg-info">Esperando Selección de Producto</span>
+            {% elif pedido.estado == 'seleccion_confirmada' %}
+              <a href="{% url 'enviar_precio_cliente' pedido.id %}" class="btn btn-warning btn-sm">
+                <i class="bi bi-send me-1"></i>Enviar Precio al Cliente
+              </a>
+            {% elif pedido.estado == 'precio_enviado_cliente' %}
+              <span class="badge bg-warning text-dark">Esperando Confirmación de Precio</span>
+            {% elif pedido.estado == 'precio_confirmado_cliente' %}
+              <a href="{% url 'enviar_a_cobranzas' pedido.id %}" class="btn btn-warning btn-sm">
+                <i class="bi bi-cash-coin me-1"></i>Enviar a Cobranza
+              </a>
+            {% elif pedido.estado == 'aprobado' %}
+              <form method="post" action="{% url 'enviar_a_cobranzas' pedido.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning btn-sm">
+                  <i class="bi bi-cash-coin me-1"></i>Enviar a cobranza
+                </button>
+              </form>
+            {% elif pedido.estado == 'cobranzas' %}
+              <span class="badge bg-warning text-dark">En cobranza</span>
+              {% if pedido.tipo == 'venta' %}
+                <form method="post" action="{% url 'facturar_contado_cobranzas' pedido.id %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-file-earmark-text me-1"></i>Facturar
+                  </button>
+                </form>
+              {% endif %}
+              
+            {% elif pedido.estado == 'pendiente_cobro' %}
+              <span class="badge bg-warning text-dark">Pendiente de Cobro</span>
+              <a href="{% url 'cobrar_pedido' pedido.id %}" class="btn btn-success btn-sm">
+                <i class="bi bi-cash-stack me-1"></i>Registrar cobro
+              </a>
+            {% elif pedido.estado == 'pagado' %}
+              {% if pedido.es_venta_repuesto %}
+                <form method="post" action="{% url 'confirmar_entrega_repuesto' pedido.id %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-sm">
+                    <i class="bi bi-truck me-1"></i>Confirmar entrega repuesto
+                  </button>
+                </form>
+              
+                
+              {% elif pedido.es_venta_vehiculo %}
+                {% if not pedido.fecha_transferencia %}
+                  <form method="post" action="{% url 'programar_transferencia' pedido.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="datetime-local" name="fecha_transferencia" class="form-control form-control-sm d-inline-block" style="width: 220px;" />
+                    <button type="submit" class="btn btn-primary btn-sm mt-1">
+                      <i class="bi bi-calendar-check me-1"></i>Programar transferencia
+                    </button>
+                  </form>
+                {% else %}
+                  <span class="badge bg-info text-dark">Transferencia programada: {{ pedido.fecha_transferencia|date:'d/m/Y H:i' }}</span>
+                  <form method="post" action="{% url 'iniciar_transferencia' pedido.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning btn-sm">
+                      <i class="bi bi-arrow-clockwise me-1"></i>Iniciar transferencia
+                    </button>
+                  </form>
+                {% endif %}
+              {% endif %}
+            {% elif pedido.estado == 'facturado_contado' %}
+              {% if pedido.tipo == 'venta' %}
+                <a href="{% url 'cobrar_pedido' pedido.id %}?metodo_pago=Transferencia" class="btn btn-outline-info btn-sm">
+                  <i class="bi bi-bank me-1"></i>Registrar transferencia bancaria
+                </a>
+              {% endif %}
+              <a href="{% url 'cobrar_pedido' pedido.id %}" class="btn btn-success btn-sm">
+                <i class="bi bi-cash-stack me-1"></i>Registrar cobro / Confirmar pago
+              </a>
+              <a href="{% url 'previsualizar_factura_cobranzas' pedido.id %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-file-earmark-text me-1"></i>Ver factura
+              </a>
+              <a href="{% url 'descargar_factura_cobranzas' pedido.id %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-download me-1"></i>Descargar factura
+              </a>
+            
+
+              
+            {% elif pedido.estado == 'transferencia_en_tramite' %}
+              <form method="post" action="{% url 'confirmar_transferencia' pedido.id %}" enctype="multipart/form-data" class="d-inline">
+                {% csrf_token %}
+                <input type="file" name="documento_transferencia" class="form-control form-control-sm d-inline-block" style="width: 250px;" />
+                <button type="submit" class="btn btn-success btn-sm mt-1">
+                  <i class="bi bi-file-earmark-arrow-up me-1"></i>Confirmar transferencia
+                </button>
+              </form>
+            {% endif %}
+            {% if pedido.estado == 'pendiente' %}
+              {% if pedido.es_pedido_busqueda or pedido.es_pedido_abastecimiento %}
+                <form method="post" action="{% url 'cancelar_pedido' pedido.id %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar pedido
+                  </button>
+                </form>
+              {% endif %}
+            {% elif pedido.estado == 'aprobado' or pedido.estado == 'cobranzas' or pedido.estado == 'pendiente_cobro' or pedido.estado == 'facturado_contado' or pedido.estado == 'transferencia_en_tramite' %}
+              <form method="post" action="{% url 'cancelar_pedido' pedido.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                  <i class="bi bi-x-circle me-1"></i>Cancelar pedido
+                </button>
+              </form>
+            {% endif %}
+            <a href="{% url 'exportar_pedido_pdf' pedido.id %}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-filetype-pdf me-1"></i>Exportar PDF
+            </a>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Producto</th>
+                  <th>Cantidad</th>
+                  <th>Precio Unitario</th>
+                  <th>Subtotal</th>
+                  {% if pedido.es_pedido_abastecimiento and pedido.estado == 'busqueda_abastecimiento' %}
+                  <th>Acciones</th>
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in pedido.items.all %}
+                <tr>
+                  <td>{{ item.producto.nombre|default:'-' }}</td>
+                  <td>{{ item.cantidad }}</td>
+                  <td>{{ item.precio_unitario }}</td>
+                  <td>{{ item.subtotal }}</td>
+                  {% if pedido.es_pedido_abastecimiento and pedido.estado == 'busqueda_abastecimiento' %}
+                  <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#actualizarProductoModal{{ item.id }}">
+                      <i class="bi bi-pencil me-1"></i>Actualizar
+                    </button>
+                  </td>
+                  {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="{% if pedido.es_pedido_abastecimiento and pedido.estado == 'busqueda_abastecimiento' %}5{% else %}4{% endif %}" class="text-center text-muted py-4">No hay productos en este pedido.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {% if pedido.es_pedido_busqueda or pedido.es_pedido_abastecimiento %}
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-light border-0 py-3 d-flex align-items-center justify-content-between">
+          <h6 class="mb-0 fw-bold">
+            <i class="bi bi-search text-primary me-2"></i>Productos Buscados
+          </h6>
+          <span class="badge bg-info">{{ pedido.productos_buscados.count }} productos</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Descripción</th>
+                  <th>Marca/Modelo</th>
+                  <th>Cantidad</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for producto in pedido.productos_buscados.all %}
+                <tr>
+                  <td>
+                    <strong>{{ producto.descripcion|truncatewords:5 }}</strong>
+                    {% if producto.especificaciones %}
+                    <br><small class="text-muted">{{ producto.especificaciones|truncatewords:3 }}</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if producto.marca %}{{ producto.marca }}{% endif %}
+                    {% if producto.modelo %} / {{ producto.modelo }}{% endif %}
+                    {% if not producto.marca and not producto.modelo %}<span class="text-muted">-</span>{% endif %}
+                  </td>
+                  <td><span class="badge bg-light text-dark">x{{ producto.cantidad }}</span></td>
+                  <td>
+                    {% if producto.seleccion.estado == 'encontrado' %}
+                      <span class="badge bg-success">Encontrado</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Pendiente</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{% url 'confirmar_producto_buscado' pedido.id producto.id %}" class="btn btn-sm btn-outline-secondary me-2">
+                      <i class="bi bi-eye me-1"></i>Ver
+                    </a>
+                    <a href="{% url 'imprimir_producto_buscado' pedido.id producto.id %}" class="btn btn-sm btn-outline-success me-2">
+                      <i class="bi bi-printer me-1"></i>Imprimir
+                    </a>
+                    {% if pedido.estado == 'seleccion_pendiente' or pedido.estado == 'seleccion_confirmada' %}
+                      <a href="{% url 'confirmar_producto_buscado' pedido.id producto.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil me-1"></i>Confirmar
+                      </a>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="aprobarRechazarAbastecimientoModal{{ pedido.id }}" tabindex="-1" aria-labelledby="aprobarRechazarAbastecimientoModalLabel{{ pedido.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'aprobar_rechazar_abastecimiento' pedido.id %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="aprobarRechazarAbastecimientoModalLabel{{ pedido.id }}">Aprobar o rechazar abastecimiento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <label for="motivo_abastecimiento_{{ pedido.id }}" class="form-label">Motivo</label>
+          <textarea id="motivo_abastecimiento_{{ pedido.id }}" name="motivo" class="form-control" rows="4" placeholder="Ingrese el motivo del cambio de estado"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" name="accion" value="rechazar" class="btn btn-outline-danger btn-sm">Rechazar abastecimiento</button>
+          <button type="submit" name="accion" value="aprobar" class="btn btn-success btn-sm">Aprobar abastecimiento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% if pedido.es_pedido_abastecimiento and pedido.estado == 'busqueda_abastecimiento' %}
+{% for item in pedido.items.all %}
+<div class="modal fade" id="actualizarProductoModal{{ item.id }}" tabindex="-1" aria-labelledby="actualizarProductoModalLabel{{ item.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'actualizar_item_pedido' pedido.id item.id %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="actualizarProductoModalLabel{{ item.id }}">Actualizar {{ item.producto.nombre }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="cantidad_{{ item.id }}" class="form-label fw-semibold">Cantidad</label>
+            <input type="number" id="cantidad_{{ item.id }}" name="cantidad" class="form-control" value="{{ item.cantidad }}" min="1" required>
+          </div>
+          <div class="mb-3">
+            <label for="precio_unitario_{{ item.id }}" class="form-label fw-semibold">Precio Unitario (Gs.)</label>
+            <input type="number" id="precio_unitario_{{ item.id }}" name="precio_unitario" class="form-control" value="{{ item.precio_unitario }}" step="0.01" min="0" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-primary btn-sm">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+
+<div class="modal fade" id="cancelarBusquedaModal{{ pedido.id }}" tabindex="-1" aria-labelledby="cancelarBusquedaModalLabel{{ pedido.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'avanzar_pedido_busqueda' pedido.id 'cancelar_busqueda' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="cancelarBusquedaModalLabel{{ pedido.id }}">Cancelar búsqueda</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <label for="motivo_cancelacion_{{ pedido.id }}" class="form-label">Motivo de cancelación</label>
+          <textarea id="motivo_cancelacion_{{ pedido.id }}" name="motivo_cancelacion" class="form-control" rows="4" required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-danger btn-sm">Confirmar cancelación</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="rechazarBusquedaModal{{ pedido.id }}" tabindex="-1" aria-labelledby="rechazarBusquedaModalLabel{{ pedido.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'avanzar_pedido_busqueda' pedido.id 'rechazar_busqueda' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="rechazarBusquedaModalLabel{{ pedido.id }}">Rechazar búsqueda</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <label for="motivo_rechazo_{{ pedido.id }}" class="form-label">Motivo de rechazo</label>
+          <textarea id="motivo_rechazo_{{ pedido.id }}" name="motivo_cancelacion" class="form-control" rows="4" required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-danger btn-sm">Confirmar rechazo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}

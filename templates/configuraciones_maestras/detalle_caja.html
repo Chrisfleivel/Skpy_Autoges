@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle Caja{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">{{ caja.nombre }} — {{ sucursal.nombre }}</h4>
+            {% if caja.estado == 'abierta' %}
+            <span class="badge bg-success">Abierta</span>
+            {% else %}
+            <span class="badge bg-secondary">Cerrada</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <p><strong>Tipo:</strong> {{ caja.get_tipo_display }}</p>
+            <p><strong>Saldo Inicial:</strong> {{ caja.saldo_inicial }}</p>
+            <p><strong>Saldo Actual:</strong> {{ caja.saldo_actual }}</p>
+            <p><strong>Empleado actual:</strong> {{ caja.empleado_actual|default:'-' }}</p>
+            <p><strong>Fecha de apertura:</strong> {{ caja.fecha_apertura|date:"d/m/Y H:i"|default:'-' }}</p>
+            <p><strong>Fecha de cierre:</strong> {{ caja.fecha_cierre|date:"d/m/Y H:i"|default:'-' }}</p>
+            <p><strong>Observaciones:</strong> {{ caja.observaciones|default:'-' }}</p>
+            <p><strong>Historial:</strong>
+                {{ caja.aperturas.count }} aperturas · {{ caja.cierres.count }} cierres · {{ caja.pagos.count }} pagos
+            </p>
+        </div>
+        <div class="card-footer">
+            {% if caja.estado == 'abierta' %}
+            <a href="{% url 'cerrar_caja_operativa' sucursal.pk caja.pk %}" class="btn btn-danger">Cerrar Caja</a>
+            {% else %}
+            <a href="{% url 'abrir_caja_operativa' sucursal.pk caja.pk %}" class="btn btn-success">Abrir Caja</a>
+            {% endif %}
+            <a href="{% url 'editar_caja' sucursal.pk caja.pk %}" class="btn btn-primary">Editar</a>
+            <a href="{% url 'lista_cajas' sucursal.pk %}" class="btn btn-secondary">Volver</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

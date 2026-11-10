@@ -1,0 +1,13 @@
+{% extends 'importaciones/base.html' %}
+{% block title %}Prorratear costos{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>Prorratear costos</h1>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Prorratear</button>
+    </form>
+  </div>
+{% endblock %}

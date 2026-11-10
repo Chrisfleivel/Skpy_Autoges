@@ -13,48 +13,41 @@
 
         <div class="collapse navbar-collapse" id="navbarNavDropdown">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link"  href="{% url 'lista_clientes' %}">Clientes</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Ventas</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'lista_pedidos' %}">Pedidos</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'lista_inventario' %}">Inventario</a>
-                </li> 
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Importaciones</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Reportes</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'lista_empleados' %}">Empleados</a>
-                </li>
-
+                                
                 <li class="nav-item dropdown">
 
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownConfig" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Configuración
+                        Ventas
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfig">
-                        <li><a class="dropdown-item" href="{% url 'lista_proveedores' %}">Proveedores</a></li>
+                        {% if perms.clientes_pedidos.listar_pedidos or perms.clientes_pedidos.listar_clientes %}
+                        <li><a class="dropdown-item" href="{% url 'lista_pedidos' %}">Pedidos</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'lista_departamentos' %}">Departamentos</a></li>
+                        {% endif %}
+                        {% if perms.clientes_pedidos.listar_clientes %}
+                        <li><a class="dropdown-item" href="{% url 'lista_clientes' %}">Clientes</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'lista_cargos' %}">Cargos</a></li>
+                        {% endif %}
+                        {% if perms.cobranzas.lista_pedidos_despacho %}
+                        <li><a class="dropdown-item" href="{% url 'lista_pedidos_despacho' %}">Despacho Productos</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Sucursales</a></li>
+                        {% endif %}
+                        {% if perms.cobranzas.lista_pedidos_busqueda %}
+                        <li><a class="dropdown-item" href="{% url 'lista_pedidos_busqueda' %}">Pedidos de Búsqueda</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'lista_agentes_transporte' %}">Agentes de Transporte</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Despachantes de Aduana</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Tasas de Cambio</a></li>
-                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if perms.cobranzas.lista_pedidos_transferencia %}
+                        <li><a class="dropdown-item" href="{% url 'lista_pedidos_transferencia' %}">Transferencia Vehículos</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                
+                <li class="nav-item dropdown">
+
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownConfig" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Inventario
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfig">
                         <li><a class="dropdown-item" href="{% url 'lista_marcas_vehiculos' %}">Marcas de Vehículos</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'lista_modelos_vehiculos' %}">Modelos de Vehículos</a></li>
@@ -62,6 +55,91 @@
                         <li><a class="dropdown-item" href="{% url 'lista_tipos_transmision' %}">Tipos de Transmisión</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'lista_tipos_vehiculos' %}">Tipos de Vehículos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_vehiculos' %}">Vehículos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_repuestos' %}">Repuestos</a></li>
+
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownConfig" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Importaciones
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfig">
+                        <li><a class="dropdown-item" href="{% url 'lista_proveedores' %}">Proveedores</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_agentes_transporte' %}">Agentes de Transporte</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_despachantes' %}">Despachantes de Aduana</a></li>
+                        
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_tasas_cambio' %}">Tasas de Cambio</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'listar_pedidos_seleccion' %}">Pedidos de Selección</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        
+                        <li><a class="dropdown-item" href="{% url 'lista_importaciones' %}">Importaciones</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_embarques' %}">Embarques</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_pedidos_busqueda' %}">Pedidos de Búsqueda</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_pedidos_abastecimiento' %}">Pedidos de Abastecimiento</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'lista_contenedores' %}">Contenedores</a></li>
+
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle disabled text-muted" href="#" id="navbarDropdownContabilidad" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Contabilidad
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownContabilidad">
+                        <li><span class="dropdown-item text-muted disabled">Módulo deshabilitado en esta etapa</span></li>
+                    </ul>
+                </li>
+    
+                <li class="nav-item dropdown">
+
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownConfig" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Configuración
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfig">
+                        {% if perms.configuraciones_maestras.lista_empresas %}
+                        <li><a class="dropdown-item" href="{% url 'lista_empresas' %}">Empresa</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if perms.configuraciones_maestras.lista_sucursales %}
+                        <li><a class="dropdown-item" href="{% url 'lista_sucursales' %}">Sucursales</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if perms.configuraciones_maestras.lista_cajas %}
+                        <li><a class="dropdown-item" href="{% url 'todas_las_cajas' %}">Cajas</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if perms.configuraciones_maestras.lista_departamentos %}
+                        <li><a class="dropdown-item" href="{% url 'lista_departamentos' %}">Dependencias</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if perms.configuraciones_maestras.lista_cargos %}
+                        <li><a class="dropdown-item" href="{% url 'lista_cargos' %}">Cargos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if perms.configuraciones_maestras.lista_ordenes_pago_exterior %}
+                        <li><a class="dropdown-item" href="{% url 'lista_ordenes_pago_exterior' %}">Pagos exteriores</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if perms.configuraciones_maestras.lista_bancos %}
+                        <li><a class="dropdown-item" href="{% url 'lista_bancos' %}">Bancos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if perms.seguridad_usuarios.lista_empleados %}
+                        <li><a class="dropdown-item" href="{% url 'lista_empleados' %}">Empleados</a></li>
+                        {% endif %}
                     </ul>
                 </li>
 
@@ -73,8 +151,7 @@
                         <li><a class="dropdown-item" href="{% url 'lista_perfiles' %}">Usuarios</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'lista_roles' %}">Configurar Roles</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Auditoria</a></li>
+                        
                     </ul>
                 </li>
             </ul>

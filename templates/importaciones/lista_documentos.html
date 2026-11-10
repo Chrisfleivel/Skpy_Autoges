@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Documentos Aduaneros{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3>Importación: {{ importacion.codigo_seguimiento }}</h3>
+      <p class="text-muted mb-0">Proveedor: {{ importacion.proveedor.nombre }}</p>
+    </div>
+    <div>
+      <a href="{% url 'agregar_documento_importacion' importacion.id %}" class="btn btn-primary">Subir Documento</a>
+      <a href="{% url 'editar_importacion_aduana' importacion.id %}" class="btn btn-secondary ms-2">Editar Datos Aduana</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      {% if documentos %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Descripción</th>
+              <th>Archivo</th>
+              <th>Subido Por</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for doc in documentos %}
+            <tr>
+              <td>{{ doc.get_tipo_display }}</td>
+              <td>{{ doc.descripcion|default:'-' }}</td>
+              <td><a href="{{ doc.archivo.url }}" target="_blank">Ver/Descargar</a></td>
+              <td>{{ doc.subido_por.get_full_name|default:doc.subido_por.username }}</td>
+              <td>{{ doc.fecha_subida|date:'d/m/Y H:i' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-muted">No hay documentos cargados para esta importación.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

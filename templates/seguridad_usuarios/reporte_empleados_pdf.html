@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @page { size: A4 landscape; margin: 12mm; }
+      body { font-family: DejaVu Sans, Arial, sans-serif; font-size:12px }
+      table { width:100%; border-collapse: collapse; table-layout: fixed; }
+      colgroup col { border: none; }
+      th, td { border:1px solid #ccc; padding:4px; word-wrap:break-word; overflow-wrap:break-word; }
+      th { background:#f0f0f0; }
+      /* Column helpers */
+      .id-col { text-align: center; }
+    </style>
+  </head>
+  <body>
+    <h3>Reporte de Empleados</h3>
+    <table>
+      <colgroup>
+        <col style="width:4%">
+        <col style="width:11%">
+        <col style="width:11%">
+        <col style="width:11%">
+        <col style="width:26%">
+        <col style="width:8%">
+        <col style="width:15%">
+        <col style="width:7%">
+        <col style="width:7%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Apellidos</th>
+          <th>Documento</th>
+          <th>Email</th>
+          <th>Teléfono</th>
+          <th>Dirección</th>
+          <th>Departamento</th>
+          <th>Cargo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in empleados %}
+        <tr>
+          <td class="id-col">{{ e.id }}</td>
+          <td>{{ e.nombre }}</td>
+          <td>{{ e.apellidos }}</td>
+          <td>{{ e.documento_identidad }}</td>
+          <td>{{ e.email }}</td>
+          <td>{{ e.obtener_telefono }}</td>
+          <td>{{ e.obtener_direccion }}</td>
+          <td>{% if e.departamento %}{{ e.departamento.nombre }}{% endif %}</td>
+          <td>{% if e.cargo %}{{ e.cargo.nombre }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

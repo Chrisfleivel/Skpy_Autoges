@@ -18,6 +18,9 @@
               <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn-primary">
                 <i class="bi bi-pencil-square me-2"></i>Editar Cliente
               </a>
+              <a href="{% url 'eliminar_cliente' cliente.id %}" class="btn btn-outline-danger">
+                <i class="bi bi-trash me-2"></i>Eliminar Cliente
+              </a>
             </div>
           </div>
 
@@ -39,12 +42,10 @@
                   <div class="mb-3">
                     <span class="text-muted">Estado</span>
                     <div>
-                      {% if cliente.estado == 'Activo' %}
+                      {% if cliente.estado %}
                         <span class="badge bg-success bg-opacity-10 text-success">Activo</span>
-                      {% elif cliente.estado == 'Inactivo' %}
-                        <span class="badge bg-secondary bg-opacity-10 text-secondary">Inactivo</span>
                       {% else %}
-                        <span class="badge bg-info bg-opacity-10 text-info">Sin estado</span>
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary">Inactivo</span>
                       {% endif %}
                     </div>
                   </div>
@@ -82,18 +83,52 @@
                     <div class="col-md-6">
                       <div class="border rounded-3 p-3 h-100">
                         <p class="text-muted mb-2">Teléfono</p>
-                        <p class="mb-0 fw-semibold">{{ cliente.telefono|default:'-' }}</p>
+                        <p class="mb-0 fw-semibold">{{ cliente.obtener_telefono_principal|default:'-' }}</p>
                       </div>
                     </div>
                     <div class="col-12">
                       <div class="border rounded-3 p-3 h-100">
                         <p class="text-muted mb-2">Dirección</p>
-                        <p class="mb-0 fw-semibold">{{ cliente.direccion|default:'No disponible' }}</p>
+                        <p class="mb-0 fw-semibold">{{ cliente.obtener_direccion_principal|default:'No disponible' }}</p>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3 flex-column flex-md-row gap-3">
+                <div>
+                  <h5 class="fw-bold mb-1">Contactos del Cliente</h5>
+                  <p class="text-muted mb-0">Revisa y administra los contactos asignados a este cliente.</p>
+                </div>
+              </div>
+              {% if cliente.contactos.exists %}
+              <div class="row g-3">
+                {% for contacto in cliente.contactos.all %}
+                <div class="col-md-6">
+                  <div class="border rounded-3 p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <div>
+                        <h6 class="mb-1 fw-semibold">{{ contacto.nombre }} {{ contacto.apellidos }}</h6>
+                        <small class="text-muted">{{ contacto.get_tipo_persona_display }}</small>
+                      </div>
+                    </div>
+                    <p class="mb-1"><i class="bi bi-telephone-fill me-2"></i>{{ contacto.telefono|default:'Sin teléfono' }}</p>
+                    <p class="mb-0"><i class="bi bi-envelope-fill me-2"></i>{{ contacto.email|default:'Sin email' }}</p>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="text-center py-4">
+                <i class="bi bi-people-fill display-4 text-muted mb-3"></i>
+                <p class="text-muted mb-0">No hay contactos registrados para este cliente.</p>
+              </div>
+              {% endif %}
             </div>
           </div>
 
@@ -106,6 +141,9 @@
                 </div>
                 <a href="{% url 'realizar_pedido' cliente.id %}" class="btn btn-success">
                   <i class="bi bi-cart-plus me-2"></i>Nuevo Pedido
+                </a>
+                <a href="{% url 'realizar_pedido_busqueda' cliente.id %}" class="btn btn-primary">
+                  <i class="bi bi-search me-2"></i>Pedido por Busqueda
                 </a>
               </div>
 

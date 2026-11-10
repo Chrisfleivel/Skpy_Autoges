@@ -1,99 +1,169 @@
 {% extends 'base.html' %}
 
+{% block title %}Vehículos{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="row">
-        <aside class="col-lg-3">
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0">Filtros Avanzados</h5>
-                </div>
-                <div class="card-body">
-                    <form method="GET" action="{% url 'lista_vehiculos' %}">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Modelo</label>
-                            <input type="text" name="search_query" class="form-control" placeholder="Ej: Hilux..." value="{{ request.GET.search_query }}">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Marca</label>
-                            <select name="marca" class="form-select">
-                                <option value="">Todas las marcas</option>
-                                {% for m in marcas %}
-                                    <option value="{{ m }}" {% if request.GET.marca == m %}selected{% endif %}>{{ m }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Año</label>
-                            <div class="d-flex gap-2">
-                                <input type="number" name="anio_min" class="form-control" placeholder="Desde" value="{{ request.GET.anio_min }}">
-                                <input type="number" name="anio_max" class="form-control" placeholder="Hasta" value="{{ request.GET.anio_max }}">
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Precio (Gs.)</label>
-                            <input type="number" name="precio_min" class="form-control mb-2" placeholder="Mínimo" value="{{ request.GET.precio_min }}">
-                            <input type="number" name="precio_max" class="form-control" placeholder="Máximo" value="{{ request.GET.precio_max }}">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100">Aplicar Filtros</button>
-                        <a href="{% url 'lista_vehiculos' %}" class="btn btn-link w-100 text-muted mt-2">Limpiar</a>
-                    </form>
-                </div>
-            </div>
-        </aside>
-
-        <main class="col-lg-9">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Vehículos Disponibles</h2>
-                <a href="{% url 'agregar_vehiculo' %}" class="btn btn-success shadow-sm">+ Nuevo Vehículo</a>
-            </div>
-
-            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
-                {% for vehiculo in vehiculos %}
-                <div class="col">
-                    <div class="card h-100 shadow-sm border-0 hover-shadow">
-                        {% if vehiculo.imagen %}
-                            <img src="{{ vehiculo.imagen.url }}" class="card-img-top" alt="{{ vehiculo.modelo }}" style="height: 200px; object-fit: cover;">
-                        {% else %}
-                            <div class="bg-light text-center py-5">
-                                <i class="bi bi-truck fs-1 text-muted"></i>
-                            </div>
-                        {% endif %}
-                        
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="card-title mb-0">{{ vehiculo.marca }} {{ vehiculo.modelo }}</h5>
-                                <span class="badge bg-info text-dark">{{ vehiculo.año }}</span>
-                            </div>
-                            <p class="text-primary fw-bold fs-5 mb-1">{{ vehiculo.costo_compra }} Gs.</p>
-                            <p class="text-muted small mb-3">Estado: <span class="text-capitalize">{{ vehiculo.estado }}</span></p>
-                        </div>
-                        <div class="card-footer bg-white border-top-0 pb-3">
-                            <a href="{% url 'detalle_vehiculo' vehiculo.id %}" class="btn btn-outline-dark w-100">Ver Detalles</a>
-                        </div>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="col-12 text-center py-5">
-                    <div class="alert alert-light shadow-sm">
-                        <p class="mb-0">No se encontraron vehículos que coincidan con los filtros.</p>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </main>
+  <div class="row align-items-center mb-5">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center gap-4">
+        <div class="bg-primary bg-opacity-10 rounded-circle p-4">
+          <i class="bi bi-truck text-primary" style="font-size: 2rem;"></i>
+        </div>
+        <div>
+          <h1 class="h3 fw-bold mb-1">Vehículos</h1>
+          <p class="text-muted mb-0">Gestiona el inventario de vehículos de tu flotas.</p>
+        </div>
+      </div>
     </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <a href="{% url 'agregar_vehiculo' %}" class="btn btn-primary shadow-sm">
+        <i class="bi bi-plus-circle-fill me-2"></i>Nuevo Vehículo
+      </a>
+    </div>
+  </div>
+
+  <div class="row gy-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center p-4">
+          <div class="text-primary mb-3">
+            <i class="bi bi-truck fs-1"></i>
+          </div>
+          <h4 class="fw-bold mb-1">{{ vehiculos|length }}</h4>
+          <small class="text-muted">Vehículos totales</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center p-4">
+          <div class="text-success mb-3">
+            <i class="bi bi-check-circle-fill fs-1"></i>
+          </div>
+          <h4 class="fw-bold mb-1">{{ disponibles|default:0 }}</h4>
+          <small class="text-muted">Disponibles</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center p-4">
+          <div class="text-info mb-3">
+            <i class="bi bi-search fs-1"></i>
+          </div>
+          <h4 class="fw-bold mb-1">{{ request.GET.marca|default:'--' }}</h4>
+          <small class="text-muted">Marca filtrada</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light border-0 py-4">
+      <div class="d-flex align-items-center justify-content-between flex-column flex-md-row gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-funnel-fill text-primary fs-4"></i>
+          <h6 class="mb-0 fw-bold">Filtrar vehículos</h6>
+        </div>
+        <span class="text-muted small">Usa filtros para encontrar vehículos más rápido.</span>
+      </div>
+    </div>
+    <div class="card-body p-4">
+      <form method="get" action="{% url 'lista_vehiculos' %}" class="row g-3">
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label fw-semibold">Búsqueda</label>
+          <input type="text" name="search_query" placeholder="Modelo..." value="{{ request.GET.search_query }}" class="form-control">
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label fw-semibold">Marca</label>
+          <select name="marca" class="form-select">
+            <option value="">Todas</option>
+            {% for m in marcas %}
+              <option value="{{ m }}" {% if request.GET.marca == m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label fw-semibold">Año (desde)</label>
+          <input type="number" name="anio_min" placeholder="2015" value="{{ request.GET.anio_min }}" class="form-control">
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label fw-semibold">Año (hasta)</label>
+          <input type="number" name="anio_max" placeholder="2024" value="{{ request.GET.anio_max }}" class="form-control">
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label opacity-0">Buscar</label>
+          <button type="submit" class="btn btn-primary w-100">Buscar</button>
+        </div>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label opacity-0">Limpiar</label>
+          <a href="{% url 'lista_vehiculos' %}" class="btn btn-outline-secondary w-100">Limpiar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+    {% for vehiculo in vehiculos %}
+    <div class="col">
+      <div class="card h-100 shadow-sm border-0 hover-shadow">
+        {% if vehiculo.imagen %}
+          <img src="{{ vehiculo.imagen.url }}" class="card-img-top" alt="{{ vehiculo.modelo }}" style="height: 200px; object-fit: cover;">
+        {% else %}
+          <div class="bg-light text-center py-5">
+            <i class="bi bi-truck fs-1 text-muted"></i>
+          </div>
+        {% endif %}
+        
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="card-title mb-0">{{ vehiculo.marca }} {{ vehiculo.modelo }}</h5>
+            <span class="badge bg-info text-dark">{{ vehiculo.año }}</span>
+          </div>
+          <p class="text-primary fw-bold fs-5 mb-1">{{ vehiculo.costo_compra|floatformat:0 }} Gs.</p>
+          <p class="text-muted small mb-1">Proveedor: {{ vehiculo.proveedor|default:'Sin proveedor' }}</p>
+          <p class="text-muted small mb-3">
+            Estado: 
+            {% if vehiculo.estado == 'disponible' %}
+              <span class="badge bg-success">Disponible</span>
+            {% elif vehiculo.estado == 'vendido' %}
+              <span class="badge bg-danger">Vendido</span>
+            {% elif vehiculo.estado == 'mantenimiento' %}
+              <span class="badge bg-warning text-dark">Mantenimiento</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ vehiculo.estado }}</span>
+            {% endif %}
+          </p>
+        </div>
+        <div class="card-footer bg-white border-top-0 pb-3">
+          <a href="{% url 'detalle_vehiculo' vehiculo.id %}" class="btn btn-outline-primary w-100">
+            <i class="bi bi-eye me-2"></i>Ver Detalles
+          </a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-search fs-1 text-muted mb-3 d-block"></i>
+          <p class="text-muted mb-0">No se encontraron vehículos que coincidan con los filtros.</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 </div>
 
 <style>
-    .hover-shadow:hover {
-        transform: translateY(-5px);
-        transition: all 0.3s ease;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-    }
+  .hover-shadow {
+    transition: all 0.3s ease;
+  }
+  
+  .hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+  }
 </style>
 {% endblock %}

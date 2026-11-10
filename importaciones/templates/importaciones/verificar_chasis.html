@@ -1,0 +1,17 @@
+{% extends 'importaciones/base.html' %}
+{% block title %}Verificar chasis{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>Verificar chasis</h1>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Analizar</button>
+    </form>
+    {% if resultado %}
+      <h2>Resultado</h2>
+      <p>{{ resultado }}</p>
+    {% endif %}
+  </div>
+{% endblock %}

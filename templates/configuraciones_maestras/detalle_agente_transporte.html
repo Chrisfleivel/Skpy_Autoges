@@ -1,50 +1,213 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block content %}
-<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-  <div class="card shadow p-4" style="width: 100%; max-width: 600px; background-color: #fff;">
-    <h2 class="mb-4 text-center text-dark">Detalle de Agente de Transporte</h2>
-    <table class="table table-bordered table-striped mb-4">
-      <tr>
-        <th class="bg-light">Nombre</th>
-        <td>{{ agente.nombre }}</td>
-      </tr>
-      <tr>
-        <th class="bg-light">Teléfono</th>
-        <td>{{ agente.telefono }}</td>
-      </tr>
-      <tr>
-        <th class="bg-light">Email</th>
-        <td>{{ agente.email }}</td>
-      </tr>
-      <tr>
-        <th class="bg-light">Dirección</th>
-        <td>{{ agente.direccion }}</td>
-      </tr>
-      <tr>
-        <th class="bg-light">Persona de Contacto</th>
-        <td>{{ agente.contacto }}</td>
-      </tr>
-      <tr>
-        <th class="bg-light">Fecha de Registro</th>
-        <td>{{ agente.fecha_registro|date:"d/m/Y H:i" }}</td>
-      </tr>
-      <tr>
-        <th class="bg-light">Estado</th>
-        <td>
-          {% if agente.estado %}
-            <span class="badge bg-success">Activo</span>
-          {% else %}
-            <span class="badge bg-danger">Inactivo</span>
-          {% endif %}
-        </td>
-      </tr>
-    </table>
-    <div class="text-center">
-      <a href="{% url 'editar_agente_transporte' agente.id %}" class="btn btn-warning">Editar</a>
-      <a href="{% url 'lista_agentes_transporte' %}" class="btn btn-secondary ms-2">Volver</a>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                        <i class="bi bi-truck text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1 fw-bold text-dark">{{ agente.nombre }}</h1>
+                        <p class="text-muted mb-0">Detalles del agente de transporte.</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'lista_agentes_transporte' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Volver
+                    </a>
+                    <a href="{% url 'editar_agente_transporte' agente.id %}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i>Editar
+                    </a>
+                    <a href="{% url 'eliminar_agente_transporte' agente.id %}" class="btn btn-outline-danger" onclick="return confirm('¿Eliminar este agente? Esta acción no se puede deshacer.');">
+                        <i class="bi bi-trash me-2"></i>Eliminar
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold">Información General</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="border-start border-primary border-4 ps-3">
+                                <small class="text-muted">ID</small>
+                                <div class="fw-semibold">#{{ agente.id }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-success border-4 ps-3">
+                                <small class="text-muted">Estado</small>
+                                <div class="fw-semibold">
+                                    {% if agente.estado %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-info border-4 ps-3">
+                                <small class="text-muted">País de Operación</small>
+                                <div class="fw-semibold">
+                                    {% if agente.pais_operacion == 'KR' %}
+                                        <span class="badge bg-info">Corea del Sur</span>
+                                    {% elif agente.pais_operacion == 'PY' %}
+                                        <span class="badge bg-success">Paraguay</span>
+                                    {% elif agente.pais_operacion == 'OT' %}
+                                        <span class="badge bg-secondary">Otro</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-warning border-4 ps-3">
+                                <small class="text-muted">Tipo de Transporte</small>
+                                <div class="fw-semibold">{{ agente.get_tipo_servicio_display|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-secondary border-4 ps-3">
+                                <small class="text-muted">Especialidad de Carga</small>
+                                <div class="fw-semibold">{{ agente.get_tipo_carga_especialidad_display|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-danger border-4 ps-3">
+                                <small class="text-muted">Persona de Contacto</small>
+                                <div class="fw-semibold">{{ agente.contacto|default:"-" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold">Datos de Contacto</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="border-start border-primary border-4 ps-3">
+                                <small class="text-muted">Teléfono</small>
+                                <div class="fw-semibold">
+                                    {% if agente.telefono %}
+                                        <a href="tel:{{ agente.telefono }}" class="text-decoration-none">{{ agente.telefono }}</a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-info border-4 ps-3">
+                                <small class="text-muted">Email</small>
+                                <div class="fw-semibold">
+                                    {% if agente.email %}
+                                        <a href="mailto:{{ agente.email }}" class="text-decoration-none">{{ agente.email }}</a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-warning border-4 ps-3">
+                                <small class="text-muted">Contacto de Emergencia</small>
+                                <div class="fw-semibold">{{ agente.contacto_emergencia|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-secondary border-4 ps-3">
+                                <small class="text-muted">Dirección</small>
+                                <div class="fw-semibold text-muted small">{{ agente.direccion|default:"-" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold">Información Operativa</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="border-start border-primary border-4 ps-3">
+                                <small class="text-muted">Puerto/Aeropuerto Habitual</small>
+                                <div class="fw-semibold">{{ agente.lugar_operacion|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-info border-4 ps-3">
+                                <small class="text-muted">Registro Autoridad</small>
+                                <div class="fw-semibold">{{ agente.registro_autoridad|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-warning border-4 ps-3">
+                                <small class="text-muted">Póliza de Seguro</small>
+                                <div class="fw-semibold">{{ agente.numero_poliza_seguro|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border-start border-secondary border-4 ps-3">
+                                <small class="text-muted">Fecha de Registro</small>
+                                <div class="text-muted small">{{ agente.fecha_registro|date:"d/m/Y H:i"|default:"-" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold">Datos de Vehículo/Transporte</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="border-start border-primary border-4 ps-3">
+                                <small class="text-muted">Placa Vehículo/Cigüeña</small>
+                                <div class="fw-semibold">{{ agente.placa_vehiculo|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-info border-4 ps-3">
+                                <small class="text-muted">Cédula Verde</small>
+                                <div class="fw-semibold">{{ agente.cedula_verde|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-warning border-4 ps-3">
+                                <small class="text-muted">Nombre del Chofer</small>
+                                <div class="fw-semibold">{{ agente.nombre_chofer|default:"-" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-start border-secondary border-4 ps-3">
+                                <small class="text-muted">Cédula del Chofer</small>
+                                <div class="fw-semibold">{{ agente.cedula_chofer|default:"-" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

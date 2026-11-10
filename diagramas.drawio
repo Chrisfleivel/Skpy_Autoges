@@ -1,0 +1,31 @@
+<mxfile host="65bd71144e">
+    <diagram id="EJIux9LXO83XHvRpIgt9" name="Página-1">
+        <mxGraphModel dx="680" dy="492" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="oO77g8JPZjqW9_8HWvcY-6" edge="1" parent="1" source="oO77g8JPZjqW9_8HWvcY-1" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="oO77g8JPZjqW9_8HWvcY-3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="oO77g8JPZjqW9_8HWvcY-7" edge="1" parent="1" source="oO77g8JPZjqW9_8HWvcY-1" style="edgeStyle=none;html=1;exitX=0.82;exitY=1.024;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitPerimeter=0;" target="oO77g8JPZjqW9_8HWvcY-4">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="oO77g8JPZjqW9_8HWvcY-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Empresa" vertex="1">
+                    <mxGeometry height="60" width="120" x="294" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="oO77g8JPZjqW9_8HWvcY-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Sucursal1" vertex="1">
+                    <mxGeometry height="60" width="120" x="140" y="210" as="geometry"/>
+                </mxCell>
+                <mxCell id="oO77g8JPZjqW9_8HWvcY-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Sucursal 2" vertex="1">
+                    <mxGeometry height="60" width="120" x="294" y="210" as="geometry"/>
+                </mxCell>
+                <mxCell id="oO77g8JPZjqW9_8HWvcY-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Sucursal 3" vertex="1">
+                    <mxGeometry height="60" width="120" x="460" y="210" as="geometry"/>
+                </mxCell>
+                <mxCell id="oO77g8JPZjqW9_8HWvcY-5" edge="1" parent="1" source="oO77g8JPZjqW9_8HWvcY-1" style="edgeStyle=none;html=1;entryX=0.583;entryY=0.077;entryDx=0;entryDy=0;entryPerimeter=0;" target="oO77g8JPZjqW9_8HWvcY-2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

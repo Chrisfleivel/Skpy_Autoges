@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Comparativo de tendencia{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h2 class="mb-1">Comparativo de tendencia</h2>
+      <p class="text-muted mb-0">Periodo actual: {{ fecha_inicio|date:'d/m/Y' }} - {{ fecha_fin|date:'d/m/Y' }} | Período anterior: {{ periodo_anterior_inicio|date:'d/m/Y' }} - {{ periodo_anterior_fin|date:'d/m/Y' }}</p>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <form method="get" class="d-flex align-items-center gap-2">
+        <label for="dias" class="form-label mb-0">Días</label>
+        <select id="dias" name="dias" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="7" {% if dias == 7 %}selected{% endif %}>7</option>
+          <option value="14" {% if dias == 14 %}selected{% endif %}>14</option>
+          <option value="30" {% if dias == 30 %}selected{% endif %}>30</option>
+        </select>
+      </form>
+      <a href="{% url 'reporte_comparativo_pdf' %}?dias={{ dias }}" class="btn btn-outline-primary btn-sm">
+        Exportar PDF
+      </a>
+      <a href="{% url 'reporte_comparativo_excel' %}?dias={{ dias }}" class="btn btn-success btn-sm">
+        Exportar Excel
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Total cobrado</div>
+          <h3 class="mt-2 mb-0">Gs. {{ total_actual|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Periodo anterior</div>
+          <h3 class="mt-2 mb-0">Gs. {{ total_anterior|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Diferencia</div>
+          <h3 class="mt-2 mb-0 {% if diferencia_total >= 0 %}text-success{% else %}text-danger{% endif %}">
+            {% if diferencia_total >= 0 %}+{% endif %}Gs. {{ diferencia_total|floatformat:2 }}
+          </h3>
+          <div class="small {% if variacion_total >= 0 %}text-success{% else %}text-danger{% endif %}">
+            {{ variacion_total|floatformat:1 }}% vs. período anterior
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-dark text-white">
+      <h5 class="mb-0">Tendencia diaria</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Fecha</th>
+              <th class="text-end">Monto</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in tendencia %}
+            <tr>
+              <td>{{ fila.fecha|date:'d/m/Y' }}</td>
+              <td class="text-end">Gs. {{ fila.total|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="2" class="text-center text-muted py-4">Sin datos en este período.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Por sucursal</h5>
+        </div>
+        <div class="card-body">
+          {% for fila in por_sucursal %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <strong>{{ fila.nombre }}</strong>
+              <span>Gs. {{ fila.total|floatformat:2 }}</span>
+            </div>
+            <div class="progress" style="height: 10px;">
+              <div class="progress-bar {% if fila.diferencia >= 0 %}bg-success{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ fila.porcentaje|floatformat:1 }}%"></div>
+            </div>
+            <div class="small {% if fila.diferencia >= 0 %}text-success{% else %}text-danger{% endif %}">
+              {% if fila.diferencia >= 0 %}+{% endif %}Gs. {{ fila.diferencia|floatformat:2 }} ({{ fila.variacion|floatformat:1 }}%)
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-muted mb-0">No hay sucursales con ventas en este período.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">Por empleado</h5>
+        </div>
+        <div class="card-body">
+          {% for fila in por_empleado %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <strong>{{ fila.nombre }}</strong>
+              <span>Gs. {{ fila.total|floatformat:2 }}</span>
+            </div>
+            <div class="progress" style="height: 10px;">
+              <div class="progress-bar {% if fila.diferencia >= 0 %}bg-success{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ fila.porcentaje|floatformat:1 }}%"></div>
+            </div>
+            <div class="small {% if fila.diferencia >= 0 %}text-success{% else %}text-danger{% endif %}">
+              {% if fila.diferencia >= 0 %}+{% endif %}Gs. {{ fila.diferencia|floatformat:2 }} ({{ fila.variacion|floatformat:1 }}%)
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-muted mb-0">No hay empleados con ventas en este período.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

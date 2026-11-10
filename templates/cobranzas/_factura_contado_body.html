@@ -1,0 +1,89 @@
+<div class="page">
+  <div class="header">
+    <div style="width:60%; display:inline-block; vertical-align:top;">
+      <div class="brand">
+        {% if logo_path %}
+          <img class="logo" src="{{ logo_path }}" alt="Logo" />
+        {% else %}
+          <div class="company-name">SKPY AutoGest</div>
+        {% endif %}
+      </div>
+      <div class="company small-muted" style="margin-top:6px;">
+        <div class="company-name">{{ empresa.nombre|default:'SKPY AutoGest' }}</div>
+        <div>{{ empresa.direccion|default:'Asunción, Paraguay' }}</div>
+        <div>RUC: {{ empresa.ruc|default:'00000000-0' }}</div>
+        <div>Tel: {{ empresa.telefono|default:'0981 000 000' }}</div>
+        <div>Email: {{ empresa.email|default:'contacto@skpyautogest.com.py' }}</div>
+      </div>
+    </div>
+
+    <div class="invoice-box">
+      <div class="invoice-title">FACTURA - CONTADO</div>
+      <div class="meta-line"><strong>Timbrado:</strong> {{ empresa.timbrado|default:'-' }}</div>
+      <div class="meta-line"><strong>Nº Factura / Pedido:</strong> {{ pedido.id }}</div>
+      <div class="meta-line"><strong>Fecha:</strong> {{ fecha_emision|date:'d/m/Y H:i' }}</div>
+      <div class="meta-line"><strong>Estado:</strong> {{ pedido.get_estado_display }}</div>
+    </div>
+    <div style="clear:both;"></div>
+
+  </div>
+
+  <div class="details">
+    <table>
+      <tr>
+        <td class="meta">
+          <strong>Cliente:</strong><br />
+          {{ cliente.razon_social|default:cliente.nombre }}<br />
+          {% if cliente.ruc %}RUC: {{ cliente.ruc }}<br />{% endif %}
+          {% if cliente.direccion %}Dirección: {{ cliente.direccion }}<br />{% endif %}
+          {% if cliente.telefono %}Tel: {{ cliente.telefono }}<br />{% endif %}
+          {% if cliente.email %}Email: {{ cliente.email }}<br />{% endif %}
+        </td>
+        <td class="meta">
+          &nbsp;
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <table class="invoice-table">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        <th>Precio Unitario</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{% if item.tipo_producto == 'repuesto' %}{{ item.repuesto }}{% else %}{{ item.vehiculo }}{% endif %}</td>
+        <td>{{ item.cantidad }}</td>
+        <td>{{ item.precio_unitario }}</td>
+        <td>{{ item.subtotal }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="totals">
+    <tr>
+      <td class="label">Subtotal Neto</td>
+      <td>Gs. {{ subtotal_neto|floatformat:2 }}</td>
+    </tr>
+    <tr>
+      <td class="label">IVA</td>
+      <td>Gs. {{ pedido.iva|default:0.00|floatformat:2 }}</td>
+    </tr>
+    <tr>
+      <td class="label"><strong>Total</strong></td>
+      <td><strong>Gs. {{ pedido.monto_total|floatformat:2 }}</strong></td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    <p>Esta factura se emite como comprobante de venta al contado. Todos los precios están expresados en guaraníes.</p>
+    <p>Gracias por su preferencia.</p>
+  </div>
+</div>

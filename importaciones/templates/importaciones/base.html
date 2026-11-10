@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Importaciones{% endblock %}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #1f2937; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    nav { margin-bottom: 20px; }
+    nav a { margin-right: 12px; text-decoration: none; color: #0f766e; }
+    .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background: #fff; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+    .muted { color: #6b7280; }
+    .alert { padding: 10px 12px; background: #ecfeff; border: 1px solid #a5f3fc; border-radius: 6px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="{% url 'importaciones:embarque_lista' %}">Embarques</a>
+      <a href="{% url 'home' %}">Inicio</a>
+    </nav>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

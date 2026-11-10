@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte comparativo de caja</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #222; margin: 24px; }
+    h1 { font-size: 22px; margin-bottom: 8px; }
+    .subtitle { color: #555; margin-bottom: 18px; }
+    .kpis { margin-bottom: 24px; }
+    .kpi { display: inline-block; width: 30%; margin-right: 2%; background: #f7f7f7; border: 1px solid #ddd; padding: 12px; border-radius: 8px; }
+    .kpi-label { font-size: 10px; text-transform: uppercase; color: #666; }
+    .kpi-value { font-size: 18px; font-weight: bold; margin-top: 6px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 11px; }
+    th { background: #f0f0f0; }
+    .right { text-align: right; }
+    .success { color: #1d7a3b; }
+    .danger { color: #b42318; }
+  </style>
+</head>
+<body>
+  <h1>Reporte comparativo de caja</h1>
+  <div class="subtitle">Periodo actual: {{ fecha_inicio|date:'d/m/Y' }} - {{ fecha_fin|date:'d/m/Y' }} | Período anterior: {{ periodo_anterior_inicio|date:'d/m/Y' }} - {{ periodo_anterior_fin|date:'d/m/Y' }}</div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-label">Total cobrado</div>
+      <div class="kpi-value">Gs. {{ total_actual|floatformat:2 }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Periodo anterior</div>
+      <div class="kpi-value">Gs. {{ total_anterior|floatformat:2 }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Diferencia</div>
+      <div class="kpi-value {% if diferencia_total >= 0 %}success{% else %}danger{% endif %}">
+        {% if diferencia_total >= 0 %}+{% endif %}Gs. {{ diferencia_total|floatformat:2 }}
+      </div>
+    </div>
+  </div>
+
+  <h3>Por sucursal</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Sucursal</th>
+        <th class="right">Actual</th>
+        <th class="right">Anterior</th>
+        <th class="right">Diferencia</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fila in por_sucursal %}
+      <tr>
+        <td>{{ fila.nombre }}</td>
+        <td class="right">Gs. {{ fila.total|floatformat:2 }}</td>
+        <td class="right">Gs. {{ fila.prev_total|floatformat:2 }}</td>
+        <td class="right {% if fila.diferencia >= 0 %}success{% else %}danger{% endif %}">
+          {% if fila.diferencia >= 0 %}+{% endif %}Gs. {{ fila.diferencia|floatformat:2 }}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">Sin sucursales con ventas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3 style="margin-top: 18px;">Por empleado</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Empleado</th>
+        <th class="right">Actual</th>
+        <th class="right">Anterior</th>
+        <th class="right">Diferencia</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fila in por_empleado %}
+      <tr>
+        <td>{{ fila.nombre }}</td>
+        <td class="right">Gs. {{ fila.total|floatformat:2 }}</td>
+        <td class="right">Gs. {{ fila.prev_total|floatformat:2 }}</td>
+        <td class="right {% if fila.diferencia >= 0 %}success{% else %}danger{% endif %}">
+          {% if fila.diferencia >= 0 %}+{% endif %}Gs. {{ fila.diferencia|floatformat:2 }}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">Sin empleados con ventas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

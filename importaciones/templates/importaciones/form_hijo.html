@@ -1,0 +1,13 @@
+{% extends 'importaciones/base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>{{ titulo }}</h1>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Guardar</button>
+    </form>
+  </div>
+{% endblock %}

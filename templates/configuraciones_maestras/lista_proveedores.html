@@ -139,8 +139,11 @@
                 {% endif %}
               </td>
               <td class="text-end">
-                <a href="{% url 'detalle_proveedor' proveedor.id %}" class="btn btn-sm btn-outline-primary">
+                <a href="{% url 'detalle_proveedor' proveedor.id %}" class="btn btn-sm btn-outline-primary" title="Detalle">
                   <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'eliminar_proveedor' proveedor.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                  <i class="bi bi-trash"></i>
                 </a>
               </td>
             </tr>

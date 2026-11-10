@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Importación{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3>Editar Importación - {{ importacion.codigo_seguimiento }}</h3>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="text-end">
+      <button class="btn btn-primary">Guardar</button>
+      <a href="{% url 'detalle_importacion' importacion.id %}" class="btn btn-secondary ms-2">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte por rango{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h2 class="mb-1">Reporte por rango</h2>
+      <p class="text-muted mb-0">Análisis de caja en el periodo seleccionado</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'dashboard_caja' %}" class="btn btn-outline-secondary">Volver al dashboard</a>
+      <a href="{% url 'exportar_reporte_caja_csv' %}?fecha_inicio={{ fecha_inicio|date:'Y-m-d' }}&fecha_fin={{ fecha_fin|date:'Y-m-d' }}" class="btn btn-success">Exportar CSV</a>
+    </div>
+  </div>
+
+  <form method="get" class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label for="fecha_inicio" class="form-label">Fecha inicio</label>
+          <input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control" value="{{ fecha_inicio|date:'Y-m-d' }}">
+        </div>
+        <div class="col-md-4">
+          <label for="fecha_fin" class="form-label">Fecha fin</label>
+          <input type="date" id="fecha_fin" name="fecha_fin" class="form-control" value="{{ fecha_fin|date:'Y-m-d' }}">
+        </div>
+        <div class="col-md-4 text-md-end">
+          <button type="submit" class="btn btn-primary">Aplicar filtro</button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Total cobrado</div>
+          <h3 class="mt-2 mb-0">Gs. {{ total_cobrado|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Efectivo</div>
+          <h3 class="mt-2 mb-0">Gs. {{ total_efectivo|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Transferencia</div>
+          <h3 class="mt-2 mb-0">Gs. {{ total_transferencia|floatformat:2 }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-dark text-white">
+          <h5 class="mb-0">Serie por día</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Fecha</th>
+                  <th class="text-end">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for fila in serie_dias %}
+                <tr>
+                  <td>{{ fila.fecha|date:'d/m/Y' }}</td>
+                  <td class="text-end">Gs. {{ fila.total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="2" class="text-center text-muted py-4">Sin cobros para este rango.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Sucursal Reporte</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Sucursal</th>
+                  <th class="text-end">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for fila in detalle_sucursales %}
+                <tr>
+                  <td>{{ fila.sucursal__nombre|default:'Sin sucursal' }}</td>
+                  <td class="text-end">Gs. {{ fila.total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="2" class="text-center text-muted py-4">Sin sucursales con cobros.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Empleados con mayor cobro</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Empleado</th>
+              <th class="text-end">Monto</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in detalle_empleados %}
+            <tr>
+              <td>
+                {% if fila.empleado__nombre or fila.empleado__apellidos %}
+                  {{ fila.empleado__nombre }} {{ fila.empleado__apellidos }}
+                {% else %}
+                  Sin empleado
+                {% endif %}
+              </td>
+              <td class="text-end">Gs. {{ fila.total|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="2" class="text-center text-muted py-4">Sin pagos para este rango.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

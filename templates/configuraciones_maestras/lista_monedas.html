@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Monedas{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row align-items-center mb-4">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center gap-3">
+        <div class="bg-success bg-opacity-10 rounded-3 p-3">
+          <i class="bi bi-currency-dollar fs-2 text-success"></i>
+        </div>
+        <div>
+          <h1 class="h4 fw-bold mb-1">Monedas</h1>
+          <p class="text-muted mb-0">Administra las monedas disponibles en el sistema.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <a href="{% url 'agregar_moneda' %}" class="btn btn-success shadow-sm">
+        <i class="bi bi-plus-circle-fill me-2"></i>Nueva Moneda
+      </a>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 py-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-table text-success fs-5"></i>
+          <h6 class="mb-0 fw-bold">Monedas registradas</h6>
+        </div>
+        <span class="text-muted small">Total: {{ monedas|length }}</span>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      {% if monedas %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="border-0 fw-semibold">Código</th>
+              <th class="border-0 fw-semibold">Nombre</th>
+              <th class="border-0 fw-semibold text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for moneda in monedas %}
+            <tr>
+              <td><strong>{{ moneda.codigo }}</strong></td>
+              <td>{{ moneda.nombre }}</td>
+              <td class="text-end">
+                <a href="{% url 'detalle_moneda' moneda.id %}" class="btn btn-sm btn-outline-info me-1" title="Ver detalle">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'editar_moneda' moneda.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'eliminar_moneda' moneda.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info m-3 mb-0" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        No hay monedas registradas. <a href="{% url 'agregar_moneda' %}" class="alert-link">Agregar una nueva</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

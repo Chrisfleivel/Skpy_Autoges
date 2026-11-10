@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar Importación{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card">
+    <div class="card-body">
+      <h3>Eliminar Importación</h3>
+      <p>¿Desea eliminar la importación <strong>{{ importacion.codigo_seguimiento }}</strong>?</p>
+      <form method="post">
+        {% csrf_token %}
+        <button class="btn btn-danger">Eliminar</button>
+        <a href="{% url 'detalle_importacion' importacion.id %}" class="btn btn-secondary ms-2">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

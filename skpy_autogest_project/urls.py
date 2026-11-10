@@ -26,8 +26,13 @@ urlpatterns = [
     path('', home_view, name='home'),  # Ruta para la página de inicio
     path('configurar_apariencia/', configurar_apariencia, name='configurar_apariencia'),
     path('seguridad_usuarios/', include('seguridad_usuarios.urls')),  # Incluir las URLs de la app seguridad_usuario
+    # path('contabilidad/', include('contabilidad.urls')),  # Deshabilitado por ahora: no necesario en esta etapa
     path('inventario/', include('inventario.urls')),  # Incluir las URLs de la app inventario
     path('configuraciones_maestras/', include('configuraciones_maestras.urls')),  # Incluir las URLs de la app configuraciones_maestras
     path('clientes_pedidos/', include('clientes_pedidos.urls')),  # Incluir las URLs de la app clientes_pedidos
     path('reposicion_stock/', include('reposicion_stock.urls')),  # Incluir las URLs de la app reposicion_stock
+    path('importaciones/', include('importaciones.urls')),
+    # path('documentos_financieros/', include('documentos_financieros.urls')),  # Deshabilitado porque depende de contabilidad
+    path('cobranzas/', include('cobranzas.urls')),
+    path('pedido_busqueda/', include('pedido_busqueda.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

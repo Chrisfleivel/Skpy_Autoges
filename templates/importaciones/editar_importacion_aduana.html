@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Datos Aduana{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3>Editar Datos Aduana - {{ importacion.codigo_seguimiento }}</h3>
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Número BL</label>
+      {{ form.numero_bl }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Número de Factura</label>
+      {{ form.numero_factura }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Referencia SWIFT</label>
+      {{ form.referencia_swift }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Número Booking</label>
+      {{ form.numero_booking }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Número HBL/AWB</label>
+      {{ form.numero_hbl_awb }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Número de Contenedor</label>
+      {{ form.numero_contenedor }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Número de Precinto</label>
+      {{ form.numero_precinto }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Placa del Vehículo</label>
+      {{ form.placa_vehiculo_destino }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Cédula del Chofer</label>
+      {{ form.cedula_chofer_destino }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Habilitación DINATRAN</label>
+      {{ form.registro_dinatran }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Código Importador Corea (KCS)</label>
+      {{ form.codigo_identificador_importador_corea }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Número de Mandato VUI</label>
+      {{ form.numero_mandato_vui }}
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Vencimiento Mandato VUI</label>
+        {{ form.fecha_vencimiento_mandato_paraguay }}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Vencimiento POA Corea</label>
+        {{ form.fecha_vencimiento_poa_corea }}
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Número de Expediente VUI</label>
+      {{ form.numero_expediente_vui }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Despachante / Agente de Despacho</label>
+      {{ form.despachante }}
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <div class="form-check">
+          {{ form.poa_cargado }}
+          <label class="form-check-label" for="id_poa_cargado">POA Cargado</label>
+        </div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <div class="form-check">
+          {{ form.certificado_kc_cargado }}
+          <label class="form-check-label" for="id_certificado_kc_cargado">Certificado KC Cargado</label>
+        </div>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">VINs de Vehículos (JSON o lista)</label>
+      {{ form.vins_vehiculos }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Estado de Despacho</label>
+      {{ form.estado_despacho }}
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <a href="{% url 'lista_documentos_importacion' importacion.id %}" class="btn btn-secondary ms-2">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

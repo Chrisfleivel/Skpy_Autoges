@@ -51,24 +51,16 @@
                             <div class="form-section-title">Roles Asignados</div>
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
-                                    <label class="form-label">Seleccionar Roles</label>
-                                    <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
-                                        {% for rol in form.roles %}
-                                            <div class="form-check">
-                                                {{ rol.tag }}
-                                                <label class="form-check-label" for="{{ rol.id_for_label }}">
-                                                    {{ rol.choice_label }}
-                                                </label>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                    {% if form.roles.errors %}
-                                        <div class="text-danger small mt-1">
-                                            {% for error in form.roles.errors %}
-                                                {{ error }}
+                                    <div class="border rounded p-3">
+                                        <div class="d-flex flex-wrap gap-2 mb-2">
+                                            {% for rol in usuario_perfil.roles_asignados %}
+                                                <span class="badge bg-primary px-3 py-2">{{ rol.nombre }}</span>
+                                            {% empty %}
+                                                <span class="text-muted">No hay roles asignados por cargo</span>
                                             {% endfor %}
                                         </div>
-                                    {% endif %}
+                                        <div class="form-text text-muted">Los roles del usuario se heredan del cargo asociado al empleado.</div>
+                                    </div>
                                 </div>
                             </div>
 

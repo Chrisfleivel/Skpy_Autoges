@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Registrar Control de Fase - {{ importacion.codigo_seguimiento }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2>Registrar Control de Cumplimiento</h2>
+            <p class="text-muted">
+                Importación: <strong>{{ importacion.codigo_seguimiento }}</strong><br>
+                Fase: <strong>{{ fase.get_fase_display }}</strong>
+            </p>
+
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Verificación de Requisitos</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.requisito.id_for_label }}" class="form-label">
+                                {{ form.requisito.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.requisito }}
+                            {% if form.requisito.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.requisito.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-check mb-3">
+                            {{ form.completado }}
+                            <label class="form-check-label" for="{{ form.completado.id_for_label }}">
+                                {{ form.completado.label }}
+                            </label>
+                            {% if form.completado.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.completado.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                                {{ form.observaciones.label }}
+                            </label>
+                            {{ form.observaciones }}
+                            {% if form.observaciones.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.observaciones.errors }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Detalles sobre la verificación</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Registrar Control
+                    </button>
+                    <a href="{% url 'detalle_fase_importacion' fase.id %}" class="btn btn-secondary">
+                        <i class="bi bi-x"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+
+            <!-- Información de Requisitos -->
+            <div class="alert alert-info mt-4">
+                <h5 class="alert-heading">Requisitos por Fase</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="mb-0 small">
+                            <li><strong>Documentos Requeridos:</strong> Todos los docs necesarios cargados</li>
+                            <li><strong>Pagos Realizados:</strong> Pagos al proveedor/flete completados</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="mb-0 small">
+                            <li><strong>Inspecciones Completadas:</strong> Inspecciones físicas realizadas</li>
+                            <li><strong>Trámites Finalizados:</strong> Trámites administrativos finalizados</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

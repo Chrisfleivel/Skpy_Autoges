@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Resumen del embarque{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="mb-1">Resumen del embarque</h3>
+      <p class="text-muted mb-0">{{ embarque.referencia_interna|default:'Sin referencia' }} · {{ embarque.bl_numero|default:'Sin B/L' }}</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'detalle_embarque' embarque.pk %}" class="btn btn-outline-secondary">Volver</a>
+      <a href="{% url 'exportar_resumen_embarque' embarque.pk %}" class="btn btn-primary">Exportar CSV</a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Estado</div>
+          <div class="fs-5 fw-bold">{{ embarque.get_estado_display }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Ítems</div>
+          <div class="fs-5 fw-bold">{{ items|length }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Gastos</div>
+          <div class="fs-5 fw-bold">{{ gastos|length }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Verificación</div>
+          <div class="fs-5 fw-bold">{% if verificacion.ok %}OK{% else %}Discrepante{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-light">Datos del embarque</div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-5">Referencia</dt><dd class="col-sm-7">{{ embarque.referencia_interna|default:'-' }}</dd>
+            <dt class="col-sm-5">B/L</dt><dd class="col-sm-7">{{ embarque.bl_numero|default:'-' }}</dd>
+            <dt class="col-sm-5">Destino</dt><dd class="col-sm-7">{{ embarque.destino_final|default:'-' }}</dd>
+            <dt class="col-sm-5">Naviera</dt><dd class="col-sm-7">{{ embarque.naviera|default:'-' }}</dd>
+            <dt class="col-sm-5">Puerto carga</dt><dd class="col-sm-7">{{ embarque.puerto_carga|default:'-' }}</dd>
+            <dt class="col-sm-5">Puerto descarga</dt><dd class="col-sm-7">{{ embarque.puerto_descarga|default:'-' }}</dd>
+            <dt class="col-sm-5">Fecha embarque</dt><dd class="col-sm-7">{{ embarque.fecha_embarque|default:'-' }}</dd>
+            <dt class="col-sm-5">ETA</dt><dd class="col-sm-7">{{ embarque.eta|default:'-' }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-light">Totales</div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between border-bottom py-2">
+            <span>Total gastos</span>
+            <strong>{{ total_gastos }}</strong>
+          </div>
+          <div class="d-flex justify-content-between border-bottom py-2">
+            <span>Total prorrateado</span>
+            <strong>{{ total_prorrateado }}</strong>
+          </div>
+          <div class="d-flex justify-content-between py-2">
+            <span>Diferencia</span>
+            <strong>{{ diferencia|floatformat:2 }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-light">Detalle de items</div>
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Chasis BL</th>
+            <th>Costo prorrateado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td>{{ item.factura_item.descripcion }}</td>
+            <td>{{ item.chasis_bl|default:'-' }}</td>
+            <td>{{ item.costo_prorrateado|default:'0.00' }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-center text-muted py-3">Sin items cargados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

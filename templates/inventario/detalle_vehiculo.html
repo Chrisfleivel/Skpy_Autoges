@@ -1,126 +1,167 @@
 {% extends 'base.html' %}
 
+{% block title %}Detalle del Vehículo{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-5">
+<div class="container-fluid py-4">
   <div class="row justify-content-center">
-    <div class="col-12 col-xl-10">
+    <div class="col-xl-10">
       <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
           <div>
-            <h1 class="h4 fw-bold mb-1">Detalle del Vehículo</h1>
-            <p class="text-muted mb-0">Revisa la información y estado del vehículo en el inventario.</p>
+            <h5 class="mb-0 fw-bold">{{ vehiculo.marca }} {{ vehiculo.modelo }} ({{ vehiculo.año }})</h5>
+            <p class="text-muted mb-0">Información completa del vehículo</p>
           </div>
           <div class="d-flex gap-2">
-            <a href="{% url 'lista_vehiculos' %}" class="btn btn-outline-secondary">
-              <i class="bi bi-arrow-left me-2"></i>Volver a la lista
+            <a href="{% url 'editar_vehiculo' vehiculo.id %}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-pencil me-2"></i>Editar
             </a>
-            <a href="{% url 'editar_vehiculo' vehiculo.id %}" class="btn btn-primary">
-              <i class="bi bi-pencil-square me-2"></i>Editar vehículo
+            <a href="{% url 'lista_vehiculos' %}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-arrow-left me-2"></i>Volver
             </a>
           </div>
         </div>
       </div>
 
-      <div class="row g-4">
-        <div class="col-lg-5">
-          <div class="card border-0 shadow-sm h-100">
-            {% if vehiculo.imagen %}
-            <img src="{{ vehiculo.imagen.url }}" class="card-img-top rounded-top" alt="{{ vehiculo.nombre }}">
-            {% else %}
-            <div class="card-img-top rounded-top bg-light d-flex align-items-center justify-content-center" style="height: 280px;">
-              <i class="bi bi-car-front text-secondary fs-1"></i>
+      {% if vehiculo.imagen %}
+      <div class="row mb-4">
+        <div class="col-12">
+          <img src="{{ vehiculo.imagen.url }}" class="img-fluid rounded shadow-sm" alt="{{ vehiculo.modelo }}" style="max-height: 400px; width: 100%; object-fit: cover;">
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="row gy-4">
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3">
+              <h6 class="mb-0 fw-bold">
+                <i class="bi bi-truck text-primary me-2"></i>Información del Vehículo
+              </h6>
             </div>
-            {% endif %}
             <div class="card-body">
-              <h5 class="fw-bold mb-2">{{ vehiculo.marca }} {{ vehiculo.modelo }} ({{ vehiculo.año }})</h5>
-              <p class="text-muted mb-3">
-                <span class="badge bg-info bg-opacity-10 text-info me-2">{{ vehiculo.get_tipo_display }}</span>
-                <span class="badge bg-success bg-opacity-10 text-success">{{ vehiculo.estado|capfirst }}</span>
-              </p>
-              <div class="row g-2">
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Código de Chasis (VIN):</div>
+                <div class="col-6">{{ vehiculo.codigo_chasis }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Kilometraje:</div>
+                <div class="col-6">{{ vehiculo.kilometraje }} km</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Color:</div>
                 <div class="col-6">
-                  <div class="bg-light rounded-3 p-3 text-center">
-                    <div class="text-muted small">Kilometraje</div>
-                    <div class="fw-bold">{{ vehiculo.kilometraje|default:'0' }} km</div>
-                  </div>
+                  {% if vehiculo.color %}
+                    <div class="d-flex align-items-center gap-2">
+                      <div style="width: 24px; height: 24px; background-color: {{ vehiculo.color }}; border-radius: 4px; border: 1px solid #ddd;"></div>
+                      <span>{{ vehiculo.color }}</span>
+                    </div>
+                  {% else %}
+                    <span>-</span>
+                  {% endif %}
                 </div>
-                <div class="col-6">
-                  <div class="bg-light rounded-3 p-3 text-center">
-                    <div class="text-muted small">Chasis (VIN)</div>
-                    <div class="fw-bold">{{ vehiculo.codigo_chasis }}</div>
-                  </div>
-                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Combustible:</div>
+                <div class="col-6">{{ vehiculo.get_combustible_display|default:'-' }}</div>
+              </div>
+              <div class="row mb-0">
+                <div class="col-6 fw-semibold text-muted">Transmisión:</div>
+                <div class="col-6">{{ vehiculo.transmision.nombre|default:'-' }}</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="col-lg-7">
-          <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-0 py-3">
-              <h6 class="mb-0 fw-bold">Especificaciones</h6>
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3">
+              <h6 class="mb-0 fw-bold">
+                <i class="bi bi-info-circle text-primary me-2"></i>Estado y Ubicación
+              </h6>
             </div>
             <div class="card-body">
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <div class="border-start border-primary border-4 ps-3">
-                    <small class="text-muted">Motorización</small>
-                    <div class="fw-semibold">{{ vehiculo.motorizacion|default:'N/A' }}</div>
-                  </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Estado:</div>
+                <div class="col-6">
+                  {% if vehiculo.estado == 'disponible' %}
+                    <span class="badge bg-success">Disponible</span>
+                  {% elif vehiculo.estado == 'vendido' %}
+                    <span class="badge bg-danger">Vendido</span>
+                  {% elif vehiculo.estado == 'mantenimiento' %}
+                    <span class="badge bg-warning text-dark">En Mantenimiento</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ vehiculo.get_estado_display }}</span>
+                  {% endif %}
                 </div>
-                <div class="col-md-6">
-                  <div class="border-start border-success border-4 ps-3">
-                    <small class="text-muted">Combustible</small>
-                    <div class="fw-semibold">{{ vehiculo.get_combustible_display }}</div>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="border-start border-info border-4 ps-3">
-                    <small class="text-muted">Transmisión</small>
-                    <div class="fw-semibold">{{ vehiculo.transmision|default:'N/A' }}</div>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="border-start border-warning border-4 ps-3">
-                    <small class="text-muted">Color</small>
-                    <div class="d-flex align-items-center gap-2">
-                      <div class="fw-semibold">{{ vehiculo.color|default:'N/A' }}</div>
-                      {% if vehiculo.color %}
-                      <div style="width: 50px; height: 50px; background-color: {{ vehiculo.color }}; border-radius: 50%; border: 1px solid #ccc;"></div>
-                      {% endif %}
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="border-start border-secondary border-4 ps-3">
-                    <small class="text-muted">Costo de Compra</small>
-                    <div class="fw-semibold">Gs. {{ vehiculo.costo_compra|floatformat:0 }}</div>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="border-start border-dark border-4 ps-3">
-                    <small class="text-muted">Precio de Venta</small>
-                    <div class="fw-semibold">Gs. {{ vehiculo.precio_venta|default:'N/A'|floatformat:0 }}</div>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <div class="border-start border-primary border-4 ps-3">
-                    <small class="text-muted">Ubicación</small>
-                    <div class="fw-semibold">{{ vehiculo.ubicacion|default:'No registrada' }}</div>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <div class="border-start border-success border-4 ps-3">
-                    <small class="text-muted">Descripción</small>
-                    <div class="text-muted small">{{ vehiculo.descripcion|default:'Sin descripción adicional.' }}</div>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <div class="bg-light rounded-3 p-3">
-                    <small class="text-muted">Fecha de Compra</small>
-                    <div class="fw-semibold">{{ vehiculo.fecha_compra|date:'d/m/Y'|default:'No disponible' }}</div>
-                  </div>
-                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Depósito:</div>
+                <div class="col-6">{{ vehiculo.ubicacion.nombre|default:'-' }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Proveedor:</div>
+                <div class="col-6">{{ vehiculo.proveedor|default:'-' }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Fecha de Ingreso:</div>
+                <div class="col-6">{{ vehiculo.fecha_ingreso|date:"d/m/Y" }}</div>
+              </div>
+              <div class="row mb-0">
+                <div class="col-6 fw-semibold text-muted">Descripción:</div>
+                <div class="col-6">{{ vehiculo.descripcion|default:'-'|truncatewords:10 }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row gy-4 mt-1">
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3 d-flex align-items-center justify-content-between">
+              <h6 class="mb-0 fw-bold">
+                <i class="bi bi-cash-coin text-primary me-2"></i>Costos
+              </h6>
+              <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarCostos">
+                <i class="bi bi-pencil me-1"></i>Editar costos
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Costo del proveedor:</div>
+                <div class="col-6">{{ vehiculo.costo_compra_provedor_total|default:'-' }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Tasa Aplicada:</div>
+                <div class="col-6">{{ vehiculo.tasa_aplicada|default:'-' }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Costo Total Importación:</div>
+                <div class="col-6 text-primary fw-bold">{{ vehiculo.costo_total_importacion|default:'-' }} USD</div>
+              </div>
+              <div class="row mb-0">
+                <div class="col-6 fw-semibold text-muted">Costo de Compra:</div>
+                <div class="col-6 text-primary fw-bold">{{ vehiculo.costo_compra|floatformat:0 }} Gs.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-3 d-flex align-items-center justify-content-between">
+              <h6 class="mb-0 fw-bold">
+                <i class="bi bi-tag text-primary me-2"></i>Precios
+              </h6>
+              <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarPrecio">
+                <i class="bi bi-pencil me-1"></i>Editar
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="row mb-0">
+                <div class="col-6 fw-semibold text-muted">Precio de Venta:</div>
+                <div class="col-6 text-success fw-bold">{{ vehiculo.precio_venta|default:'-'|floatformat:0 }} Gs.</div>
               </div>
             </div>
           </div>
@@ -130,25 +171,156 @@
   </div>
 </div>
 
-<style>
-.card {
-  border-radius: 1rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+<!-- Modal para editar costos de importación -->
+<div class="modal fade" id="modalEditarCostos" tabindex="-1" aria-labelledby="modalEditarCostosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content border-0">
+      <div class="modal-header bg-light border-0">
+        <h5 class="modal-title fw-bold" id="modalEditarCostosLabel">
+          <i class="bi bi-cash-stack text-primary me-2"></i>Editar costos de importación
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'editar_costos_vehiculo' vehiculo.id %}">
+        {% csrf_token %}
+        <div class="modal-body" style="max-height: calc(100vh - 210px); overflow-y: auto;">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo de compra del proveedor</label>
+              <input type="number" step="0.01" min="0" name="costo_compra_provedor_total" class="form-control" value="{{ vehiculo.costo_compra_provedor_total|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda del proveedor</label>
+              <select name="moneda_compra_proveedor" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if vehiculo.moneda_compra_proveedor and vehiculo.moneda_compra_proveedor.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo Flete 1</label>
+              <input type="number" step="0.01" min="0" name="costo_flete1" class="form-control" value="{{ vehiculo.costo_flete1|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda Flete 1</label>
+              <select name="moneda_flete1" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if vehiculo.moneda_flete1 and vehiculo.moneda_flete1.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo Aduana Extranjera</label>
+              <input type="number" step="0.01" min="0" name="costo_aduana_extrangera" class="form-control" value="{{ vehiculo.costo_aduana_extrangera|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda Aduana Extranjera</label>
+              <select name="moneda_aduana_extrangera" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if vehiculo.moneda_aduana_extrangera and vehiculo.moneda_aduana_extrangera.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo Extra</label>
+              <input type="number" step="0.01" min="0" name="costo_extra" class="form-control" value="{{ vehiculo.costo_extra|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda Costo Extra</label>
+              <select name="moneda_costo_extra" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if vehiculo.moneda_costo_extra and vehiculo.moneda_costo_extra.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-semibold">Descripción del costo extra</label>
+              <textarea name="descripcion_costo_extra" class="form-control" rows="2">{{ vehiculo.descripcion_costo_extra|default:'' }}</textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo Aduana Paraguaya</label>
+              <input type="number" step="0.01" min="0" name="costo_aduana_paraguaya" class="form-control" value="{{ vehiculo.costo_aduana_paraguaya|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda Aduana Paraguaya</label>
+              <select name="moneda_costo_aduana_paraguaya" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if vehiculo.moneda_costo_aduana_paraguaya and vehiculo.moneda_costo_aduana_paraguaya.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo Flete 2</label>
+              <input type="number" step="0.01" min="0" name="costo_flete2" class="form-control" value="{{ vehiculo.costo_flete2|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda Flete 2</label>
+              <select name="moneda_costo_flete2" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if vehiculo.moneda_costo_flete2 and vehiculo.moneda_costo_flete2.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-semibold">Tasa aplicada</label>
+              <input type="number" step="0.0001" min="0" name="tasa_aplicada" class="form-control" value="{{ vehiculo.tasa_aplicada|default:'' }}">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-2"></i>Guardar costos
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
-.card:hover {
-  transform: translateY(-2px);
-}
+<!-- Modal para editar precio de venta -->
+<div class="modal fade" id="modalEditarPrecio" tabindex="-1" aria-labelledby="modalEditarPrecioLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-0">
+      <div class="modal-header bg-light border-0">
+        <h5 class="modal-title fw-bold" id="modalEditarPrecioLabel">
+          <i class="bi bi-pencil-square text-primary me-2"></i>Editar Precio de Venta
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'editar_precio_vehiculo' vehiculo.id %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="precio_venta_input" class="form-label fw-semibold">Precio de Venta (Gs.)</label>
+            <input 
+              type="number" 
+              id="precio_venta_input" 
+              name="precio_venta" 
+              class="form-control form-control-lg" 
+              step="0.01" 
+              min="0" 
+              value="{{ vehiculo.precio_venta|default:'' }}" 
+              required
+            >
+            <small class="text-muted">Ingresa el precio de venta en guaraníes</small>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-2"></i>Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
-.badge {
-  font-size: 0.8rem;
-}
-
-@media (max-width: 767px) {
-  .card-img-top,
-  .bg-light.d-flex {
-    height: 220px !important;
-  }
-}
-</style>
 {% endblock %}

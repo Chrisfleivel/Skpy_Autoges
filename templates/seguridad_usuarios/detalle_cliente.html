@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle del Cliente{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+          <div>
+            <h5 class="mb-0 fw-bold">
+              {% if cliente.razon_social %}
+                {{ cliente.razon_social }}
+              {% else %}
+                {{ cliente.nombre }}
+              {% endif %}
+            </h5>
+            <p class="text-muted mb-0">Información del cliente y datos de contacto.</p>
+          </div>
+          <div class="btn-group">
+            <a href="{% url 'lista_clientes' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-2"></i>Volver
+            </a>
+            <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn-primary">
+              <i class="bi bi-pencil me-2"></i>Editar
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <small class="text-muted">Documento / RUC</small>
+            <div class="fw-semibold">{{ cliente.ruc|default:'No registrado' }}</div>
+          </div>
+          <div class="mb-3">
+            <small class="text-muted">Dirección</small>
+            <div class="fw-semibold">{{ cliente.direccion|default:'Sin direccion' }}</div>
+          </div>
+          <div class="mb-3">
+            <small class="text-muted">Teléfono</small>
+            <div class="fw-semibold">{{ cliente.telefono|default:'Sin telefono' }}</div>
+          </div>
+          <div class="mb-3">
+            <small class="text-muted">Email</small>
+            <div class="fw-semibold">{{ cliente.email|default:'Sin email' }}</div>
+          </div>
+          <div class="mb-3">
+            <small class="text-muted">Compras realizadas</small>
+            <div class="fw-semibold">{{ cliente.compras_realizadas|default:0 }}</div>
+          </div>
+          <div class="mb-3">
+            <small class="text-muted">Total gastado</small>
+            <div class="fw-semibold">{{ cliente.total_gastado|default:'0.00' }}</div>
+          </div>
+          <div class="mt-3">
+            {% if cliente.estado %}
+              <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Activo</span>
+            {% else %}
+              <span class="badge bg-secondary"><i class="bi bi-x-circle-fill me-1"></i>Inactivo</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -7,15 +7,53 @@
         <div class="col-md-6 text-center text-md-start">
             <img src="{% static 'img/skpy_logo.png' %}" alt="SKPY Logo" width="120" class="mb-4">
             <h1 class="display-4 fw-bold mb-3" style="color:#0d6efd;">Bienvenido a SKPY AutoGest</h1>
-            
-            
-            <a href="{% url 'login' %}" class="btn btn-primary btn-lg me-2">Iniciar sesión</a>
-            
+
+            {% if user.is_authenticated %}
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <a href="{% url 'lista_importaciones' %}" class="btn btn-primary btn-lg">Importaciones</a>
+                    <a href="{% url 'lista_embarques' %}" class="btn btn-outline-primary btn-lg">Embarques</a>
+                </div>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-primary btn-lg me-2">Iniciar sesión</a>
+            {% endif %}
         </div>
         <div class="col-md-6 text-center">
             <img src="{% static 'img/vehiculos_banner.jpg' %}" alt="Vehículos SKPY" class="img-fluid rounded shadow" style="max-height: 350px;">
         </div>
     </div>
+
+    {% if user.is_authenticated %}
+    <div class="row mt-5 g-3">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Importaciones</h5>
+                    <p class="card-text text-muted">Control de cargas, proveedores, aduanas y seguimiento del proceso.</p>
+                    <a href="{% url 'lista_importaciones' %}" class="btn btn-sm btn-primary">Abrir</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Embarques</h5>
+                    <p class="card-text text-muted">Crear embarques, verificar VIN, asociar gastos y prorratear costos.</p>
+                    <a href="{% url 'lista_embarques' %}" class="btn btn-sm btn-primary">Abrir</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Resumen operativo</h5>
+                    <p class="card-text text-muted">Revisión rápida del estado de cada embarque y del costo total asociado.</p>
+                    <a href="{% url 'lista_embarques' %}" class="btn btn-sm btn-primary">Ver embarques</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="row mt-5">
         <div class="col text-center">
             <h3 class="fw-bold mb-3" style="color:#198754;">Transformando la gestión de la movilidad en Paraguay</h3>

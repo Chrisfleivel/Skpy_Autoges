@@ -1,14 +1,22 @@
 # seguridad_usuarios/views.py
 
-from django.shortcuts import render, get_object_or_404, redirect, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from .models import Rol, Permiso, Auditoria, Empleado, UsuarioPerfil
-from .forms import UserRegisterForm, PermisoForm, RolForm, PermisoForm, PasswordChangeForm, EmpleadoForm, PerfilUsuarioForm
+from django.http import HttpResponse
+import csv
+from datetime import datetime
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from .forms import UserRegisterForm, PermisoForm, RolForm, PasswordChangeForm, EmpleadoForm, PerfilUsuarioForm, ContactoEmpleadoFormSet
 # User
 from django.contrib.auth.models import User, Group, Permission, PermissionManager
 from .decorators import revisar_permiso
 
 from django.contrib.auth import authenticate, login, logout
+from django.utils.crypto import get_random_string
+from django.db import transaction
 from django.contrib import messages
 import logging
 import json
@@ -31,7 +39,7 @@ logger = logging.getLogger(__name__)
 # Vistas para la gestión de Usuarios
 # --------------------------------------------------------------------------
 
-@login_required
+@revisar_permiso('seguridad_usuarios.listar_usuarios')
 def lista_usuarios(request):
     """
     Vista que muestra una lista de todos los usuarios registrados en el sistema.
@@ -40,7 +48,7 @@ def lista_usuarios(request):
     usuarios = User.objects.all()  # Usar el modelo estándar User
     return render(request, 'seguridad_usuarios/lista_usuarios.html', {'usuarios': usuarios}) # Renderiza la plantilla HTML con la lista de usuarios
 
-@login_required
+@revisar_permiso('seguridad_usuarios.crear_usuario')
 def crear_usuario(request):
     """
     Vista para crear un nuevo usuario.
@@ -245,51 +253,231 @@ def lista_empleados(request):
     """
     Vista optimizada para listar empleados con filtros dinámicos.
     """
-    # 1. Empezamos con el QuerySet base
-    empleados = Empleado.objects.all()
+    empleados = Empleado.objects.select_related('departamento', 'cargo').all()
 
-    # 2. Capturamos los parámetros de búsqueda
     nombre = request.GET.get('nombre', '').strip()
     apellido = request.GET.get('apellido', '').strip()
-    departamento = request.GET.get('departamento', '').strip()
+    documento = request.GET.get('documento', '').strip()
+    fecha_desde = request.GET.get('fecha_desde', '').strip()
+    fecha_hasta = request.GET.get('fecha_hasta', '').strip()
+    busqueda = request.GET.get('busqueda', '').strip()
+    departamento_valor = (request.GET.get('departamento_id', '').strip() or request.GET.get('departamento', '').strip())
+    cargo_valor = (request.GET.get('cargo_id', '').strip() or request.GET.get('cargo', '').strip())
     email = request.GET.get('email', '').strip()
     estado = request.GET.get('estado', '')
     tiene_usuario = request.GET.get('usuario', '')
 
-    # 3. Aplicamos filtros de texto (solo si tienen contenido)
     if nombre:
         empleados = empleados.filter(nombre__icontains=nombre)
     if apellido:
         empleados = empleados.filter(apellidos__icontains=apellido)
-    # departamento es ahora una FK; filtramos por el nombre del departamento
-    if departamento:
-        empleados = empleados.filter(departamento__nombre__icontains=departamento)
+    if documento:
+        empleados = empleados.filter(documento_identidad__icontains=documento)
+    # Filtrado por rango de fecha de contratación
+    if fecha_desde:
+        try:
+            ddesde = datetime.fromisoformat(fecha_desde).date()
+            empleados = empleados.filter(fecha_contratacion__gte=ddesde)
+        except Exception:
+            pass
+    if fecha_hasta:
+        try:
+            dhasta = datetime.fromisoformat(fecha_hasta).date()
+            empleados = empleados.filter(fecha_contratacion__lte=dhasta)
+        except Exception:
+            pass
+    if busqueda:
+        empleados = empleados.filter(
+            Q(nombre__icontains=busqueda) |
+            Q(apellidos__icontains=busqueda) |
+            Q(documento_identidad__icontains=busqueda) |
+            Q(ruc__icontains=busqueda) |
+            Q(email__icontains=busqueda) |
+            Q(telefono__icontains=busqueda)
+        )
+    if departamento_valor:
+        if departamento_valor.isdigit():
+            empleados = empleados.filter(departamento_id=departamento_valor)
+        else:
+            empleados = empleados.filter(departamento__nombre__icontains=departamento_valor)
+    if cargo_valor:
+        if cargo_valor.isdigit():
+            empleados = empleados.filter(cargo_id=cargo_valor)
+        else:
+            empleados = empleados.filter(cargo__nombre__icontains=cargo_valor)
     if email:
         empleados = empleados.filter(email__icontains=email)
 
-    # 4. Filtro por Estado
     if estado == 'ACTIVO':
         empleados = empleados.filter(estado=True)
     elif estado == 'INACTIVO':
         empleados = empleados.filter(estado=False)
 
-    # 5. Filtro por "Tiene Usuario"
     if tiene_usuario == 'SI':
         empleados = empleados.filter(tiene_usuario=True)
     elif tiene_usuario == 'NO':
         empleados = empleados.filter(tiene_usuario=False)
 
-    # 6. Retornamos el contexto
+    from configuraciones_maestras.models import Cargo, Departamento
+    departamentos = Departamento.objects.filter(estado=True).order_by('nombre')
+    cargos = Cargo.objects.filter(estado=True).order_by('nombre')
+
     context = {
         'empleados': empleados,
         'nombre': nombre,
         'apellido': apellido,
-        'departamento': departamento,
+        'documento': documento,
+        'busqueda': busqueda,
+        'departamento': departamento_valor,
+        'cargo': cargo_valor,
         'email': email,
         'estado': estado,
         'tiene_usuario': tiene_usuario,
-    } 
+        'departamentos': departamentos,
+        'cargos': cargos,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+    }
     return render(request, 'seguridad_usuarios/lista_empleados.html', context)
+
+
+@revisar_permiso('seguridad_usuarios.detallar_empleado')
+def reporte_empleados(request):
+    """Exporta un CSV con los empleados resultantes de los filtros GET."""
+    empleados = Empleado.objects.select_related('departamento', 'cargo').all()
+
+    # Reutilizar parámetros de filtrado (parciales de lista_empleados)
+    busqueda = request.GET.get('busqueda', '').strip()
+    documento = request.GET.get('documento', '').strip()
+    departamento_valor = (request.GET.get('departamento_id', '').strip() or request.GET.get('departamento', '').strip())
+    cargo_valor = (request.GET.get('cargo_id', '').strip() or request.GET.get('cargo', '').strip())
+    fecha_desde = request.GET.get('fecha_desde', '').strip()
+    fecha_hasta = request.GET.get('fecha_hasta', '').strip()
+    tiene_usuario = request.GET.get('usuario', '')
+
+    if documento:
+        empleados = empleados.filter(documento_identidad__icontains=documento)
+    if busqueda:
+        empleados = empleados.filter(
+            Q(nombre__icontains=busqueda) |
+            Q(apellidos__icontains=busqueda) |
+            Q(documento_identidad__icontains=busqueda) |
+            Q(ruc__icontains=busqueda) |
+            Q(email__icontains=busqueda) |
+            Q(telefono__icontains=busqueda)
+        )
+    if departamento_valor:
+        if departamento_valor.isdigit():
+            empleados = empleados.filter(departamento_id=departamento_valor)
+        else:
+            empleados = empleados.filter(departamento__nombre__icontains=departamento_valor)
+    if cargo_valor:
+        if cargo_valor.isdigit():
+            empleados = empleados.filter(cargo_id=cargo_valor)
+        else:
+            empleados = empleados.filter(cargo__nombre__icontains=cargo_valor)
+
+        if fecha_desde:
+            try:
+                ddesde = datetime.fromisoformat(fecha_desde).date()
+                empleados = empleados.filter(fecha_contratacion__gte=ddesde)
+            except Exception:
+                pass
+        if fecha_hasta:
+            try:
+                dhasta = datetime.fromisoformat(fecha_hasta).date()
+                empleados = empleados.filter(fecha_contratacion__lte=dhasta)
+            except Exception:
+                pass
+
+    if tiene_usuario == 'SI':
+        empleados = empleados.filter(tiene_usuario=True)
+    elif tiene_usuario == 'NO':
+        empleados = empleados.filter(tiene_usuario=False)
+
+    # Construir CSV
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="reporte_empleados.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['ID', 'Nombre', 'Apellidos', 'Documento', 'RUC', 'Email', 'Teléfono', 'Dirección', 'Departamento', 'Cargo', 'Tiene Usuario', 'Estado'])
+
+    for e in empleados:
+        writer.writerow([
+            e.id,
+            e.nombre or '',
+            e.apellidos or '',
+            e.documento_identidad or '',
+            e.ruc or '',
+            e.email or '',
+            e.obtener_telefono() or '',
+            e.obtener_direccion() or '',
+            e.departamento.nombre if e.departamento else '',
+            e.cargo.nombre if e.cargo else '',
+            'SI' if e.tiene_usuario else 'NO',
+            'ACTIVO' if e.estado else 'INACTIVO',
+        ])
+
+    return response
+
+
+@revisar_permiso('seguridad_usuarios.detallar_empleado')
+def reporte_empleados_pdf(request):
+    """Genera un PDF con los empleados resultantes de los filtros GET."""
+    empleados = Empleado.objects.select_related('departamento', 'cargo').all()
+
+    # aplicar mismos filtros que en reporte_empleados (simplificado)
+    busqueda = request.GET.get('busqueda', '').strip()
+    documento = request.GET.get('documento', '').strip()
+    departamento_valor = (request.GET.get('departamento_id', '').strip() or request.GET.get('departamento', '').strip())
+    cargo_valor = (request.GET.get('cargo_id', '').strip() or request.GET.get('cargo', '').strip())
+    fecha_desde = request.GET.get('fecha_desde', '').strip()
+    fecha_hasta = request.GET.get('fecha_hasta', '').strip()
+
+    if documento:
+        empleados = empleados.filter(documento_identidad__icontains=documento)
+    if busqueda:
+        empleados = empleados.filter(
+            Q(nombre__icontains=busqueda) |
+            Q(apellidos__icontains=busqueda) |
+            Q(documento_identidad__icontains=busqueda) |
+            Q(ruc__icontains=busqueda) |
+            Q(email__icontains=busqueda) |
+            Q(telefono__icontains=busqueda)
+        )
+    if departamento_valor:
+        if departamento_valor.isdigit():
+            empleados = empleados.filter(departamento_id=departamento_valor)
+        else:
+            empleados = empleados.filter(departamento__nombre__icontains=departamento_valor)
+    if cargo_valor:
+        if cargo_valor.isdigit():
+            empleados = empleados.filter(cargo_id=cargo_valor)
+        else:
+            empleados = empleados.filter(cargo__nombre__icontains=cargo_valor)
+
+    if fecha_desde:
+        try:
+            ddesde = datetime.fromisoformat(fecha_desde).date()
+            empleados = empleados.filter(fecha_contratacion__gte=ddesde)
+        except Exception:
+            pass
+    if fecha_hasta:
+        try:
+            dhasta = datetime.fromisoformat(fecha_hasta).date()
+            empleados = empleados.filter(fecha_contratacion__lte=dhasta)
+        except Exception:
+            pass
+
+    # renderear plantilla a HTML
+    html = render_to_string('seguridad_usuarios/reporte_empleados_pdf.html', {'empleados': empleados, 'filtros': request.GET})
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="reporte_empleados.pdf"'
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('Error generando PDF', status=500)
+    return response
 
 
 @revisar_permiso('seguridad_usuarios.agregar_empleado')
@@ -298,16 +486,27 @@ def agregar_empleado(request):
     Vista para agregar un nuevo empleado.
     redirige al detalle del empleado al crearlo.
     """
+    empleado = Empleado()
     try:
         if request.method == 'POST':
             form = EmpleadoForm(request.POST)
-            if form.is_valid():
-                empleado = form.save()  
+            contact_formset = ContactoEmpleadoFormSet(request.POST, instance=empleado)
+            if form.is_valid() and contact_formset.is_valid():
+                empleado = form.save(commit=False)
+                empleado.fecha_contratacion = str(datetime.now().date())  # Asignar la fecha actual como fecha de contratación
+                empleado.save()
+                contactos = contact_formset.save(commit=False)
+                for contacto in contactos:
+                    contacto.empleado = empleado
+                    contacto.save()
+                for contacto in contact_formset.deleted_objects:
+                    contacto.delete()
                 messages.success(request, 'Empleado agregado correctamente.')
                 return redirect('detalle_empleado', pk=empleado.id)
         else:
             form = EmpleadoForm()
-        return render(request, 'seguridad_usuarios/agregar_empleado.html', {'form': form})
+            contact_formset = ContactoEmpleadoFormSet(instance=empleado)
+        return render(request, 'seguridad_usuarios/agregar_empleado.html', {'form': form, 'contact_formset': contact_formset})
     except Exception as e:
         logger.error(f"Error al agregar empleado: {e}")
         messages.error(request, "Ocurrió un error al agregar el empleado.")
@@ -322,13 +521,21 @@ def editar_empleado(request, pk):
         empleado = get_object_or_404(Empleado, id=pk)
         if request.method == 'POST':
             form = EmpleadoForm(request.POST, instance=empleado)
-            if form.is_valid():
+            contact_formset = ContactoEmpleadoFormSet(request.POST, instance=empleado)
+            if form.is_valid() and contact_formset.is_valid():
                 form.save()
+                contactos = contact_formset.save(commit=False)
+                for contacto in contactos:
+                    contacto.empleado = empleado
+                    contacto.save()
+                for contacto in contact_formset.deleted_objects:
+                    contacto.delete()
                 messages.success(request, 'Empleado editado correctamente.')
-                return redirect('lista_empleados')
+                return redirect('detalle_empleado', pk=empleado.id)
         else:
             form = EmpleadoForm(instance=empleado)
-        return render(request, 'seguridad_usuarios/editar_empleado.html', {'form': form})
+            contact_formset = ContactoEmpleadoFormSet(instance=empleado)
+        return render(request, 'seguridad_usuarios/editar_empleado.html', {'form': form, 'contact_formset': contact_formset, 'empleado': empleado})
     except Exception as e:
         logger.error(f"Error al editar empleado: {e}")
         messages.error(request, "Ocurrió un error al editar el empleado.")
@@ -359,19 +566,20 @@ def detalle_empleado(request, pk):
     """
     try:
         empleado = get_object_or_404(Empleado, pk=pk)
-        return render(request, 'seguridad_usuarios/detalle_empleado.html', {'empleado': empleado})
+        contactos = empleado.contactos.all()
+        return render(request, 'seguridad_usuarios/detalle_empleado.html', {'empleado': empleado, 'contactos': contactos})
     except Exception as e:
         logger.error(f"Error al ver detalles del empleado con PK {pk}: {e}")
         messages.error(request, "Ocurrió un error al cargar los detalles del empleado.")
         return redirect('lista_empleados')
 
 @revisar_permiso('seguridad_usuarios.desactivar_empleado')
-def desactivar_empleado(request, empleado_id):
+def desactivar_empleado(request, pk):
     """
     Vista para inactivar un empleado existente.
     """
     try:
-        empleado = get_object_or_404(Empleado, id=empleado_id)
+        empleado = get_object_or_404(Empleado, pk=pk)
         if request.method == 'POST':
             empleado.estado = False
             empleado.save()
@@ -384,12 +592,12 @@ def desactivar_empleado(request, empleado_id):
         return redirect('lista_empleados')
 
 @revisar_permiso('seguridad_usuarios.activar_empleado')
-def activar_empleado(request, empleado_id):
+def activar_empleado(request, pk):
     """
     Vista para activar un empleado existente.
     """
     try:
-        empleado = get_object_or_404(Empleado, id=empleado_id)
+        empleado = get_object_or_404(Empleado, pk=pk)
         if request.method == 'POST':
             empleado.estado = True
             empleado.save()
@@ -734,24 +942,47 @@ def crear_usuario_para_empleado(request, empleado_id):
                 username = empleado.email
                 nombre = empleado.nombre
                 apellidos = empleado.apellidos
-                password = User.objects.make_random_password()  # Genera una contraseña aleatoria
-                usuario = User.objects.create_user(
-                    username=username,
-                    email=empleado.email,
-                    password=password,
-                    first_name=nombre,
-                    last_name=apellidos
-                )
-                perfil_usuario = form.save(commit=False)
-                perfil_usuario.empleado = empleado
-                perfil_usuario.user = usuario
-                perfil_usuario.Contrasena_temporal = password
-                perfil_usuario.save()
-                # Guardar los roles seleccionados
-                perfil_usuario.roles.set(form.cleaned_data['roles'])
-                # Marcar que el empleado tiene un usuario asociado
-                empleado.tiene_usuario = True
-                empleado.save()
+                # get_random_string reemplaza a make_random_password, eliminado en Django >= 5.1
+                password = get_random_string(length=12)  # Genera una contraseña aleatoria
+                with transaction.atomic():
+                    # El email se usa como username: si ya existe un usuario con ese email
+                    # (por ejemplo, de un intento anterior interrumpido), se reutiliza en
+                    # lugar de fallar por el UNIQUE de auth_user.username.
+                    usuario = User.objects.filter(username=username).first()
+                    if usuario is None:
+                        usuario = User.objects.create_user(
+                            username=username,
+                            email=empleado.email,
+                            password=password,
+                            first_name=nombre,
+                            last_name=apellidos
+                        )
+                    else:
+                        # Se actualiza la contraseña con la nueva temporal y los datos personales
+                        usuario.set_password(password)
+                        usuario.first_name = nombre
+                        usuario.last_name = apellidos
+                        usuario.save()
+                    # El signal post_save de User ya crea un UsuarioPerfil vacío; se reutiliza
+                    # ese perfil en lugar de insertar otro (evita UNIQUE en user OneToOne).
+                    perfil_usuario = getattr(usuario, 'perfil', None)
+                    if perfil_usuario is None:
+                        perfil_usuario = UsuarioPerfil.objects.create(user=usuario)
+                    if perfil_usuario.empleado_id and perfil_usuario.empleado_id != empleado.id:
+                        messages.error(request, 'Ya existe un usuario con ese email asociado a otro empleado.')
+                        return redirect('detalle_empleado', pk=empleado.id)
+                    perfil_usuario.empleado = empleado
+                    perfil_usuario.Contrasena_temporal = password
+                    tema = form.cleaned_data.get('tema')
+                    if tema:
+                        perfil_usuario.tema = tema
+                    foto = form.cleaned_data.get('foto_perfil')
+                    if foto:
+                        perfil_usuario.foto_perfil = foto
+                    perfil_usuario.save()
+                    # Marcar que el empleado tiene un usuario asociado
+                    empleado.tiene_usuario = True
+                    empleado.save()
                 messages.success(request, 'Usuario y perfil creados correctamente para el empleado.')
                 return redirect('detalle_empleado', pk=empleado.id)
         else:
@@ -865,19 +1096,58 @@ def lista_grupos(request):
     return render(request, 'seguridad_usuarios/lista_grupos.html', {'grupos': grupos})
 
 
-
-
 def obtener_cargos(request):
     from configuraciones_maestras.models import Cargo
     departamento_id = request.GET.get('departamento_id')
     cargos = Cargo.objects.filter(departamento_id=departamento_id).values('id', 'nombre')
     return JsonResponse(list(cargos), safe=False)
 
+
+@revisar_permiso('seguridad_usuarios.editar_perfil')
+def editar_perfil_usuario(request, empleado_id):
+    """
+    Vista para editar el perfil de un usuario, incluyendo la foto de perfil.
+    """
+    try:
+        empleado = get_object_or_404(Empleado, id=empleado_id)
+        usuario_perfil = getattr(empleado, 'usuario_perfil', None)
+
+        if not usuario_perfil:
+            messages.warning(request, 'Este empleado no tiene un perfil de usuario asociado.')
+            return redirect('perfil_usuario', empleado_id=empleado_id)
+
+        if request.method == 'POST':
+            form = PerfilUsuarioForm(request.POST, request.FILES, instance=usuario_perfil)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Perfil de usuario actualizado correctamente.')
+                return redirect('perfil_usuario', empleado_id=empleado_id)
+        else:
+            form = PerfilUsuarioForm(instance=usuario_perfil)
+
+        return render(request, 'seguridad_usuarios/editar_perfil_usuario.html', {
+            'form': form,
+            'empleado': empleado,
+            'usuario_perfil': usuario_perfil
+        })
+    except Exception as e:
+        logger.error(f"Error al editar perfil de usuario con ID {empleado_id}: {e}")
+        messages.error(request, "Ocurrió un error al editar el perfil del usuario.")
+        return redirect('perfil_usuario', empleado_id=empleado_id)
+
+
+
 permisos_iniciales_seguridad_usuarios = [
         {
             'codename': 'seguridad_usuarios.registrar_usuario',
             'nombre': 'Registrar usuario',
             'descripcion': 'Registrar nuevos usuarios en el sistema.',
+            'sector': 'Seguridad y Usuarios'
+        },
+        {
+            'codename': 'seguridad_usuarios.editar_perfil',
+            'nombre': 'Editar perfil',
+            'descripcion': 'Editar el perfil de usuario.',
             'sector': 'Seguridad y Usuarios'
         },
         {
@@ -1024,38 +1294,12 @@ permisos_iniciales_seguridad_usuarios = [
             'descripcion': 'Permite crear un usuario y perfil para un empleado.',
             'sector': 'Seguridad y Usuarios'
         },
+        {
+            'codename': 'seguridad_usuarios.crear_usuario',
+            'nombre': 'Crear usuario',
+            'descripcion': 'Permite crear nuevos usuarios.',
+            'sector': 'Seguridad y Usuarios'
+        }
     ]
 
-@revisar_permiso('seguridad_usuarios.editar_perfil')
-def editar_perfil_usuario(request, empleado_id):
-    """
-    Vista para editar el perfil de un usuario, incluyendo la foto de perfil.
-    """
-    try:
-        empleado = get_object_or_404(Empleado, id=empleado_id)
-        usuario_perfil = getattr(empleado, 'usuario_perfil', None)
-
-        if not usuario_perfil:
-            messages.warning(request, 'Este empleado no tiene un perfil de usuario asociado.')
-            return redirect('perfil_usuario', empleado_id=empleado_id)
-
-        if request.method == 'POST':
-            form = PerfilUsuarioForm(request.POST, request.FILES, instance=usuario_perfil)
-            if form.is_valid():
-                perfil = form.save()
-                # Guardar los roles seleccionados
-                perfil.roles.set(form.cleaned_data['roles'])
-                messages.success(request, 'Perfil de usuario actualizado correctamente.')
-                return redirect('perfil_usuario', empleado_id=empleado_id)
-        else:
-            form = PerfilUsuarioForm(instance=usuario_perfil)
-
-        return render(request, 'seguridad_usuarios/editar_perfil_usuario.html', {
-            'form': form,
-            'empleado': empleado,
-            'usuario_perfil': usuario_perfil
-        })
-    except Exception as e:
-        logger.error(f"Error al editar perfil de usuario con ID {empleado_id}: {e}")
-        messages.error(request, "Ocurrió un error al editar el perfil del usuario.")
-        return redirect('perfil_usuario', empleado_id=empleado_id)
+    

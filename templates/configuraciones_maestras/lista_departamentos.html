@@ -11,14 +11,14 @@
           <i class="bi bi-building fs-2 text-primary"></i>
         </div>
         <div>
-          <h1 class="h4 fw-bold mb-1">Departamentos</h1>
+          <h1 class="h4 fw-bold mb-1">Dependencias</h1>
           <p class="text-muted mb-0">Administra las dependencias internas de la empresa.</p>
         </div>
       </div>
     </div>
     <div class="col-md-4 text-md-end mt-3 mt-md-0">
       <a href="{% url 'agregar_departamento' %}" class="btn btn-primary shadow-sm">
-        <i class="bi bi-plus-circle-fill me-2"></i>Nuevo departamento
+        <i class="bi bi-plus-circle-fill me-2"></i>Nueva Dependencia
       </a>
     </div>
   </div>
@@ -59,22 +59,22 @@
                 {% endif %}
               </td>
               <td class="text-end">
-                <a href="{% url 'detalle_departamento' departamento.id %}" class="btn btn-sm btn-outline-primary me-1">
+                <a href="{% url 'detalle_departamento' departamento.id %}" class="btn btn-sm btn-outline-primary me-1" title="Ver detalles">
                   <i class="bi bi-eye"></i>
                 </a>
-                <a href="{% url 'editar_departamento' departamento.id %}" class="btn btn-sm btn-outline-secondary me-1">
+                <a href="{% url 'editar_departamento' departamento.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Editar">
                   <i class="bi bi-pencil"></i>
                 </a>
                 {% if departamento.estado %}
-                <a href="{% url 'inactivar_departamento' departamento.id %}" class="btn btn-sm btn-outline-warning me-1">
+                <a href="{% url 'inactivar_departamento' departamento.id %}" class="btn btn-sm btn-outline-warning me-1" title="Inactivar">
                   <i class="bi bi-slash-circle"></i>
                 </a>
                 {% else %}
-                <a href="{% url 'activar_departamento' departamento.id %}" class="btn btn-sm btn-outline-success me-1">
+                <a href="{% url 'activar_departamento' departamento.id %}" class="btn btn-sm btn-outline-success me-1" title="Activar">
                   <i class="bi bi-check-circle"></i>
                 </a>
                 {% endif %}
-                <a href="{% url 'eliminar_departamento' departamento.id %}" class="btn btn-sm btn-outline-danger">
+                <a href="{% url 'eliminar_departamento' departamento.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
                   <i class="bi bi-trash"></i>
                 </a>
               </td>

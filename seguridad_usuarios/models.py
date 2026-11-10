@@ -146,7 +146,38 @@ class Persona(models.Model):
         self.estado = True
         self.fecha_baja = None
         self.save()
+    
+    def guardar_nombre_camel_case(self):
+        if self.nombre:
+            self.nombre = self.nombre.title()
+        if self.apellidos:
+            self.apellidos = self.apellidos.title()
+        if self.razon_social:
+            self.razon_social = self.razon_social.title()
 
+    def guardar_email_minusculas(self):
+        if self.email:
+            self.email = self.email.lower()
+    
+    def guardar_direccion_minusculas(self):
+        if self.direccion:
+            self.direccion = self.direccion.lower()
+           
+    def guardar_ruc_sin_espacios(self):
+        if self.ruc:
+            self.ruc = self.ruc.replace(" ", "")
+    
+    def guardar_telefono_sin_espacios(self):
+        if self.telefono:
+            self.telefono = self.telefono.replace(" ", "")
+    
+    def guardar_persona(self):
+        self.guardar_nombre_camel_case()
+        self.guardar_email_minusculas()
+        self.guardar_direccion_minusculas()
+        self.guardar_ruc_sin_espacios()
+        self.guardar_telefono_sin_espacios()
+    
     class Meta:
         abstract = True
     
@@ -167,10 +198,133 @@ class Empleado(Persona):
         verbose_name_plural = "Empleados"
         ordering = ['nombre']
 
+    def obtener_contacto_principal(self):
+        contacto_principal = self.contactos.filter(es_principal=True).first()
+        if contacto_principal:
+            return contacto_principal
+        return None
+    
+    def obtener_contactos_por_categoria(self, categoria):
+        return self.contactos.filter(categoria=categoria)
+    
+    def obtener_contactos_profesionales(self):
+        return self.contactos.filter(categoria='PROFESIONAL')
+    
+    def obtener_contactos_personales(self):
+        return self.contactos.filter(categoria='PERSONAL')
+    
+    def tiene_contacto_principal(self):
+        return self.contactos.filter(es_principal=True).exists()
+    
+    def tiene_contactos_profesionales(self):
+        return self.contactos.filter(categoria='PROFESIONAL').exists()
+    
+    def tiene_contactos_personales(self):
+        return self.contactos.filter(categoria='PERSONAL').exists()
+    
+    def obtener_contacto(self):
+        """
+        Devuelve el contacto principal del empleado si existe, 
+        de lo contrario verifica si hay contactos profesionales o personales y devuelve el primero que encuentre. 
+        """
+        contacto_principal = self.obtener_contacto_principal()
+        if contacto_principal:
+            return contacto_principal
+        
+        contactos_profesionales = self.obtener_contactos_profesionales()
+        if contactos_profesionales.exists():
+            return contactos_profesionales.first()
+        
+        contactos_personales = self.obtener_contactos_personales()
+        if contactos_personales.exists():
+            return contactos_personales.first()
+        
+        return None
+    
+    def obtener_telefono(self):
+        contacto = self.obtener_contacto()
+        if contacto:
+            return contacto.telefono
+        return None
+    
+    def obtener_direccion(self):
+        contacto = self.obtener_contacto()
+        if contacto:
+            return contacto.direccion
+        return None
+    
+    def obtener_email(self):
+        contacto = self.obtener_contacto()
+        if contacto:
+            return contacto.email
+        return None
+    
+    def obtener_nombre_completo(self):
+        nombre = self.nombre or ""
+        apellidos = self.apellidos or ""
+        return f"{nombre} {apellidos}".strip()
+    
+    def obtener_nombre_o_razon_social(self):
+        if self.tipo_persona == 'FISICA':
+            return self.obtener_nombre_completo()
+        elif self.tipo_persona == 'JURIDICA':
+            return self.razon_social or ""
+        return ""
+    
     def __str__(self):
         nombre = self.nombre or ""
         apellidos = self.apellidos or ""
         return f"{nombre} {apellidos}".strip() or f"Empleado #{self.id}"
+    
+    def save(self, *args, **kwargs):
+        # Guardar la persona antes de guardar el empleado
+        self.guardar_persona()
+
+        old_cargo_id = None
+        if self.pk:
+            old = Empleado.objects.filter(pk=self.pk).only('cargo_id').first()
+            old_cargo_id = old.cargo_id if old else None
+
+        super().save(*args, **kwargs)
+
+        try:
+            from configuraciones_maestras.models import CargoEmpleadoHistorial
+        except ImportError:
+            CargoEmpleadoHistorial = None
+
+        if CargoEmpleadoHistorial is not None:
+            new_cargo_id = self.cargo_id
+            if new_cargo_id and new_cargo_id != old_cargo_id:
+                CargoEmpleadoHistorial.objects.get_or_create(
+                    cargo_id=new_cargo_id,
+                    empleado=self,
+                )
+            if old_cargo_id and old_cargo_id != new_cargo_id:
+                CargoEmpleadoHistorial.objects.get_or_create(
+                    cargo_id=old_cargo_id,
+                    empleado=self,
+                )
+        
+
+
+class ContactoEmpleado(Persona):
+    CATEGORIA_CHOICES = [
+        ('PERSONAL', 'Personal'),
+        ('PROFESIONAL', 'Profesional'),
+    ]
+
+    empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='contactos')
+    categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES, default='PERSONAL', verbose_name='Categoría')
+    es_principal = models.BooleanField(default=False, verbose_name='Es Principal')
+
+    class Meta:
+        verbose_name = "Contacto de Empleado"
+        verbose_name_plural = "Contactos de Empleados"
+
+    def __str__(self):
+        nombre = self.nombre or ''
+        apellidos = self.apellidos or ''
+        return f"{self.get_categoria_display()} - {nombre} {apellidos}".strip()
 
 
 class UsuarioPerfil(models.Model):
@@ -199,9 +353,14 @@ class UsuarioPerfil(models.Model):
     foto_perfil = models.ImageField(upload_to='fotos_perfil/', blank=True, null=True, verbose_name="Foto de Perfil")
     Contrasena_temporal = models.CharField(max_length=255, blank=True, null=True, verbose_name="Contraseña Temporal")
 
+    def roles_asignados(self):
+        if self.empleado and getattr(self.empleado, 'cargo_id', None):
+            return self.empleado.cargo.roles.all()
+        return self.roles.none()
+
     def permisos_asignados(self):
         permisos = set()
-        for rol in self.roles.all():
+        for rol in self.roles_asignados():
             permisos.update(rol.permisos.values_list('codename', flat=True))
         return permisos
     

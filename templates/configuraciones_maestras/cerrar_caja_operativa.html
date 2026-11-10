@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Cerrar Caja{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Cerrar Caja: {{ caja.nombre }} ({{ sucursal.nombre }})</h4>
+                </div>
+                <div class="card-body">
+                    <p><strong>Monto esperado (saldo actual):</strong> Gs. {{ monto_esperado }}</p>
+                    <p>Se registrará el arqueo con la diferencia entre el monto contado y el esperado.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                            <div class="text-danger small">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'lista_cajas' sucursal.pk %}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-danger">Cerrar Caja</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

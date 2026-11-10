@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Empresas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-1">Empresa</h2>
+            <p class="text-muted mb-0">Administración de la información corporativa de SKPY.</p>
+        </div>
+        <a href="{% url 'agregar_empresa' %}" class="btn btn-primary">Nueva Empresa</a>
+    </div>
+
+    {% if empresas %}
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Dirección</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for empresa in empresas %}
+                <tr>
+                    <td>{{ empresa.nombre }}</td>
+                    <td>{{ empresa.telefono|default:'-' }}</td>
+                    <td>{{ empresa.email|default:'-' }}</td>
+                    <td>{{ empresa.direccion|default:'-' }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'detalle_empresa' empresa.pk %}" class="btn btn-outline-info">Ver</a>
+                            <a href="{% url 'editar_empresa' empresa.pk %}" class="btn btn-outline-secondary">Editar</a>
+                            <a href="{% url 'eliminar_empresa' empresa.pk %}" class="btn btn-outline-danger">Eliminar</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">No hay empresas registradas todavía.</div>
+    {% endif %}
+</div>
+{% endblock %}

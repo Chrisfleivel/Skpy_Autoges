@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Fases de Importación - {{ importacion.codigo_seguimiento }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Fases de Importación</h2>
+            <p class="text-muted">Importación: <strong>{{ importacion.codigo_seguimiento }}</strong></p>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if perms.importaciones.editar_importacion %}
+                <a href="{% url 'crear_fase_importacion' importacion.id %}" class="btn btn-primary">
+                    <i class="bi bi-plus"></i> Nueva Fase
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if fases %}
+        <div class="row">
+            {% for fase in fases %}
+                <div class="col-md-6 mb-3">
+                    <div class="card {% if fase.estado_completado %}border-success{% else %}border-warning{% endif %}">
+                        <div class="card-header {% if fase.estado_completado %}bg-success{% else %}bg-warning{% endif %} text-white">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="mb-0">{{ fase.get_fase_display }}</h5>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    {% if fase.estado_completado %}
+                                        <span class="badge bg-light text-success">✓ Completado</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-warning">En Progreso</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if fase.descripcion %}
+                                <p class="card-text small text-muted">{{ fase.descripcion }}</p>
+                            {% endif %}
+
+                            <div class="mb-3">
+                                <strong>Documentos:</strong>
+                                <span class="badge bg-info">{{ fase.documentos.count }}</span>
+                            </div>
+
+                            <div class="mb-3">
+                                {% if fase.documentos.all %}
+                                    <ul class="list-unstyled small">
+                                        {% for doc in fase.documentos.all|slice:":3" %}
+                                            <li>
+                                                <span class="badge bg-{% if doc.estado == 'validado' %}success{% elif doc.estado == 'rechazado' %}danger{% else %}secondary{% endif %}">
+                                                    {{ doc.get_estado_display }}
+                                                </span>
+                                                {{ doc.get_tipo_display }}
+                                            </li>
+                                        {% endfor %}
+                                        {% if fase.documentos.count > 3 %}
+                                            <li class="text-muted">... y {{ fase.documentos.count|add:"-3" }} más</li>
+                                        {% endif %}
+                                    </ul>
+                                {% else %}
+                                    <span class="text-muted small">Sin documentos aún</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'detalle_fase_importacion' fase.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Ver
+                                </a>
+                                {% if perms.importaciones.agregar_documento %}
+                                    <a href="{% url 'agregar_documento_fase' fase.id %}" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-file-earmark-arrow-up"></i> Subir
+                                    </a>
+                                {% endif %}
+                                {% if perms.importaciones.editar_importacion and not fase.estado_completado %}
+                                    <a href="{% url 'editar_fase_importacion' fase.id %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </a>
+                                    <form method="post" action="{% url 'marcar_fase_completada' fase.id %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('¿Completar esta fase?')">
+                                            <i class="bi bi-check-circle"></i> Completar
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted small">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    Iniciado: {{ fase.fecha_inicio|date:"d/m/Y" }}
+                                </div>
+                                {% if fase.fecha_completado %}
+                                    <div class="col-md-6 text-end">
+                                        Completado: {{ fase.fecha_completado|date:"d/m/Y" }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay fases registradas para esta importación.
+        </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'detalle_importacion' importacion.id %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a Importación
+        </a>
+    </div>
+</div>
+{% endblock %}

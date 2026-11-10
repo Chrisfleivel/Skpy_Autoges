@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirmar Producto Buscado{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-xl-10">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h5 class="mb-0 fw-bold">Confirmar Producto Buscado</h5>
+              <p class="text-muted mb-0">Pedido #{{ pedido.id }} - {{ pedido.cliente.nombre }}</p>
+            </div>
+            <a href="{% url 'detalle_pedido' pedido.id %}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-2"></i>Volver
+            </a>
+          </div>
+        </div>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          
+          <div class="card-body">
+            <h6 class="mb-3 fw-semibold text-primary">Producto Buscado</h6>
+            <div class="card bg-light border-0 mb-4 p-3">
+              <div class="row">
+                <div class="col-md-6">
+                  <p class="small text-muted mb-1">Descripción</p>
+                  <p class="fw-semibold">{{ producto.descripcion }}</p>
+                </div>
+                <div class="col-md-3">
+                  <p class="small text-muted mb-1">Cantidad</p>
+                  <p class="fw-semibold">{{ producto.cantidad }}</p>
+                </div>
+                <div class="col-md-3">
+                  <p class="small text-muted mb-1">Marca / Modelo</p>
+                  <p class="fw-semibold">
+                    {% if producto.marca %}{{ producto.marca }}{% endif %}
+                    {% if producto.modelo %} / {{ producto.modelo }}{% endif %}
+                    {% if not producto.marca and not producto.modelo %}N/A{% endif %}
+                  </p>
+                </div>
+              </div>
+              {% if producto.especificaciones %}
+              <div class="mt-2">
+                <p class="small text-muted mb-1">Especificaciones</p>
+                <p class="small">{{ producto.especificaciones }}</p>
+              </div>
+              {% endif %}
+            </div>
+
+            <hr class="my-4">
+
+            <h6 class="mb-3 fw-semibold text-primary">Seleccionar Producto Encontrado</h6>
+            
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="id_repuesto">Repuesto Encontrado</label>
+              <select name="repuesto_id" id="id_repuesto" class="form-select form-control" required>
+                <option value="">-- Selecciona un repuesto --</option>
+                {% for repuesto in repuestos %}
+                  <option value="{{ repuesto.id }}" 
+                    {% if seleccion.repuesto.id == repuesto.id %}selected{% endif %}>
+                    {{ repuesto.nombre }} - Gs. {{ repuesto.precio_base }}
+                  </option>
+                {% endfor %}
+              </select>
+              <small class="text-muted d-block mt-1">
+                <i class="bi bi-info-circle me-1"></i>
+                Selecciona el repuesto que mejor se adapte al producto buscado
+              </small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="id_precio_unitario">Precio Unitario (Gs.)</label>
+              <input type="number" 
+                     name="precio_unitario" 
+                     id="id_precio_unitario" 
+                     class="form-control form-control-lg" 
+                     step="0.01" 
+                     min="0"
+                     placeholder="0.00"
+                     value="{% if seleccion.precio_unitario %}{{ seleccion.precio_unitario }}{% endif %}"
+                     required>
+              <small class="text-muted d-block mt-1">
+                El precio total será: cantidad ({{ producto.cantidad }}) × precio unitario
+              </small>
+            </div>
+
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" name="aprobado_seo" id="id_aprobado_seo" {% if seleccion.aprobado_seo %}checked{% endif %}>
+              <label class="form-check-label fw-semibold" for="id_aprobado_seo">
+                Aprobado por SEO para abastecimiento
+              </label>
+            </div>
+
+            <div class="row g-3 mt-4">
+              <div class="col-md-6">
+                <p class="small text-muted mb-1">Precio Total</p>
+                <div class="card bg-primary bg-opacity-10 border-primary border p-3">
+                  <h5 class="fw-bold text-primary mb-0" id="precio_total_display">
+                    Gs. {{ seleccion.precio_total|default:"0.00" }}
+                  </h5>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <p class="small text-muted mb-1">Estado</p>
+                <div class="card bg-info bg-opacity-10 border-info border p-3">
+                  <h5 class="fw-bold text-info mb-0">
+                    {% if seleccion.estado == 'encontrado' %}
+                      Encontrado ✓
+                    {% else %}
+                      Pendiente
+                    {% endif %}
+                  </h5>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer bg-light border-0 py-3">
+            <div class="d-flex gap-2 justify-content-end">
+              <a href="{% url 'detalle_pedido' pedido.id %}" class="btn btn-outline-secondary">
+                Cancelar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle me-2"></i>Confirmar Selección
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const precioUnitarioInput = document.getElementById('id_precio_unitario');
+  const precioTotalDisplay = document.getElementById('precio_total_display');
+  const cantidad = {{ producto.cantidad }};
+
+  function actualizarPrecioTotal() {
+    const precioUnitario = parseFloat(precioUnitarioInput.value) || 0;
+    const precioTotal = precioUnitario * cantidad;
+    precioTotalDisplay.textContent = `Gs. ${precioTotal.toFixed(2)}`;
+  }
+
+  precioUnitarioInput.addEventListener('input', actualizarPrecioTotal);
+  actualizarPrecioTotal();
+});
+</script>
+{% endblock %}

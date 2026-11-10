@@ -1,14 +1,191 @@
-# Edición de agente de transporte
 {% extends 'base.html' %}
-
-{% block title %}Editar Agente de Transporte{% endblock %}
+{% load static %}
 
 {% block content %}
-    <h1>Editar Agente de Transporte</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar cambios</button>
-    </form>
-    <a href="{% url 'lista_agentes_transporte' %}">Volver a la lista de agentes de transporte</a>
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="mb-0 fw-bold">Editar Agente de Transporte</h5>
+                        <p class="text-muted mb-0">Actualiza los datos del agente seleccionado.</p>
+                    </div>
+                    <a href="{% url 'detalle_agente_transporte' agente.id %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Volver al detalle
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <h6 class="mb-3 fw-bold text-primary border-bottom pb-2">Información Básica</h6>
+                        <div class="mb-4">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label fw-semibold">Nombre / Razón Social</label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                                <div class="text-danger small mt-1">{{ form.nombre.errors|join:', ' }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.pais_operacion.id_for_label }}" class="form-label fw-semibold">País de Operación</label>
+                                {{ form.pais_operacion }}
+                                {% if form.pais_operacion.errors %}
+                                    <div class="text-danger small mt-1">{{ form.pais_operacion.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.tipo_servicio.id_for_label }}" class="form-label fw-semibold">Tipo de Transporte</label>
+                                {{ form.tipo_servicio }}
+                                {% if form.tipo_servicio.errors %}
+                                    <div class="text-danger small mt-1">{{ form.tipo_servicio.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="mb-3 fw-bold text-primary border-bottom pb-2">Datos de Contacto</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.telefono.id_for_label }}" class="form-label fw-semibold">Teléfono</label>
+                                {{ form.telefono }}
+                                {% if form.telefono.errors %}
+                                    <div class="text-danger small mt-1">{{ form.telefono.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">Email</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small mt-1">{{ form.email.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.contacto.id_for_label }}" class="form-label fw-semibold">Persona de Contacto</label>
+                                {{ form.contacto }}
+                                {% if form.contacto.errors %}
+                                    <div class="text-danger small mt-1">{{ form.contacto.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.contacto_emergencia.id_for_label }}" class="form-label fw-semibold">Contacto de Emergencia</label>
+                                {{ form.contacto_emergencia }}
+                                {% if form.contacto_emergencia.errors %}
+                                    <div class="text-danger small mt-1">{{ form.contacto_emergencia.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="mb-3 fw-bold text-primary border-bottom pb-2">Información Operativa</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.tipo_carga_especialidad.id_for_label }}" class="form-label fw-semibold">Especialidad de Carga</label>
+                                {{ form.tipo_carga_especialidad }}
+                                {% if form.tipo_carga_especialidad.errors %}
+                                    <div class="text-danger small mt-1">{{ form.tipo_carga_especialidad.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.lugar_operacion.id_for_label }}" class="form-label fw-semibold">Puerto/Aeropuerto Habitual</label>
+                                {{ form.lugar_operacion }}
+                                {% if form.lugar_operacion.errors %}
+                                    <div class="text-danger small mt-1">{{ form.lugar_operacion.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.registro_autoridad.id_for_label }}" class="form-label fw-semibold">Registro Autoridad (IATA/FIATA/DINATRAN)</label>
+                                {{ form.registro_autoridad }}
+                                {% if form.registro_autoridad.errors %}
+                                    <div class="text-danger small mt-1">{{ form.registro_autoridad.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.numero_poliza_seguro.id_for_label }}" class="form-label fw-semibold">Póliza de Seguro</label>
+                                {{ form.numero_poliza_seguro }}
+                                {% if form.numero_poliza_seguro.errors %}
+                                    <div class="text-danger small mt-1">{{ form.numero_poliza_seguro.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="mb-3 fw-bold text-primary border-bottom pb-2">Datos de Vehículo/Transporte</h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <label for="{{ form.placa_vehiculo.id_for_label }}" class="form-label fw-semibold">Placa Vehículo/Cigüeña</label>
+                                {{ form.placa_vehiculo }}
+                                {% if form.placa_vehiculo.errors %}
+                                    <div class="text-danger small mt-1">{{ form.placa_vehiculo.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <label for="{{ form.cedula_verde.id_for_label }}" class="form-label fw-semibold">Cédula Verde</label>
+                                {{ form.cedula_verde }}
+                                {% if form.cedula_verde.errors %}
+                                    <div class="text-danger small mt-1">{{ form.cedula_verde.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <label for="{{ form.nombre_chofer.id_for_label }}" class="form-label fw-semibold">Nombre del Chofer</label>
+                                {{ form.nombre_chofer }}
+                                {% if form.nombre_chofer.errors %}
+                                    <div class="text-danger small mt-1">{{ form.nombre_chofer.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.cedula_chofer.id_for_label }}" class="form-label fw-semibold">Cédula del Chofer</label>
+                                {{ form.cedula_chofer }}
+                                {% if form.cedula_chofer.errors %}
+                                    <div class="text-danger small mt-1">{{ form.cedula_chofer.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.direccion.id_for_label }}" class="form-label fw-semibold">Dirección</label>
+                                {{ form.direccion }}
+                                {% if form.direccion.errors %}
+                                    <div class="text-danger small mt-1">{{ form.direccion.errors|join:', ' }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.estado }}
+                                <label class="form-check-label" for="{{ form.estado.id_for_label }}">
+                                    {{ form.estado.label }}
+                                </label>
+                            </div>
+                            {% if form.estado.errors %}
+                                <div class="text-danger small mt-1">{{ form.estado.errors|join:', ' }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'detalle_agente_transporte' agente.id %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle-fill me-2"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

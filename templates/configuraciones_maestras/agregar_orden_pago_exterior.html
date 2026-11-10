@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Nueva orden de pago exterior{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card shadow-sm border-0 mx-auto" style="max-width: 1100px;">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">Nueva orden de pago exterior</h4>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          {% for field in form %}
+          <div class="col-md-6">
+            <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <div class="text-danger small">{{ field.errors }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="d-flex justify-content-between mt-4">
+          <a href="{% url 'lista_ordenes_pago_exterior' %}" class="btn btn-outline-secondary">Volver</a>
+          <button type="submit" class="btn btn-primary">Guardar orden</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

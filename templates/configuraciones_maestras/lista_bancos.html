@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Bancos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Bancos</h2>
+      <p class="text-muted mb-0">Entidades bancarias correlacionadas en pagos exteriores.</p>
+    </div>
+    <a href="{% url 'agregar_banco' %}" class="btn btn-primary">Nuevo banco</a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>País</th>
+              <th>SWIFT</th>
+              <th>Activo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for banco in bancos %}
+            <tr>
+              <td>{{ banco.codigo|default:'-' }}</td>
+              <td>{{ banco.nombre }}</td>
+              <td>{{ banco.pais_codigo|default:'-' }}</td>
+              <td>{{ banco.swift|default:'-' }}</td>
+              <td>{% if banco.activo %}Sí{% else %}No{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">No hay bancos registrados.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

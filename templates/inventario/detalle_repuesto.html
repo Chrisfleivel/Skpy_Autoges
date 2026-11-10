@@ -1,11 +1,466 @@
-
 {% extends 'base.html' %}
 
+{% block title %}Detalle del Repuesto - {{ repuesto.nombre }}{% endblock %}
+
 {% block content %}
-  <h1>Detalle del Repuesto</h1>
-  <p><strong>Nombre:</strong> {{ repuesto.nombre }}</p>
-  <p><strong>Descripción:</strong> {{ repuesto.descripcion }}</p>
-  <p><strong>Precio:</strong> ${{ repuesto.precio }}</p>
-  <p><strong>Cantidad en Stock:</strong> {{ repuesto.cantidad }}</p>
-  <a href="{% url 'lista_repuestos' %}">Volver a la Lista de Repuestos</a>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+                <div class="d-flex gap-3 align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-4 p-3 d-flex align-items-center justify-content-center" style="width: 72px; height: 72px;">
+                        <i class="bi bi-wrench text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 fw-bold mb-1">{{ repuesto.nombre }}</h1>
+                        <p class="text-muted mb-1">Código: <span class="fw-semibold text-dark">{{ repuesto.codigo_repuesto }}</span></p>
+                        <span class="badge {% if repuesto.stock_actual > repuesto.stock_minimo %}bg-success{% elif repuesto.stock_actual > 0 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                            {% if repuesto.stock_actual > repuesto.stock_minimo %}En stock{% elif repuesto.stock_actual > 0 %}Stock bajo{% else %}Agotado{% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <a href="{% url 'lista_repuestos' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Volver
+                    </a>
+                    {% if pedido_abastecimiento %}
+                    <span class="badge bg-info text-dark px-3 py-2">
+                        <i class="bi bi-box-seam me-1"></i>Pedido de abastecimiento en curso
+                        <span class="ms-2 fw-semibold">{{ pedido_abastecimiento.get_estado_display }}</span>
+                    </span>
+                    {% elif repuesto.stock_actual <= repuesto.stock_minimo %}
+                    <a href="{% url 'crear_pedido_abastecimiento' repuesto.id %}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-box-seam me-1"></i>Realizar pedido
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'editar_repuesto' repuesto.id %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-pencil me-1"></i>Editar
+                    </a>
+                    <a href="{% url 'eliminar_repuesto' repuesto.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar este repuesto?');">
+                        <i class="bi bi-trash me-1"></i>Eliminar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row gy-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                {% if repuesto.imagen %}
+                <img src="{{ repuesto.imagen.url }}" alt="{{ repuesto.nombre }}" class="card-img-top" style="height: 300px; object-fit: cover;">
+                {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <i class="bi bi-image text-secondary fs-1"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">Resumen rápido</h5>
+                    <dl class="row text-muted mb-0">
+                        <dt class="col-6">Proveedor</dt>
+                        <dd class="col-6 text-end">{% if repuesto.proveedor %}{{ repuesto.proveedor }}{% else %}Sin proveedor{% endif %}</dd>
+
+                        <dt class="col-6">Categoría</dt>
+                        <dd class="col-6 text-end">{{ repuesto.categoria|default:'No definida' }}</dd>
+
+                        <dt class="col-6">Unidad</dt>
+                        <dd class="col-6 text-end">{% if repuesto.unidad_medida %}{{ repuesto.unidad_medida.nombre }}{% else %}N/A{% endif %}</dd>
+
+                        <dt class="col-6">Compatibilidad</dt>
+                        <dd class="col-6 text-end">{{ repuesto.compatibilidad|default:'Universal' }}</dd>
+
+                        <dt class="col-6">Última entrada</dt>
+                        <dd class="col-6 text-end">{{ repuesto.fecha_ultima_entrada|date:'d/m/Y H:i' }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h6 class="mb-0 fw-bold">Información de inventario</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded-3 bg-light h-100">
+                                        <label class="text-muted small mb-1 d-block">Stock actual</label>
+                                        <div class="fw-semibold fs-5">{{ repuesto.stock_actual }}</div>
+                                        <small class="text-muted">Stock mínimo: {{ repuesto.stock_minimo }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded-3 bg-light h-100">
+                                        <label class="text-muted small mb-1 d-block">Precio de venta</label>
+                                        <div class="fw-semibold fs-5">Gs. {{ repuesto.precio_venta|default:'0'|floatformat:0 }}</div>
+                                        <small class="text-muted">Precio sugerido</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded-3 bg-light h-100">
+                                        <label class="text-muted small mb-1 d-block">Stock reservado</label>
+                                        <div class="fw-semibold fs-5">{{ repuesto.stock_reservado }}</div>
+                                        <small class="text-muted">Unidades comprometidas en pedidos</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded-3 bg-light h-100">
+                                        <label class="text-muted small mb-1 d-block">Stock disponible</label>
+                                        <div class="fw-semibold fs-5">{{ repuesto.stock_disponible }}</div>
+                                        <small class="text-muted">Disponible para vender</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded-3 bg-light h-100">
+                                        <label class="text-muted small mb-1 d-block">Costo de compra</label>
+                                        <div class="fw-semibold fs-5">Gs. {{ repuesto.costo_compra|floatformat:0 }}</div>
+                                        <small class="text-muted">Costo real en el inventario</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded-3 bg-light h-100">
+                                        <label class="text-muted small mb-1 d-block">Costo proveedor / Tasa</label>
+                                        <div class="fw-semibold fs-5">{{ repuesto.costo_compra_provedor_total|default:'-' }}</div>
+                                        <small class="text-muted">Tasa: {{ repuesto.tasa_aplicada|default:'-' }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                  <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h6 class="mb-0 fw-bold">Descripción y detalles</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-3">{{ repuesto.descripcion|default:'No se proporcionó una descripción adicional para este repuesto.' }}</p>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary bg-opacity-10 text-primary p-2 rounded-circle">
+                                            <i class="bi bi-tags"></i>
+                                        </span>
+                                        <div>
+                                            <div class="text-uppercase text-muted small">Categoría</div>
+                                            <div class="fw-semibold">{{ repuesto.categoria|default:'No definida' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary p-2 rounded-circle">
+                                            <i class="bi bi-box-seam"></i>
+                                        </span>
+                                        <div>
+                                            <div class="text-uppercase text-muted small">Compatibilidad</div>
+                                            <div class="fw-semibold">{{ repuesto.compatibilidad|default:'Universal' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-success bg-opacity-10 text-success p-2 rounded-circle">
+                                            <i class="bi bi-building"></i>
+                                        </span>
+                                        <div>
+                                            <div class="text-uppercase text-muted small">Proveedor</div>
+                                            <div class="fw-semibold">{% if repuesto.proveedor %}{{ repuesto.proveedor.nombre }}{% else %}Sin proveedor{% endif %}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-info bg-opacity-10 text-info p-2 rounded-circle">
+                                            <i class="bi bi-gear"></i>
+                                        </span>
+                                        <div>
+                                            <div class="text-uppercase text-muted small">Unidad</div>
+                                            <div class="fw-semibold">{% if repuesto.unidad_medida %}{{ repuesto.unidad_medida.nombre }}{% else %}N/A{% endif %}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light border-0 py-3 d-flex align-items-center justify-content-between">
+                          <h6 class="mb-0 fw-bold"><i class="bi bi-cash-coin text-primary me-2"></i>Costos de importación</h6>
+                          <div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarCostos">
+                              <i class="bi bi-pencil me-1"></i>Editar costos
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#modalEditarPrecioRepuesto">
+                              <i class="bi bi-tag me-1"></i>Definir precio
+                            </button>
+                          </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-6 fw-semibold text-muted">Costo del proveedor:</div>
+                                <div class="col-6">{{ repuesto.costo_compra_provedor_total|default:'-' }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6 fw-semibold text-muted">Tasa Aplicada:</div>
+                                <div class="col-6">{{ repuesto.tasa_aplicada|default:'-' }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6 fw-semibold text-muted">Costo Total Importación:</div>
+                                <div class="col-6 text-primary fw-bold">{{ repuesto.costo_total_importacion|default:'-' }} USD</div>
+                            </div>
+                            <div class="row mb-0">
+                                <div class="col-6 fw-semibold text-muted">Costo de Compra:</div>
+                                <div class="col-6 text-primary fw-bold">{{ repuesto.costo_compra|floatformat:0 }} Gs.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal para editar precio de venta (Repuesto) -->
+                <div class="modal fade" id="modalEditarPrecioRepuesto" tabindex="-1" aria-labelledby="modalEditarPrecioRepuestoLabel" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content border-0">
+                      <div class="modal-header bg-light border-0">
+                        <h5 class="modal-title fw-bold" id="modalEditarPrecioRepuestoLabel">
+                          <i class="bi bi-pencil-square text-primary me-2"></i>Editar Precio de Venta
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <form method="post" action="{% url 'editar_precio_repuesto' repuesto.id %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                          <div class="mb-3">
+                            <label for="precio_venta_input_repuesto" class="form-label fw-semibold">Precio de Venta (Gs.)</label>
+                            <input 
+                              type="number" 
+                              id="precio_venta_input_repuesto" 
+                              name="precio_venta" 
+                              class="form-control form-control-lg" 
+                              step="0.01" 
+                              min="0" 
+                              value="{{ repuesto.precio_venta|default:'' }}" 
+                              required
+                            >
+                            <small class="text-muted">Ingresa el precio de venta en guaraníes</small>
+                          </div>
+                        </div>
+                        <div class="modal-footer border-0">
+                          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                          <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Guardar Cambios
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 py-3">
+                            <h6 class="mb-0 fw-bold">Descripción y detalles</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-3">{{ repuesto.descripcion|default:'No se proporcionó una descripción adicional para este repuesto.' }}</p>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary bg-opacity-10 text-primary p-2 rounded-circle">
+                                            <i class="bi bi-tags"></i>
+                                        </span>
+                                        <div>
+                                            <div class="text-uppercase text-muted small">Categoría</div>
+                                            <div class="fw-semibold">{{ repuesto.categoria|default:'No definida' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary p-2 rounded-circle">
+                                            <i class="bi bi-box-seam"></i>
+                                        </span>
+                                        <div>
+                                            <div class="text-uppercase text-muted small">Compatibilidad</div>
+                                            <div class="fw-semibold">{{ repuesto.compatibilidad|default:'Universal' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-success bg-opacity-10 text-success p-2 rounded-circle">
+                                            <i class="bi bi-building"></i>
+                                        </span>
+                                        <div>
+                                            <div class="text-uppercase text-muted small">Proveedor</div>
+                                            <div class="fw-semibold">{% if repuesto.proveedor %}{{ repuesto.proveedor.nombre }}{% else %}Sin proveedor{% endif %}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-info bg-opacity-10 text-info p-2 rounded-circle">
+                                            <i class="bi bi-gear"></i>
+                                        </span>
+                                        <div>
+                                            <div class="text-uppercase text-muted small">Unidad</div>
+                                            <div class="fw-semibold">{% if repuesto.unidad_medida %}{{ repuesto.unidad_medida.nombre }}{% else %}N/A{% endif %}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar costos de importación -->
+<div class="modal fade" id="modalEditarCostos" tabindex="-1" aria-labelledby="modalEditarCostosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content border-0">
+      <div class="modal-header bg-light border-0">
+        <h5 class="modal-title fw-bold" id="modalEditarCostosLabel">
+          <i class="bi bi-cash-stack text-primary me-2"></i>Editar costos de importación
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'editar_costos_repuesto' repuesto.id %}">
+        {% csrf_token %}
+        <div class="modal-body" style="max-height: calc(100vh - 210px); overflow-y: auto;">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo unitario del proveedor</label>
+              <input type="number" step="0.01" min="0" name="costo_unitario_proveedor" class="form-control" value="{{ repuesto.costo_unitario_proveedor|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda del proveedor</label>
+              <select name="moneda_compra_proveedor" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if repuesto.moneda_compra_proveedor and repuesto.moneda_compra_proveedor.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Cantidad a comprar</label>
+              <input type="number" step="1" min="0" name="cantidad_a_comprar" class="form-control" value="{{ repuesto.cantidad_a_comprar|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted d-block mt-4">El total del proveedor se calculará automáticamente a partir del costo unitario, la cantidad y la moneda.</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo Flete 1</label>
+              <input type="number" step="0.01" min="0" name="costo_flete1" class="form-control" value="{{ repuesto.costo_flete1|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda Flete 1</label>
+              <select name="moneda_flete1" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if repuesto.moneda_flete1 and repuesto.moneda_flete1.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo Aduana Extranjera</label>
+              <input type="number" step="0.01" min="0" name="costo_aduana_extrangera" class="form-control" value="{{ repuesto.costo_aduana_extrangera|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda Aduana Extranjera</label>
+              <select name="moneda_aduana_extrangera" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if repuesto.moneda_aduana_extrangera and repuesto.moneda_aduana_extrangera.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo Extra</label>
+              <input type="number" step="0.01" min="0" name="costo_extra" class="form-control" value="{{ repuesto.costo_extra|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda Costo Extra</label>
+              <select name="moneda_costo_extra" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if repuesto.moneda_costo_extra and repuesto.moneda_costo_extra.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-semibold">Descripción del costo extra</label>
+              <textarea name="descripcion_costo_extra" class="form-control" rows="2">{{ repuesto.descripcion_costo_extra|default:'' }}</textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo Aduana Paraguaya</label>
+              <input type="number" step="0.01" min="0" name="costo_aduana_paraguaya" class="form-control" value="{{ repuesto.costo_aduana_paraguaya|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda Aduana Paraguaya</label>
+              <select name="moneda_costo_aduana_paraguaya" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if repuesto.moneda_costo_aduana_paraguaya and repuesto.moneda_costo_aduana_paraguaya.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Costo Flete 2</label>
+              <input type="number" step="0.01" min="0" name="costo_flete2" class="form-control" value="{{ repuesto.costo_flete2|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Moneda Flete 2</label>
+              <select name="moneda_costo_flete2" class="form-select">
+                <option value="">Sin moneda</option>
+                {% for moneda in monedas %}
+                  <option value="{{ moneda.id }}" {% if repuesto.moneda_flete2 and repuesto.moneda_flete2.id == moneda.id %}selected{% endif %}>{{ moneda.codigo }} - {{ moneda.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-semibold">Tasa aplicada</label>
+              <input type="number" step="0.0001" min="0" name="tasa_aplicada" class="form-control" value="{{ repuesto.tasa_aplicada|default:'' }}">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-2"></i>Guardar costos
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .card-img-top {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    @media (max-width: 768px) {
+        .d-flex.flex-column.flex-md-row {
+            flex-direction: column !important;
+        }
+    }
+</style>
 {% endblock %}

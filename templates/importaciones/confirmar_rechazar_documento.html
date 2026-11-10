@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Rechazar Documento{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Rechazar Documento</h5>
+                </div>
+                <div class="card-body">
+                    <p>¿Desea rechazar este documento?</p>
+                    <div class="alert alert-info">
+                        <strong>{{ documento.get_tipo_display }}</strong><br>
+                        {% if documento.numero_referencia %}
+                            Referencia: <code>{{ documento.numero_referencia }}</code><br>
+                        {% endif %}
+                        Cargado: {{ documento.fecha_carga|date:"d/m/Y H:i" }}<br>
+                        Estado: <span class="badge bg-secondary">{{ documento.get_estado_display }}</span>
+                    </div>
+
+                    <p class="text-muted">
+                        <i class="bi bi-exclamation-triangle"></i> 
+                        El documento será marcado como rechazado. El usuario que lo cargó deberá cargar un nuevo documento.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-x-circle"></i> Rechazar Documento
+                        </button>
+                        <a href="{% url 'detalle_fase_importacion' fase.id %}" class="btn btn-secondary">
+                            <i class="bi bi-x"></i> Cancelar
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

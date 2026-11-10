@@ -123,6 +123,11 @@
             </div>
 
             {{ contact_formset.management_form }}
+            {% if contact_formset.non_form_errors %}
+            <div class="alert alert-danger">
+              {{ contact_formset.non_form_errors }}
+            </div>
+            {% endif %}
             <div id="contactos-container">
               {% for contact_form in contact_formset.forms %}
                 <div class="contacto-form border rounded-3 p-3 mb-3 position-relative">
@@ -132,32 +137,55 @@
                       <i class="bi bi-trash"></i>
                     </button>
                   </div>
+                  {% if contact_form.non_field_errors %}
+                  <div class="alert alert-danger">
+                    {{ contact_form.non_field_errors }}
+                  </div>
+                  {% endif %}
                   {{ contact_form.id }}
                   <div class="d-none">{{ contact_form.DELETE }}</div>
                   <div class="row g-3">
                     <div class="col-md-4">
                       <label class="form-label fw-semibold" for="{{ contact_form.tipo_persona.id_for_label }}">Tipo</label>
                       {{ contact_form.tipo_persona }}
+                      {% if contact_form.tipo_persona.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.tipo_persona.errors|join:', ' }}</div>
+                      {% endif %}
                     </div>
                     <div class="col-md-4">
                       <label class="form-label fw-semibold" for="{{ contact_form.nombre.id_for_label }}">Nombre</label>
                       {{ contact_form.nombre }}
+                      {% if contact_form.nombre.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.nombre.errors|join:', ' }}</div>
+                      {% endif %}
                     </div>
                     <div class="col-md-4">
                       <label class="form-label fw-semibold" for="{{ contact_form.apellidos.id_for_label }}">Apellidos</label>
                       {{ contact_form.apellidos }}
+                      {% if contact_form.apellidos.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.apellidos.errors|join:', ' }}</div>
+                      {% endif %}
                     </div>
                     <div class="col-md-4">
                       <label class="form-label fw-semibold" for="{{ contact_form.cargo.id_for_label }}">Cargo</label>
                       {{ contact_form.cargo }}
+                      {% if contact_form.cargo.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.cargo.errors|join:', ' }}</div>
+                      {% endif %}
                     </div>
                     <div class="col-md-4">
                       <label class="form-label fw-semibold" for="{{ contact_form.telefono.id_for_label }}">Teléfono</label>
                       {{ contact_form.telefono }}
+                      {% if contact_form.telefono.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.telefono.errors|join:', ' }}</div>
+                      {% endif %}
                     </div>
                     <div class="col-md-4">
                       <label class="form-label fw-semibold" for="{{ contact_form.email.id_for_label }}">Email</label>
                       {{ contact_form.email }}
+                      {% if contact_form.email.errors %}
+                      <div class="text-danger small mt-1">{{ contact_form.email.errors|join:', ' }}</div>
+                      {% endif %}
                     </div>
                   </div>
                 </div>

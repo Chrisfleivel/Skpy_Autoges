@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle del Contenedor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Contenedor {{ contenedor.numero }}</h3>
+    <div class="d-flex gap-2">
+      
+      <a href="{% url 'lista_contenedores' %}" class="btn btn-outline-secondary">Volver</a>
+      <a href="{% url 'editar_contenedor' contenedor.id %}" class="btn btn-outline-secondary">Editar</a>
+      <a href="{% url 'eliminar_contenedor' contenedor.id %}" class="btn btn-outline-danger">Eliminar</a>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <p><strong>Estado:</strong> {{ contenedor.get_estado_display }}</p>
+      <p><strong>Fecha de Embarque:</strong> {{ contenedor.fecha_embarque|default:'-' }}</p>
+      <p><strong>Despachante:</strong> {{ contenedor.despachante|default:'-' }}</p>
+      <p><strong>Descripción:</strong> {{ contenedor.descripcion|default:'-' }}</p>
+      <p><strong>Observaciones:</strong> {{ contenedor.observaciones|default:'-' }}</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5>Pedidos de Proveedores Asociados</h5>
+        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#asociarPedidosModal">Asociar pedidos</button>
+      </div>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Proveedor</th>
+            <th>Estado</th>
+            <th>Observaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pedido in pedidos %}
+          <tr>
+            <td>{{ pedido.codigo }}</td>
+            <td>{{ pedido.proveedor }}</td>
+            <td>{{ pedido.get_estado_display }}</td>
+            <td>{{ pedido.observaciones|default:'-' }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="text-center">No hay pedidos asociados a este contenedor.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% include 'importaciones/includes/_asociar_pedidos_modal.html' %}
+</div>
+{% endblock %}

@@ -1,13 +1,116 @@
-# Detalle de Tasa de Cambio
 {% extends 'base.html' %}
 
 {% block title %}Detalle de Tasa de Cambio{% endblock %}
 
 {% block content %}
-    <h1>Detalle de Tasa de Cambio</h1>
-    <p><strong>Moneda:</strong> {{ tasa.moneda }}</p>
-    <p><strong>Tasa de Cambio:</strong> {{ tasa.tasa }}</p>
-    <a href="{% url 'editar_tasa_cambio' tasa.id %}">Editar</a>
-    <a href="{% url 'eliminar_tasa_cambio' tasa.id %}">Eliminar</a>
-    <a href="{% url 'lista_tasas_cambio' %}">Volver a la lista de tasas de cambio</a>
+<div class="container-fluid py-4">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+          <div>
+            <h5 class="mb-0 fw-bold">Detalles de la Tasa de Cambio</h5>
+            <p class="text-muted mb-0">Informacion y auditoría de la tasa registrada.</p>
+          </div>
+          <div class="btn-group">
+            <a href="{% url 'lista_tasas_cambio' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-2"></i>Volver
+            </a>
+            <a href="{% url 'editar_tasa_cambio' tasa.id %}" class="btn btn-primary">
+              <i class="bi bi-pencil me-2"></i>Editar
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <small class="text-muted">Moneda de Origen</small>
+              <div class="fw-semibold fs-5">{{ tasa.moneda_origen }}</div>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted">Moneda de Destino</small>
+              <div class="fw-semibold fs-5">{{ tasa.moneda_destino }}</div>
+            </div>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <small class="text-muted">Tasa de Cambio</small>
+              <div class="fw-bold fs-4 text-primary">1 {{ tasa.moneda_origen }} = {{ tasa.valor|floatformat:4 }} {{ tasa.moneda_destino }}</div>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted">Fecha de Vigencia</small>
+              <div class="fw-semibold fs-5">{{ tasa.fecha|date:'d/m/Y' }}</div>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="row">
+            <div class="col-md-6">
+              <small class="text-muted">Registrado por</small>
+              <div class="fw-semibold">
+                {% if tasa.usuario_creo %}
+                  {{ tasa.usuario_creo.get_full_name|default:tasa.usuario_creo.username }}
+                {% else %}
+                  <span class="text-muted">Sistema</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted">Fecha de Registro</small>
+              <div class="fw-semibold">{{ tasa.fecha_creacion|date:'d/m/Y H:i' }}</div>
+            </div>
+          </div>
+
+          <div class="mt-4 p-3 bg-light rounded">
+            <h6 class="fw-semibold mb-2">Ejemplos de Conversión</h6>
+            <ul class="list-unstyled">
+              <li><small>100 USD = <strong id="conv-100">0</strong> PYG</small></li>
+              <li><small>500 USD = <strong id="conv-500">0</strong> PYG</small></li>
+              <li><small>1000 USD = <strong id="conv-1000">0</strong> PYG</small></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="mb-0 fw-bold">Acciones</h6>
+        </div>
+        <div class="card-body">
+          <a href="{% url 'editar_tasa_cambio' tasa.id %}" class="btn btn-warning w-100 mb-2">
+            <i class="bi bi-pencil me-2"></i>Editar Tasa
+          </a>
+          <a href="{% url 'eliminar_tasa_cambio' tasa.id %}" class="btn btn-danger w-100">
+            <i class="bi bi-trash me-2"></i>Eliminar Tasa
+          </a>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mt-3">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="mb-0 fw-bold">Información</h6>
+        </div>
+        <div class="card-body">
+          <p class="small text-muted mb-0">
+            Esta tasa de cambio fue registrada en el sistema y se aplica automáticamente a todos los vehículos y repuestos 
+            cargados en la fecha <strong>{{ tasa.fecha|date:'d/m/Y' }}</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const tasa = parseFloat('{{ tasa.valor }}');
+  document.getElementById('conv-100').textContent = (100 * tasa).toLocaleString('es-PY', { maximumFractionDigits: 0 });
+  document.getElementById('conv-500').textContent = (500 * tasa).toLocaleString('es-PY', { maximumFractionDigits: 0 });
+  document.getElementById('conv-1000').textContent = (1000 * tasa).toLocaleString('es-PY', { maximumFractionDigits: 0 });
+});
+</script>
 {% endblock %}

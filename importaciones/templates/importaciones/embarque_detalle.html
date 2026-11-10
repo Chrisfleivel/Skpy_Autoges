@@ -1,0 +1,54 @@
+{% extends 'importaciones/base.html' %}
+{% block title %}Detalle de embarque{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>Embarque {{ embarque.referencia_interna|default:embarque.pk }}</h1>
+    <p><strong>B/L:</strong> {{ embarque.bl_numero|default:'-' }}</p>
+    <p><strong>Booking:</strong> {{ embarque.booking|default:'-' }}</p>
+    <p><strong>Estado:</strong> {{ embarque.get_estado_display }}</p>
+    <p><strong>FOB:</strong> {{ valor_fob|default:'0' }} {{ moneda_base }}</p>
+    <p><strong>Gastos:</strong> {{ total_gastos|default:'0' }} {{ moneda_base }}</p>
+    <p><strong>Costo landed:</strong> {{ costo_landed|default:'0' }} {{ moneda_base }}</p>
+
+    <h2>Ítems</h2>
+    {% if items %}
+      <table>
+        <tr><th>Factura</th><th>Cantidad</th><th>Chasis</th></tr>
+        {% for item in items %}
+          <tr>
+            <td>{{ item.factura_item.factura.numero|default:'-' }}</td>
+            <td>{{ item.cantidad }}</td>
+            <td>{{ item.chasis_bl|default:'-' }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>No hay ítems cargados.</p>
+    {% endif %}
+
+    <h2>Gastos</h2>
+    {% if gastos %}
+      <table>
+        <tr><th>Tipo</th><th>Descripción</th><th>Monto</th></tr>
+        {% for gasto in gastos %}
+          <tr>
+            <td>{{ gasto.get_tipo_display }}</td>
+            <td>{{ gasto.descripcion }}</td>
+            <td>{{ gasto.monto }} {{ gasto.moneda }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>No hay gastos cargados.</p>
+    {% endif %}
+
+    {% if form_estado %}
+      <form method="post" action="{% url 'importaciones:cambiar_estado' embarque.pk %}">
+        {% csrf_token %}
+        {{ form_estado.as_p }}
+        <button type="submit">Cambiar estado</button>
+      </form>
+    {% endif %}
+  </div>
+{% endblock %}

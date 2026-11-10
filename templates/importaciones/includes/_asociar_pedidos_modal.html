@@ -1,0 +1,114 @@
+<div class="modal fade" id="asociarPedidosModal" tabindex="-1" aria-labelledby="asociarPedidosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="asociarPedidosLabel">Asociar Pedidos al Contenedor {{ contenedor.numero }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="get" action="{% url 'detalle_contenedor' contenedor.id %}" class="row g-2 mb-3">
+          <div class="col-md-6">
+            <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="Buscar por cliente, id o observaciones">
+          </div>
+          <div class="col-md-4">
+            <select name="proveedor" class="form-select">
+              <option value="">-- Filtrar por proveedor --</option>
+              {% for pid, pname in proveedores_list %}
+              <option value="{{ pid }}" {% if pid|stringformat:"s" == proveedor_selected %}selected{% endif %}>{{ pname }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-primary w-100" type="submit">Filtrar</button>
+          </div>
+        </form>
+
+        <p>Selecciona los pedidos que quieres asociar a este contenedor. Los pedidos ya asignados a otro contenedor no aparecerán aquí.</p>
+        <form method="post" action="{% url 'asociar_pedidos_contenedor' contenedor.id %}">
+          {% csrf_token %}
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>ID</th>
+                  <th>Cliente / Código</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in candidatos_page.object_list %}
+                <tr class="{% if p.id in asociados_ids %}table-success{% endif %}">
+                  <td><input type="checkbox" name="pedido_ids" value="{{ p.id }}" {% if p.id in asociados_ids %}checked{% endif %}></td>
+                  <td>{{ p.id }}</td>
+                  <td>
+                    {{ p.cliente }} / {{ p.id }}
+                    {% if p.id in asociados_ids %}
+                      <span class="badge bg-success ms-2">Ya asociado</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ p.get_tipo_display }}</td>
+                  <td>{{ p.fecha_pedido }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No hay pedidos candidatos.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% if pedidos_bloqueados %}
+          <div class="mt-4">
+            <h6 class="text-muted">No disponibles para este contenedor</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <tbody>
+                  {% for p in pedidos_bloqueados %}
+                  <tr class="table-warning">
+                    <td><span class="badge bg-warning text-dark">Asignado a otro contenedor</span></td>
+                    <td>{{ p.id }}</td>
+                    <td>{{ p.cliente }} / {{ p.id }}</td>
+                    <td>{{ p.get_tipo_display }}</td>
+                    <td>{{ p.fecha_pedido }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
+
+          <nav aria-label="Pagina pedidos candidato">
+            <ul class="pagination">
+              {% if candidatos_page.has_previous %}
+                <li class="page-item"><a class="page-link" href="?search={{ search }}&proveedor={{ proveedor_selected }}&cpage={{ candidatos_page.previous_page_number }}">Anterior</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+              {% endif %}
+
+              {% for num in candidatos_page.paginator.page_range %}
+                {% if num == candidatos_page.number %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                  <li class="page-item"><a class="page-link" href="?search={{ search }}&proveedor={{ proveedor_selected }}&cpage={{ num }}">{{ num }}</a></li>
+                {% endif %}
+              {% endfor %}
+
+              {% if candidatos_page.has_next %}
+                <li class="page-item"><a class="page-link" href="?search={{ search }}&proveedor={{ proveedor_selected }}&cpage={{ candidatos_page.next_page_number }}">Siguiente</a></li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="submit" class="btn btn-primary">Guardar asociaciones</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

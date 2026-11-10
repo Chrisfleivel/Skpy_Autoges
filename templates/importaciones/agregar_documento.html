@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Subir Documento Aduanero{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3>Subir Documento para importación {{ importacion.codigo_seguimiento }}</h3>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Tipo de Documento</label>
+      {{ form.tipo }}
+      {% if form.tipo.errors %}<div class="text-danger small">{{ form.tipo.errors }}</div>{% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Archivo (PDF)</label>
+      {{ form.archivo }}
+      {% if form.archivo.errors %}<div class="text-danger small">{{ form.archivo.errors }}</div>{% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Descripción</label>
+      {{ form.descripcion }}
+    </div>
+    <div class="text-end">
+      <button type="submit" class="btn btn-primary">Subir</button>
+      <a href="{% url 'lista_documentos_importacion' importacion.id %}" class="btn btn-secondary ms-2">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

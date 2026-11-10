@@ -1,0 +1,47 @@
+{% extends 'importaciones/base.html' %}
+{% block title %}Embarques{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>Embarques</h1>
+    <form method="get">
+      <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Buscar por B/L, booking, contenedor o buque">
+      <select name="estado">
+        <option value="">Todos</option>
+        {% for valor, etiqueta in estados %}
+          <option value="{{ valor }}" {% if estado_actual == valor %}selected{% endif %}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">Buscar</button>
+    </form>
+
+    <p class="muted">Conteo por estado: {{ conteo_por_estado|default:'-' }}</p>
+
+    {% if embarques %}
+      <table>
+        <thead>
+          <tr>
+            <th>B/L</th>
+            <th>Booking</th>
+            <th>Buque</th>
+            <th>Estado</th>
+            <th>ETA</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for embarque in embarques %}
+            <tr>
+              <td><a href="{% url 'importaciones:embarque_detalle' embarque.pk %}">{{ embarque.bl_numero|default:'-' }}</a></td>
+              <td>{{ embarque.booking|default:'-' }}</td>
+              <td>{{ embarque.buque_viaje|default:'-' }}</td>
+              <td>{{ embarque.get_estado_display }}</td>
+              <td>{{ embarque.eta|default:'-' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No hay embarques cargados.</p>
+    {% endif %}
+  </div>
+{% endblock %}

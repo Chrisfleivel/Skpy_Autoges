@@ -1,141 +1,257 @@
 {% extends 'base.html' %}
 
+{% block title %}Agregar Empleado{% endblock %}
+
 {% block content %}
-<div class="form-page-wrapper">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <div class="custom-card">
-                    <div class="custom-card-header">
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-person-plus fs-3 me-3"></i>
-                            <div>
-                                <h2 class="h4 mb-0">Registrar Empleado</h2>
-                                <small class="opacity-75">Complete los datos para agregar el empleado al sistema</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-body p-4 p-md-5">
-                        <form method="POST" class="needs-validation" novalidate>
-                            {% csrf_token %}
-
-                            {% if form.non_field_errors %}
-                                <div class="alert alert-danger">
-                                    {{ form.non_field_errors }}
-                                </div>
-                            {% endif %}
-
-                            <div class="form-section-title">Datos Personales</div>
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-6">
-                                    <label class="form-label">Nombre</label>
-                                    {{ form.nombre }}
-                                    {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors }}</div>{% endif %}
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Apellidos</label>
-                                    {{ form.apellidos }}
-                                    {% if form.apellidos.errors %}<div class="text-danger small">{{ form.apellidos.errors }}</div>{% endif %}
-                                </div>
-                                <div class="col-md-12">
-                                    <label class="form-label">Correo Electrónico</label>
-                                    {{ form.email }}
-                                    {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
-                                </div>
-                            </div>
-
-                            <div class="form-section-title">Información Laboral</div>
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-6">
-                                    <label class="form-label">Departamento</label>
-                                    {{ form.departamento }}
-                                    {% if form.departamento.errors %}<div class="text-danger small">{{ form.departamento.errors }}</div>{% endif %}
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Cargo</label>
-                                    {{ form.cargo }}
-                                    {% if form.cargo.errors %}<div class="text-danger small">{{ form.cargo.errors }}</div>{% endif %}
-                                </div>
-                            </div>
-
-                            {% for field in form %}
-                                {% if not field.name in 'nombre,apellidos,email,departamento,cargo' %}
-                                    <div class="mb-3">
-                                        <label for="{{ field.id_for_label }}" class="form-label">
-                                            {{ field.label }}
-                                            {% if field.field.required %}
-                                                <span style="color: red;">*</span>
-                                            {% endif %}
-                                        </label>
-                                        {{ field }}
-                                        {% if field.errors %}
-                                            <div class="text-danger small">
-                                                {{ field.errors|striptags }}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-
-                            <div class="d-flex flex-column flex-md-row gap-3 pt-3 border-top">
-                                <button type="submit" class="btn btn-primary btn-save shadow-sm">
-                                    <i class="bi bi-check-lg me-2"></i>Guardar Empleado
-                                </button>
-                                <a href="{% url 'lista_empleados' %}" class="btn btn-outline-secondary px-4 d-flex align-items-center justify-content-center">
-                                    Cancelar
-                                </a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="text-center mt-4 text-muted">
-                    <small>SKPY AutoGest - Módulo de Gestión de Usuarios</small>
-                </div>
-            </div>
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-xl-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+          <div>
+            <h5 class="mb-0 fw-bold">Registrar Empleado</h5>
+            <p class="text-muted mb-0">Crea un empleado y registra sus datos de contacto.</p>
+          </div>
+          <a href="{% url 'lista_empleados' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver
+          </a>
         </div>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger m-4 mb-3">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+          <div class="card-body">
+            <h6 class="mb-3 fw-semibold text-primary">Datos Personales</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.tipo_persona.id_for_label }}">Tipo de Persona</label>
+                {{ form.tipo_persona }}
+                {% if form.tipo_persona.errors %}<div class="text-danger small mt-1">{{ form.tipo_persona.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.documento_identidad.id_for_label }}">Cédula/Documento</label>
+                {{ form.documento_identidad }}
+                {% if form.documento_identidad.errors %}<div class="text-danger small mt-1">{{ form.documento_identidad.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.nombre.id_for_label }}">Nombre</label>
+                {{ form.nombre }}
+                {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.apellidos.id_for_label }}">Apellidos</label>
+                {{ form.apellidos }}
+                {% if form.apellidos.errors %}<div class="text-danger small mt-1">{{ form.apellidos.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.email.id_for_label }}">Correo Electrónico</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.telefono.id_for_label }}">Teléfono</label>
+                {{ form.telefono }}
+                {% if form.telefono.errors %}<div class="text-danger small mt-1">{{ form.telefono.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="{{ form.ruc.id_for_label }}">RUC</label>
+                {{ form.ruc }}
+                {% if form.ruc.errors %}<div class="text-danger small mt-1">{{ form.ruc.errors|join:', ' }}</div>{% endif %}
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <h6 class="mb-3 fw-semibold text-primary">Información Laboral</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.departamento.id_for_label }}">Departamento</label>
+                {{ form.departamento }}
+                {% if form.departamento.errors %}<div class="text-danger small mt-1">{{ form.departamento.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.cargo.id_for_label }}">Cargo</label>
+                {{ form.cargo }}
+                {% if form.cargo.errors %}<div class="text-danger small mt-1">{{ form.cargo.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="{{ form.direccion.id_for_label }}">Dirección</label>
+                {{ form.direccion }}
+                {% if form.direccion.errors %}<div class="text-danger small mt-1">{{ form.direccion.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  {{ form.estado }}
+                  <label class="form-check-label" for="{{ form.estado.id_for_label }}">{{ form.estado.label }}</label>
+                </div>
+                {% if form.estado.errors %}<div class="text-danger small mt-1">{{ form.estado.errors|join:', ' }}</div>{% endif %}
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <h6 class="mb-3 fw-semibold text-primary">Contactos del Empleado</h6>
+            {{ contact_formset.management_form }}
+            <div id="contactos-container" class="mb-3">
+              {% for contact_form in contact_formset.forms %}
+                <div class="contacto-form border rounded-3 p-3 mb-3 position-relative">
+                  <div class="d-flex justify-content-between mb-3">
+                    <h6 class="mb-0">Contacto</h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-contacto">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold">Categoría</label>
+                      {{ contact_form.categoria }}
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold">Tipo</label>
+                      {{ contact_form.tipo_persona }}
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold">Nombre</label>
+                      {{ contact_form.nombre }}
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold">Apellidos</label>
+                      {{ contact_form.apellidos }}
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold">Teléfono</label>
+                      {{ contact_form.telefono }}
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold">Email</label>
+                      {{ contact_form.email }}
+                    </div>
+                  </div>
+                  {% for hidden in contact_form.hidden_fields %}{{ hidden }}{% endfor %}
+                  {% if contact_form.DELETE %}<div class="d-none">{{ contact_form.DELETE }}</div>{% endif %}
+                </div>
+              {% endfor %}
+            </div>
+            <button type="button" id="agregar-contacto" class="btn btn-outline-primary btn-sm mb-4">Agregar contacto</button>
+
+            <div id="contacto-form-template" class="d-none">
+              <div class="contacto-form border rounded-3 p-3 mb-3 position-relative">
+                <div class="d-flex justify-content-between mb-3">
+                  <h6 class="mb-0">Contacto</h6>
+                  <button type="button" class="btn btn-sm btn-outline-danger remove-contacto">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold">Categoría</label>
+                    <select name="__PREFIX__-categoria" class="form-select">
+                      <option value="PERSONAL">Personal</option>
+                      <option value="PROFESIONAL">Profesional</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold">Tipo</label>
+                    <select name="__PREFIX__-tipo_persona" class="form-select">
+                      <option value="FISICA">Persona Física</option>
+                      <option value="JURIDICA">Persona Jurídica</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold">Nombre</label>
+                    <input type="text" name="__PREFIX__-nombre" class="form-control">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold">Apellidos</label>
+                    <input type="text" name="__PREFIX__-apellidos" class="form-control">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold">Teléfono</label>
+                    <input type="text" name="__PREFIX__-telefono" class="form-control">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold">Email</label>
+                    <input type="email" name="__PREFIX__-email" class="form-control">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer bg-light border-0 py-3">
+            <div class="d-flex gap-2 justify-content-end">
+              <a href="{% url 'lista_empleados' %}" class="btn btn-outline-secondary">Cancelar</a>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-2"></i>Guardar Empleado
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
-    (function () {
-      'use strict'
-      var forms = document.querySelectorAll('.needs-validation')
-      Array.prototype.slice.call(forms)
-        .forEach(function (form) {
-          form.addEventListener('submit', function (event) {
-            if (!form.checkValidity()) {
-              event.preventDefault()
-              event.stopPropagation()
-            }
-            form.classList.add('was-validated')
-          }, false)
-        })
-    })()
+document.addEventListener('DOMContentLoaded', function() {
+  const addContactoButton = document.getElementById('agregar-contacto');
+  const contactosContainer = document.getElementById('contactos-container');
+  const formTemplate = document.getElementById('contacto-form-template')?.innerHTML;
+  const totalForms = document.querySelector('input[name="contactoempleado_set-TOTAL_FORMS"]');
 
-    document.addEventListener('DOMContentLoaded', function() {
-      const departamentoSelect = document.getElementById('id_departamento');
-      const cargoSelect = document.getElementById('id_cargo');
+  function updateDeleteButtons() {
+    contactosContainer?.querySelectorAll('.remove-contacto').forEach(button => {
+      button.onclick = function() {
+        const row = this.closest('.contacto-form');
+        const deleteInput = row.querySelector('input[name$="-DELETE"]');
+        if (deleteInput) {
+          deleteInput.checked = true;
+          row.style.display = 'none';
+        } else {
+          row.remove();
+          if (totalForms) totalForms.value = parseInt(totalForms.value, 10) - 1;
+        }
+      };
+    });
+  }
 
-      if (departamentoSelect && cargoSelect) {
-        departamentoSelect.addEventListener('change', function() {
-          const departamentoId = this.value;
-          cargoSelect.innerHTML = '<option value="">---------</option>'; // Limpia cargos
-          if (departamentoId) {
-            fetch("{% url 'obtener_cargos' %}?departamento_id=" + departamentoId)
-              .then(response => response.json())
-              .then(data => {
-                data.forEach(function(cargo) {
-                  const option = document.createElement('option');
-                  option.value = cargo.id;
-                  option.text = cargo.nombre;
-                  cargoSelect.appendChild(option);
-                });
-              });
-          }
-        });
+  function addContactoForm() {
+    if (!totalForms || !formTemplate || !contactosContainer) return;
+    const index = parseInt(totalForms.value, 10);
+    const newHtml = formTemplate.replace(/__PREFIX__/g, 'contactoempleado_set-' + index);
+    contactosContainer.insertAdjacentHTML('beforeend', newHtml);
+    totalForms.value = index + 1;
+    updateDeleteButtons();
+  }
+
+  updateDeleteButtons();
+  if (addContactoButton) addContactoButton.addEventListener('click', addContactoForm);
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  const departamentoSelect = document.getElementById('id_departamento');
+  const cargoSelect = document.getElementById('id_cargo');
+  if (departamentoSelect && cargoSelect) {
+    departamentoSelect.addEventListener('change', function() {
+      const departamentoId = this.value;
+      cargoSelect.innerHTML = '<option value="">---------</option>';
+      if (departamentoId) {
+        fetch("{% url 'obtener_cargos' %}?departamento_id=" + departamentoId)
+          .then(response => response.json())
+          .then(data => {
+            data.forEach(function(cargo) {
+              const option = document.createElement('option');
+              option.value = cargo.id;
+              option.text = cargo.nombre;
+              cargoSelect.appendChild(option);
+            });
+          });
       }
     });
+  }
+});
 </script>
 {% endblock %}

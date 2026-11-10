@@ -1,20 +1,32 @@
 from django.core.management.base import BaseCommand
-from inventario.models import Repuesto, UnidadMedida
+from django.db import transaction
+from configuraciones_maestras.models import Moneda
+from inventario.models import Repuesto, UnidadMedida, CategoriaRepuesto
 import random
 
 class Command(BaseCommand):
     help = 'Carga repuestos iniciales en la base de datos para pruebas'
 
     def handle(self, *args, **kwargs):
-        # Obtener o crear la unidad de medida "Unidad"
-        unidad, created = UnidadMedida.objects.get_or_create(
-            nombre='Unidad',
-            defaults={'abreviatura': 'u'}
-        )
-        if created:
-            self.stdout.write(self.style.SUCCESS('Unidad de medida "Unidad" creada.'))
+        from clientes_pedidos.models import ItemPedido, Pedido
 
-        repuestos_data = [
+        with transaction.atomic():
+            # Obtener o crear la unidad de medida "Unidad"
+            unidad, created = UnidadMedida.objects.get_or_create(
+                nombre='Unidad',
+                defaults={'abreviatura': 'u'}
+            )
+            if created:
+                self.stdout.write(self.style.SUCCESS('Unidad de medida "Unidad" creada.'))
+
+            moneda_venta, moneda_created = Moneda.objects.get_or_create(
+                codigo='PYG',
+                defaults={'nombre': 'Guaraní'}
+            )
+            if moneda_created:
+                self.stdout.write(self.style.SUCCESS('Moneda "PYG" creada.'))
+
+            repuestos_data = [
             # I. Sistema de Motor y Mantenimiento
             {
                 'nombre': 'Filtro de Aceite CRDi (Eco)',
@@ -321,29 +333,68 @@ class Command(BaseCommand):
                 'compatibilidad': 'Hyundai I10 / Kia Picanto',
             },
         ]
-        
+
+            category_names = sorted({item['categoria'] for item in repuestos_data})
+            categorias_map = {}
+            for nombre_categoria in category_names:
+                categoria_obj, created = CategoriaRepuesto.objects.get_or_create(
+                    nombre=nombre_categoria,
+                    defaults={'descripcion': '', 'estado': True}
+                )
+                categorias_map[nombre_categoria] = categoria_obj
+                if created:
+                    self.stdout.write(self.style.SUCCESS(f'Categoría "{nombre_categoria}" creada.'))
+
         for repuesto_data in repuestos_data:
             stock_actual = random.randint(10, 50)
             costo_compra = random.randint(50000, 500000)
             precio_venta = round(costo_compra * 1.2, 2)
             
-            repuesto, created = Repuesto.objects.get_or_create(
-                codigo_repuesto=repuesto_data['codigo_repuesto'],
-                defaults={
-                    'nombre': repuesto_data['nombre'],
-                    'categoria': repuesto_data['categoria'],
-                    'compatibilidad': repuesto_data['compatibilidad'],
-                    'unidad_medida': unidad,
-                    'stock_actual': stock_actual,
-                    'stock_minimo': 5,
-                    'costo_compra': costo_compra,
-                    'precio_venta': precio_venta,
-                    'costo_unitario': costo_compra,
-                }
-            )
-            if created:
+            categoria_obj = categorias_map[repuesto_data['categoria']]
+            codigo_repuesto = repuesto_data['codigo_repuesto']
+            repuesto_existente = Repuesto.objects.filter(codigo_repuesto=codigo_repuesto).first()
+
+            if repuesto_existente:
+                tiene_pedido = (
+                    ItemPedido.objects.filter(repuesto=repuesto_existente).exists()
+                    or Pedido.objects.filter(repuesto_a_abastecer=repuesto_existente).exists()
+                )
+                if not tiene_pedido:
+                    repuesto_existente.delete()
+                    self.stdout.write(self.style.WARNING(f'Repuesto {codigo_repuesto} sin pedidos asociados. Se recreará.'))
+                    repuesto_existente = None
+
+            if repuesto_existente is None:
+                repuesto = Repuesto.objects.create(
+                    nombre=repuesto_data['nombre'],
+                    codigo_repuesto=codigo_repuesto,
+                    categoria=categoria_obj,
+                    compatibilidad=repuesto_data['compatibilidad'],
+                    unidad_medida=unidad,
+                    stock_actual=stock_actual,
+                    stock_minimo=5,
+                    costo_compra=costo_compra,
+                    precio_venta=precio_venta,
+                    costo_unitario=costo_compra,
+                    tipo='repuesto',
+                    estado='disponible',
+                    moneda_venta=moneda_venta,
+                )
                 self.stdout.write(self.style.SUCCESS(f'Repuesto {repuesto} creado correctamente.'))
             else:
-                self.stdout.write(f'Repuesto {repuesto} ya existe.')
+                repuesto_existente.nombre = repuesto_data['nombre']
+                repuesto_existente.categoria = categoria_obj
+                repuesto_existente.compatibilidad = repuesto_data['compatibilidad']
+                repuesto_existente.unidad_medida = unidad
+                repuesto_existente.stock_actual = stock_actual
+                repuesto_existente.stock_minimo = 5
+                repuesto_existente.costo_compra = costo_compra
+                repuesto_existente.precio_venta = precio_venta
+                repuesto_existente.costo_unitario = costo_compra
+                repuesto_existente.tipo = 'repuesto'
+                repuesto_existente.estado = 'disponible'
+                repuesto_existente.moneda_venta = moneda_venta
+                repuesto_existente.save()
+                self.stdout.write(self.style.SUCCESS(f'Repuesto {repuesto_existente} actualizado correctamente.'))
         
         self.stdout.write(self.style.SUCCESS('Carga de repuestos completada.'))

@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Cobranzas{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row align-items-center mb-5">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center gap-4">
+        <div class="bg-success bg-opacity-10 rounded-circle p-4">
+          <i class="bi bi-cash-coin text-success" style="font-size: 2rem;"></i>
+        </div>
+        <div>
+          <h1 class="h3 fw-bold mb-1">Cobranzas</h1>
+          <p class="text-muted mb-0">Pedidos aprobados para confirmar pago y facturación.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light border-0 py-4">
+      <div class="d-flex align-items-center justify-content-between flex-column flex-md-row gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-funnel-fill text-primary fs-4"></i>
+          <h6 class="mb-0 fw-bold">Filtrar pedidos</h6>
+        </div>
+        <span class="text-muted small">Usa filtros para encontrar pedidos más rápido.</span>
+      </div>
+    </div>
+    <div class="card-body p-4">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-lg-3 col-md-6">
+          <label class="form-label fw-semibold">Estado</label>
+          <select name="estado" class="form-select">
+            <option value="">Todos los estados</option>
+            {% for key, val in pedidos.model.ESTADO_PEDIDO %}
+              <option value="{{ key }}" {% if request.GET.estado == key %}selected{% endif %}>{{ val }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <label class="form-label fw-semibold">Tipo de Venta</label>
+          <select name="tipo" class="form-select">
+            <option value="">Todos los tipos</option>
+            <option value="repuesto" {% if request.GET.tipo == 'repuesto' %}selected{% endif %}>Repuesto</option>
+            <option value="vehiculo" {% if request.GET.tipo == 'vehiculo' %}selected{% endif %}>Vehículo</option>
+          </select>
+        </div>
+        <div class="col-lg-3 col-md-6 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+        <div class="col-lg-3 col-md-6 d-flex align-items-end">
+          <a href="{% url 'lista_pedidos_cobranzas' %}" class="btn btn-outline-secondary w-100">Limpiar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white border-0 py-3">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+        <div>
+          <h3 class="h5 fw-bold mb-1">Pedidos en Cobranzas</h3>
+          <p class="text-muted mb-0">Resultados encontrados: <strong>{{ pedidos|length }}</strong></p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+          <a href="{% url 'lista_pedidos_busqueda' %}" class="btn btn-outline-warning btn-sm">Ver búsquedas</a>
+          <a href="{% url 'lista_pedidos_despacho' %}" class="btn btn-outline-success btn-sm">Ver despacho</a>
+          <a href="{% url 'lista_pedidos_transferencia' %}" class="btn btn-outline-info btn-sm">Ver transferencia</a>
+          <div class="text-muted small">
+          {% if request.GET.estado or request.GET.tipo %}
+            Filtros activos
+          {% else %}
+            Sin filtros aplicados
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-center">
+            <tr>
+              <th class="border-0 fw-semibold">#</th>
+              <th class="border-0 fw-semibold">Cliente</th>
+              <th class="border-0 fw-semibold">Monto</th>
+              <th class="border-0 fw-semibold">Estado</th>
+              <th class="border-0 fw-semibold">Factura</th>
+              <th class="border-0 fw-semibold">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pedido in pedidos %}
+            <tr>
+              <td class="text-center fw-semibold text-primary">#{{ pedido.id }}</td>
+              <td>
+                <a href="{% url 'detalle_pedido' pedido.id %}" class="text-decoration-none text-dark fw-semibold d-inline-flex align-items-center gap-2">
+                  {{ pedido.cliente }}
+                  <i class="bi bi-box-arrow-up-right text-primary small"></i>
+                </a>
+              </td>
+              <td class="text-end">Gs. {{ pedido.monto_total|default:0 }}</td>
+              <td class="text-center">
+                {% if pedido.estado == 'pagado' %}
+                  <span class="badge bg-success bg-opacity-10 text-success">Pagado</span>
+                {% elif pedido.estado == 'facturado' %}
+                  <span class="badge bg-primary bg-opacity-10 text-primary">Facturado</span>
+                {% elif pedido.estado == 'facturado_contado' %}
+                  <span class="badge bg-primary bg-opacity-10 text-primary">Facturado Contado</span>
+                {% elif pedido.estado == 'transferencia_en_tramite' %}
+                  <span class="badge bg-info bg-opacity-10 text-info">Transferencia en Trámite</span>
+                {% elif pedido.estado == 'pendiente_cobro' %}
+                  <span class="badge bg-warning bg-opacity-10 text-warning">Pendiente de Cobro</span>
+                {% elif pedido.estado == 'cobranzas' %}
+                  <span class="badge bg-warning bg-opacity-10 text-warning">En cobranzas</span>
+                {% else %}
+                  <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ pedido.get_estado_display }}</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if pedido.factura_pdf %}
+                  <span class="badge bg-success bg-opacity-10 text-success">Factura generada</span>
+                {% elif pedido.estado == 'facturado_contado' %}
+                  <span class="badge bg-warning bg-opacity-10 text-warning">Pendiente de factura</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <div class="d-flex justify-content-center gap-1 flex-wrap">
+                  {% if pedido.estado == 'facturado_contado' %}
+                    <form method="post" action="{% url 'confirmar_pago_cobranzas' pedido.id %}" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="metodo_pago" value="Transferencia">
+                      <button type="submit" class="btn btn-outline-success btn-sm" title="Confirmar pago">Confirmar pago</button>
+                    </form>
+                  {% elif pedido.estado == 'aprobado' or pedido.estado == 'cobranzas' or pedido.estado == 'pendiente_cobro' %}
+                    <form method="post" action="{% url 'facturar_contado_cobranzas' pedido.id %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-outline-primary btn-sm" title="Facturar Contado">Facturar</button>
+                    </form>
+                  {% endif %}
+
+                  <form method="post" action="{% url 'cancelar_pedido_cobranzas' pedido.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Cancelar">Cancelar</button>
+                  </form>
+
+                  {% if pedido.es_venta_repuesto and pedido.estado == 'facturado_contado' %}
+                    <form method="post" action="{% url 'entregar_repuesto_cobranzas' pedido.id %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-outline-secondary btn-sm" title="Entregar">Entregar</button>
+                    </form>
+                  {% endif %}
+
+                  {% if pedido.es_venta_vehiculo and pedido.estado == 'facturado_contado' %}
+                    <form method="post" action="{% url 'iniciar_transferencia_cobranzas' pedido.id %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-outline-info btn-sm" title="Iniciar Trámite">Trámite</button>
+                    </form>
+                  {% endif %}
+
+                  <a href="{% url 'detalle_pedido' pedido.id %}" class="btn btn-outline-primary btn-sm" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                  </a>
+
+                  {% if pedido.factura_pdf or pedido.estado == 'facturado_contado' %}
+                    <a href="{% url 'previsualizar_factura_cobranzas' pedido.id %}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Factura">
+                      <i class="bi bi-file-pdf"></i>
+                    </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">No hay pedidos pendientes de cobranza.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.card {
+  border-radius: 1rem;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.05);
+}
+
+.btn-outline-secondary {
+  border-color: #d1d5db;
+}
+
+@media (max-width: 767px) {
+  .card-body .row.g-3 > div {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+}
+</style>
+{% endblock %}

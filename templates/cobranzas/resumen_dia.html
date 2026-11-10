@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+
+{% block title %}Resumen del día{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h2 class="mb-1">Resumen del día</h2>
+      <p class="text-muted mb-0">Corte operativo de caja para {{ fecha|date:'d/m/Y' }}</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <form method="get" class="d-flex align-items-center gap-2">
+        <input type="date" name="fecha" class="form-control" value="{{ fecha|date:'Y-m-d' }}">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+      </form>
+      <a href="{% url 'panel_caja' %}" class="btn btn-outline-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Cobros del día</div>
+          <div class="fs-4 fw-bold">Gs. {{ total_cobrado|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Efectivo</div>
+          <div class="fs-4 fw-bold">Gs. {{ total_efectivo|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Transferencias</div>
+          <div class="fs-4 fw-bold">Gs. {{ total_transferencia|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Diferencia total</div>
+          <div class="fs-4 fw-bold {% if diferencia_total >= 0 %}text-success{% else %}text-danger{% endif %}">
+            Gs. {{ diferencia_total|floatformat:2 }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Ranking de rendimiento</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-lg-6">
+              <h6 class="fw-bold mb-3">Resumen por sucursal</h6>
+              <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Sucursal</th>
+                      <th>Total</th>
+                      <th>Participación</th>
+                      <th>Diferencia vs. día anterior</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for fila in resumen_por_sucursal %}
+                    <tr>
+                      <td>{{ fila.nombre }}</td>
+                      <td>Gs. {{ fila.total|floatformat:2 }}</td>
+                      <td>{{ fila.participacion|floatformat:1 }}%</td>
+                      <td class="{% if fila.diferencia_anterior >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {% if fila.diferencia_anterior >= 0 %}+{% endif %}Gs. {{ fila.diferencia_anterior|floatformat:2 }}
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="4" class="text-center text-muted py-3">Sin ventas para esta fecha.</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="col-lg-6">
+              <h6 class="fw-bold mb-3">Resumen por empleado</h6>
+              <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Empleado</th>
+                      <th>Total</th>
+                      <th>Participación</th>
+                      <th>Diferencia vs. día anterior</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for fila in resumen_por_empleado %}
+                    <tr>
+                      <td>{{ fila.nombre }}</td>
+                      <td>Gs. {{ fila.total|floatformat:2 }}</td>
+                      <td>{{ fila.participacion|floatformat:1 }}%</td>
+                      <td class="{% if fila.diferencia_anterior >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {% if fila.diferencia_anterior >= 0 %}+{% endif %}Gs. {{ fila.diferencia_anterior|floatformat:2 }}
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="4" class="text-center text-muted py-3">Sin rendimiento registrado.</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white">
+          <h5 class="mb-0">Pagos registrados</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Hora</th>
+                  <th>Caja</th>
+                  <th>Método</th>
+                  <th>Empleado</th>
+                  <th class="text-end">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for pago in pagos %}
+                <tr>
+                  <td>{{ pago.fecha_pago|time:'H:i' }}</td>
+                  <td>{% if pago.caja %}{{ pago.caja.nombre }}{% else %}-{% endif %}</td>
+                  <td>{{ pago.metodo_pago }}</td>
+                  <td>{% if pago.empleado %}{{ pago.empleado }}{% else %}-{% endif %}</td>
+                  <td class="text-end">Gs. {{ pago.monto|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-4">No hubo pagos registrados para esta fecha.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">Arqueo por caja</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Caja</th>
+                  <th>Esperado</th>
+                  <th>Real</th>
+                  <th>Diferencia</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for cierre in cierres %}
+                <tr>
+                  <td>{{ cierre.caja.nombre }}</td>
+                  <td>Gs. {{ cierre.monto_esperado|floatformat:2 }}</td>
+                  <td>Gs. {{ cierre.monto_real|floatformat:2 }}</td>
+                  <td class="{% if cierre.diferencia >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    Gs. {{ cierre.diferencia|floatformat:2 }}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-4">Todavía no se cerró ninguna caja.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Totales de cierre</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span>Esperado</span>
+            <strong>Gs. {{ total_esperado|floatformat:2 }}</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Real</span>
+            <strong>Gs. {{ total_real|floatformat:2 }}</strong>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>Diferencia</span>
+            <strong class="{% if diferencia_total >= 0 %}text-success{% else %}text-danger{% endif %}">
+              Gs. {{ diferencia_total|floatformat:2 }}
+            </strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

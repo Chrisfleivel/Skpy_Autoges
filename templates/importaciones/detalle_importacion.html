@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle Importación{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3>Importación {{ importacion.codigo_seguimiento }}</h3>
+      <p class="text-muted">Proveedor: {{ importacion.proveedor.nombre }}</p>
+    </div>
+    <div>
+      <a href="{% url 'lista_importaciones' %}" class="btn btn-outline-secondary">Volver</a>
+      <a href="{% url 'editar_importacion' importacion.id %}" class="btn btn-outline-secondary">Editar</a>
+      <a href="{% url 'cargar_factura_importacion' importacion.id %}" class="btn btn-outline-success ms-2">Cargar factura</a>
+      <a href="{% url 'lista_documentos_importacion' importacion.id %}" class="btn btn-outline-info ms-2">Documentos</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <dl class="row">
+        <dt class="col-sm-3">Código</dt>
+        <dd class="col-sm-9">{{ importacion.codigo_seguimiento }}</dd>
+
+        <dt class="col-sm-3">Proveedor</dt>
+        <dd class="col-sm-9">{{ importacion.proveedor.nombre }}</dd>
+
+        <dt class="col-sm-3">Agente Transporte Origen</dt>
+        <dd class="col-sm-9">{{ importacion.agente_transporte_origen }}</dd>
+
+        <dt class="col-sm-3">Agente Transporte Destino</dt>
+        <dd class="col-sm-9">{{ importacion.agente_transporte_destino }}</dd>
+
+        <dt class="col-sm-3">Despachante</dt>
+        <dd class="col-sm-9">{{ importacion.despachante_aduana }}</dd>
+
+        <dt class="col-sm-3">Despachante / Agente de Despacho</dt>
+        <dd class="col-sm-9">{{ importacion.despachante|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Número Booking</dt>
+        <dd class="col-sm-9">{{ importacion.numero_booking|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Número HBL/AWB</dt>
+        <dd class="col-sm-9">{{ importacion.numero_hbl_awb|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Número de Contenedor</dt>
+        <dd class="col-sm-9">{{ importacion.numero_contenedor|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Número de Precinto</dt>
+        <dd class="col-sm-9">{{ importacion.numero_precinto|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Placa Vehículo Local</dt>
+        <dd class="col-sm-9">{{ importacion.placa_vehiculo_destino|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Cédula del Chofer</dt>
+        <dd class="col-sm-9">{{ importacion.cedula_chofer_destino|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Habilitación DINATRAN</dt>
+        <dd class="col-sm-9">{{ importacion.registro_dinatran|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Código Importador Corea (KCS)</dt>
+        <dd class="col-sm-9">{{ importacion.codigo_identificador_importador_corea|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Número de Mandato VUI</dt>
+        <dd class="col-sm-9">{{ importacion.numero_mandato_vui|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Número de Expediente VUI</dt>
+        <dd class="col-sm-9">{{ importacion.numero_expediente_vui|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Vencimiento Mandato VUI</dt>
+        <dd class="col-sm-9">{{ importacion.fecha_vencimiento_mandato_paraguay|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Vencimiento POA Corea</dt>
+        <dd class="col-sm-9">{{ importacion.fecha_vencimiento_poa_corea|default:'-' }}</dd>
+
+        {% if importacion.tiene_alerta_mandato %}
+        <dt class="col-sm-3">Alertas de Mandato</dt>
+        <dd class="col-sm-9 text-danger">
+          {% for alerta in importacion.mandatos_vencidos %}
+            <div>{{ alerta }}</div>
+          {% endfor %}
+        </dd>
+        {% endif %}
+
+        {% if importacion.tiene_alerta_proxima_expiracion %}
+        <dt class="col-sm-3">Alertas Próxima Expiración</dt>
+        <dd class="col-sm-9 text-warning">
+          {% for alerta in importacion.mandatos_por_vencer %}
+            <div>{{ alerta }}</div>
+          {% endfor %}
+        </dd>
+        {% endif %}
+
+        <dt class="col-sm-3">POA Cargado</dt>
+        <dd class="col-sm-9">
+          {% if importacion.poa_cargado %}
+            <span class="badge bg-success">Sí</span>
+          {% else %}
+            <span class="badge bg-secondary">No</span>
+          {% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Certificado KC Cargado</dt>
+        <dd class="col-sm-9">
+          {% if importacion.certificado_kc_cargado %}
+            <span class="badge bg-success">Sí</span>
+          {% else %}
+            <span class="badge bg-secondary">No</span>
+          {% endif %}
+        </dd>
+
+        <dt class="col-sm-3">Fecha Embarque</dt>
+        <dd class="col-sm-9">{{ importacion.fecha_embarque|default:'-' }}</dd>
+
+        <dt class="col-sm-3">Estado</dt>
+        <dd class="col-sm-9">{{ importacion.get_estado_display }}</dd>
+
+        <dt class="col-sm-3">Monto Total Costos</dt>
+        <dd class="col-sm-9">{{ importacion.monto_total_costos }}</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+{% endblock %}

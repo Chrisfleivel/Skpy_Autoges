@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Auditoría de ajustes</h2>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" href="{% url 'listar_asientos_contables' %}">Ver asientos</a>
+            <a class="btn btn-outline-primary" href="{% url 'auditoria_asientos_contables' %}">Ver auditoría</a>
+            <a class="btn btn-outline-secondary" href="{% url 'cierre_mensual' %}">Cierre mensual</a>
+        </div>
+    </div>
+    <table class="table">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for asiento in ajustes %}
+        <tr>
+            <td>{{ asiento.fecha }}</td>
+            <td>{{ asiento.descripcion }}</td>
+            <td>
+            {% if not asiento.revisado %}
+                <form action="{% url 'marcar_asiento_revisado' asiento.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-success">Marcar Revisado</button>
+                </form>
+            {% else %}
+                <span class="badge badge-secondary">Revisado por {{ asiento.revisado_por }}</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}

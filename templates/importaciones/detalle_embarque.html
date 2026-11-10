@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de embarque{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3>Embarque #{{ embarque.pk }}</h3>
+      <p class="mb-0 text-muted">{{ embarque.referencia_interna|default:'Sin referencia' }} · {{ embarque.get_estado_display }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'lista_embarques' %}" class="btn btn-outline-secondary">Volver</a>
+      <a href="{% url 'editar_embarque' embarque.pk %}" class="btn btn-outline-primary">Editar</a>
+      <a href="{% url 'resumen_embarque' embarque.pk %}" class="btn btn-outline-info">Resumen</a>
+      <a href="{% url 'exportar_resumen_embarque' embarque.pk %}" class="btn btn-success">Exportar CSV</a>
+    </div>
+  </div>
+
+  {% if messages %}
+    <div class="mt-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="card mb-4">
+    <div class="card-header">Checklist operativo</div>
+    <div class="card-body">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <div class="border rounded p-2 {% if flujo_operativo.embarque_registrado %}border-success text-success{% else %}border-warning text-warning{% endif %}">
+            <strong>Embarque registrado</strong>
+            <div>{{ flujo_operativo.embarque_registrado|yesno:'Sí,No' }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="border rounded p-2 {% if flujo_operativo.costos_cargados %}border-success text-success{% else %}border-warning text-warning{% endif %}">
+            <strong>Costos cargados</strong>
+            <div>{{ flujo_operativo.costos_cargados|yesno:'Sí,No' }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="border rounded p-2 {% if flujo_operativo.items_asociados %}border-success text-success{% else %}border-warning text-warning{% endif %}">
+            <strong>Ítems asociados</strong>
+            <div>{{ flujo_operativo.items_asociados|yesno:'Sí,No' }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="border rounded p-2 {% if flujo_operativo.chasis_verificado %}border-success text-success{% else %}border-warning text-warning{% endif %}">
+            <strong>Chasis verificado</strong>
+            <div>{{ flujo_operativo.chasis_verificado|yesno:'Sí,No' }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="border rounded p-2 {% if flujo_operativo.prorrateado %}border-success text-success{% else %}border-warning text-warning{% endif %}">
+            <strong>Prorrateado</strong>
+            <div>{{ flujo_operativo.prorrateado|yesno:'Sí,No' }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="border rounded p-2 {% if flujo_operativo.cerrado %}border-success text-success{% else %}border-warning text-warning{% endif %}">
+            <strong>Cerrado</strong>
+            <div>{{ flujo_operativo.cerrado|yesno:'Sí,No' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header">Datos generales</div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6"><strong>Referencia:</strong> {{ embarque.referencia_interna|default:'-' }}</div>
+            <div class="col-md-6"><strong>B/L:</strong> {{ embarque.bl_numero|default:'-' }}</div>
+            <div class="col-md-6"><strong>Booking:</strong> {{ embarque.booking|default:'-' }}</div>
+            <div class="col-md-6"><strong>Naviera:</strong> {{ embarque.naviera|default:'-' }}</div>
+            <div class="col-md-6"><strong>Puerto carga:</strong> {{ embarque.puerto_carga|default:'-' }}</div>
+            <div class="col-md-6"><strong>Puerto descarga:</strong> {{ embarque.puerto_descarga|default:'-' }}</div>
+            <div class="col-md-6"><strong>Destino final:</strong> {{ embarque.destino_final|default:'-' }}</div>
+            <div class="col-md-6"><strong>Flete prepago:</strong> {% if embarque.flete_prepago %}Sí{% else %}No{% endif %}</div>
+            <div class="col-md-6"><strong>Fecha embarque:</strong> {{ embarque.fecha_embarque|default:'-' }}</div>
+            <div class="col-md-6"><strong>ETA:</strong> {{ embarque.eta|default:'-' }}</div>
+            <div class="col-md-6"><strong>Fecha arribo:</strong> {{ embarque.fecha_arribo|default:'-' }}</div>
+            <div class="col-md-6"><strong>Fecha recepción:</strong> {{ embarque.fecha_recepcion|default:'-' }}</div>
+            <div class="col-md-6"><strong>Peso bruto:</strong> {{ embarque.peso_bruto_kg|default:'-' }}</div>
+            <div class="col-md-6"><strong>Volumen:</strong> {{ embarque.volumen_m3|default:'-' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Ítems del embarque</span>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Factura / ítem</th>
+                <th>Cantidad</th>
+                <th>Chasis B/L</th>
+                <th>Costo prorrateado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in items %}
+              <tr>
+                <td>{{ item.factura_item.descripcion }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>{{ item.chasis_bl|default:'-' }}</td>
+                <td>{{ item.costo_prorrateado|default:'-' }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center">Sin ítems cargados.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Gastos del embarque</div>
+        <div class="card-body">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Descripción</th>
+                <th>Proveedor</th>
+                <th>Monto</th>
+                <th>Costeable</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for gasto in gastos %}
+              <tr>
+                <td>{{ gasto.get_tipo_display }}</td>
+                <td>{{ gasto.descripcion }}</td>
+                <td>{{ gasto.proveedor_servicio|default:'-' }}</td>
+                <td>{{ gasto.monto_base }}</td>
+                <td>{% if gasto.es_costeable %}Sí{% else %}No{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center">Sin gastos asociados.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-header">Verificación de chasis</div>
+        <div class="card-body">
+          {% if verificacion.ok %}
+            <span class="badge bg-success mb-3">OK</span>
+          {% else %}
+            <span class="badge bg-warning text-dark mb-3">Hay discrepancias</span>
+          {% endif %}
+          {% for item in verificacion.items %}
+            <div class="border rounded p-2 mb-2">
+              <strong>{{ item.descripcion }}</strong>
+              <div>BL: {{ item.chasis_bl|default:'-' }}</div>
+              <div>Vehículo: {{ item.chasis_vehiculo|default:'-' }}</div>
+              <div>{% if item.coincide %}Coincide{% else %}No coincide{% endif %}</div>
+            </div>
+          {% empty %}
+            <p class="text-muted mb-0">No hay ítems para verificar.</p>
+          {% endfor %}
+          <form method="post" action="{% url 'verificar_embarque' embarque.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary w-100 mt-3">Verificar chasis</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header">Prorrateo y cierre</div>
+        <div class="card-body d-grid gap-2">
+          <form method="post" action="{% url 'prorratear_embarque' embarque.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning w-100">Prorratear gastos</button>
+          </form>
+          <form method="post" action="{% url 'cerrar_embarque' embarque.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success w-100">Cerrar embarque</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header">Asignar ítem</div>
+        <div class="card-body">
+          <form method="post" action="{% url 'agregar_item_embarque' embarque.pk %}">
+            {% csrf_token %}
+            {% for field in item_form %}
+              <div class="mb-3">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+              </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Agregar ítem</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Registrar gasto</div>
+        <div class="card-body">
+          <form method="post" action="{% url 'agregar_gasto_embarque' embarque.pk %}">
+            {% csrf_token %}
+            {% for field in gasto_form %}
+              <div class="mb-3">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+              </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Agregar gasto</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

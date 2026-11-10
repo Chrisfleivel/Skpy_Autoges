@@ -1,14 +1,106 @@
-# Agregar Tasa de Cambio
 {% extends 'base.html' %}
 
-{% block title %}Agregar Tasa de Cambio{% endblock %}
+{% block title %}Cargar Tasa de Cambio{% endblock %}
 
 {% block content %}
-    <h1>Agregar Tasa de Cambio</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Agregar</button>
-    </form>
-    <a href="{% url 'lista_tasas_cambio' %}">Volver a la lista de tasas de cambio</a>
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-xl-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+          <div>
+            <h5 class="mb-0 fw-bold">Registrar Tasa de Cambio</h5>
+            <p class="text-muted mb-0">Esta tasa se aplicara a todas las compras en USD de hoy.</p>
+          </div>
+          <a href="{% url 'lista_tasas_cambio' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver
+          </a>
+        </div>
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.moneda_origen.id_for_label }}">Moneda de Origen</label>
+                {{ form.moneda_origen }}
+                {% if form.moneda_origen.errors %}
+                  <div class="text-danger small mt-1">{{ form.moneda_origen.errors|join:', ' }}</div>
+                {% endif %}
+                <small class="text-muted d-block mt-2">La moneda de las compras (normalmente USD)</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.moneda_destino.id_for_label }}">Moneda de Destino</label>
+                {{ form.moneda_destino }}
+                {% if form.moneda_destino.errors %}
+                  <div class="text-danger small mt-1">{{ form.moneda_destino.errors|join:', ' }}</div>
+                {% endif %}
+                <small class="text-muted d-block mt-2">La moneda de venta (PYG)</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.valor.id_for_label }}">Tasa de Cambio</label>
+                {{ form.valor }}
+                {% if form.valor.errors %}
+                  <div class="text-danger small mt-1">{{ form.valor.errors|join:', ' }}</div>
+                {% endif %}
+                <small class="text-muted d-block mt-2">1 USD = X PYG</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.fecha.id_for_label }}">Fecha de Vigencia</label>
+                {{ form.fecha }}
+                {% if form.fecha.errors %}
+                  <div class="text-danger small mt-1">{{ form.fecha.errors|join:', ' }}</div>
+                {% endif %}
+                <small class="text-muted d-block mt-2">Fecha para la cual es valida esta tasa</small>
+              </div>
+            </div>
+
+            <!-- Previsualización de Cálculo -->
+            <div class="alert alert-info mt-4" role="alert">
+              <h6 class="mb-2"><i class="bi bi-info-circle-fill me-2"></i>Previsualización de Conversión</h6>
+              <div id="preview-calc">
+                <p class="mb-1 small"><strong>100 USD × <span id="preview-tasa">0</span> = </strong><span id="preview-resultado">0</span> PYG</p>
+                <p class="mb-1 small"><strong>1000 USD × <span id="preview-tasa-1000">0</span> = </strong><span id="preview-resultado-1000">0</span> PYG</p>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+              <a href="{% url 'lista_tasas_cambio' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle me-2"></i>Cancelar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-2"></i>Registrar Tasa
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const inputTasa = document.querySelector('input[name="valor"]');
+  
+  function actualizarPreview() {
+    const tasa = parseFloat(inputTasa.value) || 0;
+    document.getElementById('preview-tasa').textContent = tasa.toFixed(4);
+    document.getElementById('preview-resultado').textContent = (100 * tasa).toLocaleString('es-PY', { maximumFractionDigits: 0 });
+    document.getElementById('preview-tasa-1000').textContent = tasa.toFixed(4);
+    document.getElementById('preview-resultado-1000').textContent = (1000 * tasa).toLocaleString('es-PY', { maximumFractionDigits: 0 });
+  }
+  
+  inputTasa.addEventListener('input', actualizarPreview);
+  actualizarPreview();
+});
+</script>
 {% endblock %}

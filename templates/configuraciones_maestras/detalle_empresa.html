@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle Empresa{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0">{{ empresa.nombre }}</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <p><strong>Dirección:</strong> {{ empresa.direccion|default:'-' }}</p>
+                    <p><strong>Teléfono:</strong> {{ empresa.telefono|default:'-' }}</p>
+                    <p><strong>Email:</strong> {{ empresa.email|default:'-' }}</p>
+                    <p><strong>Sucursales:</strong>
+                        {% if empresa.sucursales.exists %}
+                            {% for sucursal in empresa.sucursales.all %}
+                                {{ sucursal.nombre }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            Sin sucursales asociadas
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4 text-center">
+                    {% if empresa.logo %}
+                        <img src="{{ empresa.logo.url }}" alt="Logo {{ empresa.nombre }}" class="img-fluid rounded border" style="max-height: 180px;">
+                    {% else %}
+                        <div class="border rounded p-4 text-muted">Sin logo cargado</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <a href="{% url 'editar_empresa' empresa.pk %}" class="btn btn-primary">Editar</a>
+            <a href="{% url 'lista_empresas' %}" class="btn btn-secondary">Volver</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

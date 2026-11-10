@@ -48,20 +48,24 @@ def revisar_permisos_roles(nombres_permisos):
     def decorator(view_func):
         def _wrapped_view(request, *args, **kwargs):
             usuario = request.user
-            if usuario.is_authenticated:
-                # Verificar si el usuario tiene alguno de los permisos directamente
-                for permiso in nombres_permisos:
-                    if usuario.has_perm(permiso):
-                        return view_func(request, *args, **kwargs)
-                
-                # Verificar si el usuario tiene alguno de los permisos a través de sus roles
-                empleado = getattr(usuario, 'empleado', None)
-                if empleado:
-                    permisos_asignados = empleado.permisos_asignados()
-                    if any(permiso in permisos_asignados for permiso in nombres_permisos):
-                        return view_func(request, *args, **kwargs)
-            
-            raise PermissionDenied
+            if not usuario.is_authenticated:
+                return redirect('login')
+            if usuario.is_active is False:
+                return redirect('home')
+            if usuario.is_superuser:
+                return view_func(request, *args, **kwargs)
+
+            for permiso in nombres_permisos:
+                if usuario.has_perm(permiso):
+                    return view_func(request, *args, **kwargs)
+
+            perfil_usuario = getattr(usuario, 'perfil', None)
+            if perfil_usuario:
+                permisos_asignados = perfil_usuario.permisos_asignados()
+                if any(permiso in permisos_asignados for permiso in nombres_permisos):
+                    return view_func(request, *args, **kwargs)
+
+            return redirect('home')
         return _wrapped_view
     return decorator
 

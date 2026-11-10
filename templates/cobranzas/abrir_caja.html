@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Abrir Caja{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card shadow-sm border-0 mx-auto" style="max-width: 700px;">
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Abrir Caja</h4>
+      <span class="badge bg-white text-success">Operación de caja</span>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-light border mb-4">
+        Registra la caja asignada a la sucursal y el monto inicial para comenzar a cobrar clientes.
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Sucursal</label>
+            {{ form.sucursal }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nombre de la caja</label>
+            {{ form.nombre }}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Monto inicial</label>
+            {{ form.monto_inicial }}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Observaciones</label>
+            {{ form.observaciones }}
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+          <a href="{% url 'panel_caja' %}" class="btn btn-outline-secondary">Volver</a>
+          <button type="submit" class="btn btn-success">Abrir caja</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

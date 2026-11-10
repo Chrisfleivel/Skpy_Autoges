@@ -1,11 +1,158 @@
 {% extends 'base.html' %}
 
+{% block title %}Editar Repuesto{% endblock %}
+
 {% block content %}
-  <h2>Editar Repuesto</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar cambios</button>
-    <a href="{% url 'lista_repuestos' %}">Cancelar</a>
-  </form>
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-xl-9">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+          <div>
+            <h5 class="mb-0 fw-bold">Editar Repuesto</h5>
+            <p class="text-muted mb-0">Actualiza los datos del repuesto en el inventario.</p>
+          </div>
+          <a href="{% url 'lista_repuestos' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver
+          </a>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger m-4 mb-3">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <div class="card-body">
+            <h6 class="mb-3 fw-semibold text-primary">Información General</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-8">
+                <label class="form-label fw-semibold" for="{{ form.nombre.id_for_label }}">Nombre del Repuesto</label>
+                {{ form.nombre }}
+                {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="{{ form.codigo_repuesto.id_for_label }}">Código</label>
+                {{ form.codigo_repuesto }}
+                {% if form.codigo_repuesto.errors %}<div class="text-danger small mt-1">{{ form.codigo_repuesto.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.categoria.id_for_label }}">Categoría</label>
+                {{ form.categoria }}
+                {% if form.categoria.errors %}<div class="text-danger small mt-1">{{ form.categoria.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.compatibilidad.id_for_label }}">Compatibilidad</label>
+                {{ form.compatibilidad }}
+                {% if form.compatibilidad.errors %}<div class="text-danger small mt-1">{{ form.compatibilidad.errors|join:', ' }}</div>{% endif %}
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <h6 class="mb-3 fw-semibold text-primary">Proveedor y Unidad</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.proveedor.id_for_label }}">Proveedor</label>
+                {{ form.proveedor }}
+                {% if form.proveedor.errors %}<div class="text-danger small mt-1">{{ form.proveedor.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.unidad_medida.id_for_label }}">Unidad de Medida</label>
+                {{ form.unidad_medida }}
+                {% if form.unidad_medida.errors %}<div class="text-danger small mt-1">{{ form.unidad_medida.errors|join:', ' }}</div>{% endif %}
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <h6 class="mb-3 fw-semibold text-primary">Stock y Precios</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="{{ form.stock_actual.id_for_label }}">Stock Actual</label>
+                {{ form.stock_actual }}
+                {% if form.stock_actual.errors %}<div class="text-danger small mt-1">{{ form.stock_actual.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="{{ form.stock_minimo.id_for_label }}">Stock Mínimo</label>
+                {{ form.stock_minimo }}
+                {% if form.stock_minimo.errors %}<div class="text-danger small mt-1">{{ form.stock_minimo.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="{{ form.costo_compra.id_for_label }}">Costo de Compra</label>
+                {{ form.costo_compra }}
+                {% if form.costo_compra.errors %}<div class="text-danger small mt-1">{{ form.costo_compra.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="{{ form.precio_venta.id_for_label }}">Precio de Venta</label>
+                {{ form.precio_venta }}
+                {% if form.precio_venta.errors %}<div class="text-danger small mt-1">{{ form.precio_venta.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="{{ form.costo_compra_provedor_total.id_for_label }}">Costo del Proveedor Total</label>
+                {{ form.costo_compra_provedor_total }}
+                {% if form.costo_compra_provedor_total.errors %}<div class="text-danger small mt-1">{{ form.costo_compra_provedor_total.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="{{ form.costo_total_importacion.id_for_label }}">Costo Total de Importación</label>
+                {{ form.costo_total_importacion }}
+                {% if form.costo_total_importacion.errors %}<div class="text-danger small mt-1">{{ form.costo_total_importacion.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="{{ form.tasa_aplicada.id_for_label }}">Tasa Aplicada</label>
+                {{ form.tasa_aplicada }}
+                {% if form.tasa_aplicada.errors %}<div class="text-danger small mt-1">{{ form.tasa_aplicada.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="{{ form.tasa_cambio.id_for_label }}">Tasa de Cambio</label>
+                {{ form.tasa_cambio }}
+                {% if form.tasa_cambio.errors %}<div class="text-danger small mt-1">{{ form.tasa_cambio.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold" for="{{ form.moneda_venta.id_for_label }}">Moneda de Venta</label>
+                {{ form.moneda_venta }}
+                {% if form.moneda_venta.errors %}<div class="text-danger small mt-1">{{ form.moneda_venta.errors|join:', ' }}</div>{% endif %}
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <h6 class="mb-3 fw-semibold text-primary">Imagen y Descripción</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="{{ form.imagen.id_for_label }}">Imagen del Repuesto</label>
+                {{ form.imagen }}
+                {% if form.imagen.errors %}<div class="text-danger small mt-1">{{ form.imagen.errors|join:', ' }}</div>{% endif %}
+                {% if form.instance.imagen %}
+                  <div class="mt-2">
+                    <small class="text-muted">Imagen actual:</small><br>
+                    <img src="{{ form.instance.imagen.url }}" alt="Imagen actual" class="img-thumbnail mt-2" style="max-height: 120px;">
+                  </div>
+                {% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="{{ form.descripcion.id_for_label }}">Descripción</label>
+                {{ form.descripcion }}
+                {% if form.descripcion.errors %}<div class="text-danger small mt-1">{{ form.descripcion.errors|join:', ' }}</div>{% endif %}
+              </div>
+            </div>
+          </div>
+
+          {{ form.tipo }}
+
+          <div class="card-footer bg-light border-0 py-3">
+            <div class="d-flex gap-2 justify-content-end">
+              <a href="{% url 'lista_repuestos' %}" class="btn btn-outline-secondary">Cancelar</a>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-2"></i>Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

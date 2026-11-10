@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Cajas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-1">Cajas</h2>
+            <p class="text-muted mb-0">Cajas operativas de todas las sucursales. La apertura, cierre y saldos se gestionan desde Caja (cobranzas).</p>
+        </div>
+    </div>
+
+    {% if cajas %}
+    <div class="alert alert-light border d-flex align-items-center gap-3 mb-3">
+        <span class="fw-bold">Cajas registradas:</span>
+        <span class="badge bg-primary">Total: {{ total_cajas }}</span>
+        <span class="badge bg-success">Abiertas: {{ total_abiertas }}</span>
+        <span class="badge bg-secondary">Cerradas: {{ total_cerradas }}</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Sucursal</th>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Saldo Actual</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for caja in cajas %}
+                <tr>
+                    <td>
+                        <a href="{% url 'detalle_sucursal' caja.sucursal.pk %}">{{ caja.sucursal.nombre }}</a>
+                    </td>
+                    <td>{{ caja.nombre }}</td>
+                    <td>{{ caja.get_tipo_display }}</td>
+                    <td>
+                        {% if caja.estado == 'abierta' %}
+                        <span class="badge bg-success">Abierta</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Cerrada</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ caja.saldo_actual }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'detalle_caja' caja.sucursal.pk caja.pk %}" class="btn btn-outline-info">Ver</a>
+                            {% if caja.estado == 'abierta' %}
+                            <a href="{% url 'cerrar_caja_operativa' caja.sucursal.pk caja.pk %}" class="btn btn-outline-danger">Cerrar</a>
+                            {% else %}
+                            <a href="{% url 'abrir_caja_operativa' caja.sucursal.pk caja.pk %}" class="btn btn-outline-success">Abrir</a>
+                            {% endif %}
+                            <a href="{% url 'editar_caja' caja.sucursal.pk caja.pk %}" class="btn btn-outline-secondary">Editar</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">No hay cajas registradas todavía. Creá una desde alguna <a href="{% url 'lista_sucursales' %}">sucursal</a>.</div>
+    {% endif %}
+</div>
+{% endblock %}

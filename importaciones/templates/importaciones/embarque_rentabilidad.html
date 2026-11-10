@@ -1,0 +1,23 @@
+{% extends 'importaciones/base.html' %}
+{% block title %}Rentabilidad del embarque{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>Rentabilidad del embarque</h1>
+    {% if lineas %}
+      <table>
+        <tr><th>Vehículo</th><th>Ingreso</th><th>Costo</th><th>Margen</th></tr>
+        {% for linea in lineas %}
+          <tr>
+            <td>{{ linea.vehiculo }}</td>
+            <td>{{ linea.ingreso }}</td>
+            <td>{{ linea.costo }}</td>
+            <td>{{ linea.margen }}%</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>No hay ventas confirmadas asociadas a este embarque.</p>
+    {% endif %}
+  </div>
+{% endblock %}

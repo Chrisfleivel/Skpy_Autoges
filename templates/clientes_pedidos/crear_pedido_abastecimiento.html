@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Solicitar abastecimiento{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h5 class="mb-0 fw-bold">Solicitar abastecimiento</h5>
+          <p class="text-muted mb-0">Se creará un pedido de abastecimiento para el repuesto seleccionado.</p>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-warning d-flex align-items-start gap-2" role="alert">
+            <i class="bi bi-exclamation-circle-fill mt-1"></i>
+            <div>
+              <strong>{{ repuesto.nombre }}</strong><br>
+              Stock actual: {{ repuesto.stock_actual }} unidades<br>
+              Stock mínimo: {{ repuesto.stock_minimo }} unidades
+            </div>
+          </div>
+
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="cantidad" class="form-label fw-semibold">Cantidad a abastecer</label>
+              <input type="number" id="cantidad" name="cantidad" class="form-control" min="1" required value="{{ repuesto.stock_minimo|default:1 }}">
+            </div>
+            <div class="mb-3">
+              <label for="descripcion" class="form-label fw-semibold">Descripción del abastecimiento</label>
+              <textarea id="descripcion" name="descripcion" class="form-control" rows="4" placeholder="Indique la razón o detalle del abastecimiento"></textarea>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-warning">
+                <i class="bi bi-box-seam me-1"></i>Crear pedido de abastecimiento
+              </button>
+              <a href="{% url 'detalle_repuesto' repuesto.id %}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

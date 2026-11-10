@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Confirmar Completar Fase{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Confirmar Completar Fase</h5>
+                </div>
+                <div class="card-body">
+                    <p>¿Desea marcar esta fase como completada?</p>
+                    <div class="alert alert-info">
+                        <strong>{{ fase.get_fase_display }}</strong><br>
+                        Importación: {{ importacion.codigo_seguimiento }}<br>
+                        Documentos: {{ fase.documentos.count }}
+                    </div>
+
+                    <p class="text-muted">
+                        <i class="bi bi-info-circle"></i> 
+                        Al completar esta fase, no podrá añadir más documentos sin reeditarla.
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-check-circle"></i> Sí, Completar Fase
+                        </button>
+                        <a href="{% url 'detalle_fase_importacion' fase.id %}" class="btn btn-secondary">
+                            <i class="bi bi-x"></i> Cancelar
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

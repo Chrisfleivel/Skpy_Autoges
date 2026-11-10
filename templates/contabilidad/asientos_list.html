@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Asientos contables</h2>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" href="{% url 'auditoria_asientos_contables' %}">Ver auditoría</a>
+            <a class="btn btn-outline-secondary" href="{% url 'cierre_mensual' %}">Cierre mensual</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Fecha desde</label>
+                    <input type="date" name="fecha_desde" class="form-control" value="{{ fecha_desde|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha hasta</label>
+                    <input type="date" name="fecha_hasta" class="form-control" value="{{ fecha_hasta|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tipo de documento</label>
+                    <select name="documento_tipo" class="form-select">
+                        <option value="">Todos</option>
+                        {% for tipo in documento_tipos %}
+                        <option value="{{ tipo.id }}" {% if tipo.id|stringformat:'s' == documento_tipo_seleccionado %}selected{% endif %}>
+                            {{ tipo.app_label }} / {{ tipo.model }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">ID documento</label>
+                    <input type="text" name="documento_id" class="form-control" value="{{ documento_id }}" placeholder="Ej. 123">
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                </div>
+                <div class="col-md-2">
+                    <a href="{% url 'listar_asientos_contables' %}" class="btn btn-outline-secondary w-100">Limpiar filtros</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Descripción</th>
+                        <th>Documento</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for asiento in asientos %}
+                    <tr>
+                        <td>{{ asiento.fecha|date:'d/m/Y H:i' }}</td>
+                        <td>{{ asiento.descripcion }}</td>
+                        <td>
+                            {% if asiento.documento %}
+                                {{ asiento.documento }}
+                            {% elif asiento.documento_tipo %}
+                                {{ asiento.documento_tipo.app_label }}/{{ asiento.documento_tipo.model }} #{{ asiento.documento_id }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if asiento.revisado %}
+                                <span class="badge bg-success">Revisado</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a class="btn btn-sm btn-outline-primary" href="{% url 'detalle_asiento_contable' asiento.id %}">Detalle</a>
+                                {% if not asiento.revisado %}
+                                <form action="{% url 'marcar_asiento_revisado' asiento.id %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-success" type="submit">Marcar revisado</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-muted text-center">No hay asientos registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

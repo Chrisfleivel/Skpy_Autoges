@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirmar Precio del Pedido{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-xl-10">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h5 class="mb-0 fw-bold">Confirmar Precio del Pedido</h5>
+              <p class="text-muted mb-0">Pedido #{{ pedido.id }} - Aprobación Final de Precio</p>
+            </div>
+            <a href="{% url 'detalle_pedido' pedido.id %}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-2"></i>Volver
+            </a>
+          </div>
+        </div>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          
+          <div class="card-body">
+            <div class="alert alert-success border-0">
+              <i class="bi bi-check-circle me-2"></i>
+              <strong>Productos Encontrados</strong><br>
+              Los productos que buscaba han sido encontrados. A continuación se muestran los precios confirmados
+              por nuestro equipo de selección.
+            </div>
+
+            <h6 class="mb-3 fw-semibold text-primary">Detalle de Productos y Precios</h6>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Producto Buscado</th>
+                    <th>Producto Encontrado</th>
+                    <th>Cantidad</th>
+                    <th class="text-end">Precio Unitario</th>
+                    <th class="text-end">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for seleccion in selecciones %}
+                  <tr>
+                    <td>
+                      <strong>{{ seleccion.producto_buscado.descripcion|truncatewords:5 }}</strong>
+                      {% if seleccion.producto_buscado.marca %}
+                      <br><small class="text-muted">
+                        Buscado: {{ seleccion.producto_buscado.marca }}
+                        {% if seleccion.producto_buscado.modelo %}/{{ seleccion.producto_buscado.modelo }}{% endif %}
+                      </small>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if seleccion.repuesto %}
+                        <span class="badge bg-success bg-opacity-10 text-success">
+                          <i class="bi bi-check-circle me-1"></i>{{ seleccion.repuesto.nombre }}
+                        </span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <span class="badge bg-light text-dark">x{{ seleccion.producto_buscado.cantidad }}</span>
+                    </td>
+                    <td class="text-end">
+                      <strong>Gs. {{ seleccion.precio_unitario }}</strong>
+                    </td>
+                    <td class="text-end">
+                      <strong class="text-primary">Gs. {{ seleccion.precio_total }}</strong>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="row mt-4">
+              <div class="col-md-8"></div>
+              <div class="col-md-4">
+                <div class="card bg-primary bg-opacity-10 border-primary border-2 p-3">
+                  <p class="small text-muted mb-2">MONTO TOTAL A IMPORTAR</p>
+                  <h4 class="fw-bold text-primary mb-0">
+                    Gs. {{ monto_total }}
+                  </h4>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="alert alert-info border-0">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>¿Confirma esta venta?</strong><br>
+              Al hacer clic en "Confirmar Venta", se procederá con el pedido de importación
+              y se trasladará a la etapa de cobranza.
+            </div>
+          </div>
+
+          <div class="card-footer bg-light border-0 py-3">
+            <div class="d-flex gap-2 justify-content-end">
+              <a href="{% url 'detalle_pedido' pedido.id %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle me-2"></i>Rechazar
+              </a>
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-check-circle me-2"></i>Confirmar Venta
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body">
+          <h6 class="fw-semibold mb-3">Información de Contacto</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <p class="small text-muted mb-1">Cliente</p>
+              <p class="fw-semibold">{{ pedido.cliente.nombre }} {{ pedido.cliente.apellidos }}</p>
+            </div>
+            <div class="col-md-6">
+              <p class="small text-muted mb-1">Email</p>
+              <p class="fw-semibold">{{ pedido.cliente.email }}</p>
+            </div>
+            <div class="col-md-6">
+              <p class="small text-muted mb-1">Teléfono</p>
+              <p class="fw-semibold">{{ pedido.cliente.telefono }}</p>
+            </div>
+            <div class="col-md-6">
+              <p class="small text-muted mb-1">Dirección</p>
+              <p class="fw-semibold small">{{ pedido.cliente.direccion }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Sucursales{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-1">Sucursales</h2>
+            <p class="text-muted mb-0">Administración de las sucursales de SKPY.</p>
+        </div>
+        <div class="d-flex gap-2">
+            {% if perms.configuraciones_maestras.lista_cajas %}
+            <a href="{% url 'todas_las_cajas' %}" class="btn btn-outline-primary">Todas las cajas</a>
+            {% endif %}
+            <a href="{% url 'agregar_sucursal' %}" class="btn btn-primary">Nueva Sucursal</a>
+        </div>
+    </div>
+
+    {% if sucursales %}
+    <div class="alert alert-light border d-flex align-items-center gap-3 mb-3">
+        <span class="fw-bold">Sucursales registradas:</span>
+        <span class="badge bg-primary">Total: {{ total_sucursales }}</span>
+        <span class="badge bg-success">Activas: {{ total_activas }}</span>
+        <span class="badge bg-secondary">Inactivas: {{ total_inactivas }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Dirección</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sucursal in sucursales %}
+                <tr>
+                    <td>{{ sucursal.nombre }}</td>
+                    <td>{{ sucursal.telefono|default:'-' }}</td>
+                    <td>{{ sucursal.email|default:'-' }}</td>
+                    <td>{{ sucursal.direccion|default:'-' }}</td>
+                    <td>
+                        {% if sucursal.activa %}
+                        <span class="badge bg-success">Activa</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactiva</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'detalle_sucursal' sucursal.pk %}" class="btn btn-outline-info">Ver</a>
+                            <a href="{% url 'lista_cajas' sucursal.pk %}" class="btn btn-outline-primary">Cajas</a>
+                            <a href="{% url 'editar_sucursal' sucursal.pk %}" class="btn btn-outline-secondary">Editar</a>
+                            <a href="{% url 'eliminar_sucursal' sucursal.pk %}" class="btn btn-outline-danger">Eliminar</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">No hay sucursales registradas todavía.</div>
+    {% endif %}
+</div>
+{% endblock %}
