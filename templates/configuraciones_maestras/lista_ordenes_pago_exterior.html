@@ -9,7 +9,9 @@
       <h2 class="mb-1">Órdenes de pago exterior</h2>
       <p class="text-muted mb-0">Liquidaciones y transferencias internacionales registradas.</p>
     </div>
-    <a href="{% url 'agregar_orden_pago_exterior' %}" class="btn btn-primary">Nueva orden</a>
+    <a href="{% url 'agregar_orden_pago_exterior' %}" class="btn btn-primary shadow-sm">
+      <i class="bi bi-plus-circle-fill me-2"></i>Nueva orden
+    </a>
   </div>
 
   <div class="card shadow-sm border-0">
@@ -39,9 +41,15 @@
               <td>{{ orden.total_orden }}</td>
               <td><span class="badge bg-secondary">{{ orden.get_estado_display }}</span></td>
               <td class="text-end">
-                <a href="{% url 'detalle_orden_pago_exterior' orden.pk %}" class="btn btn-sm btn-outline-primary">Detalle</a>
-                <a href="{% url 'editar_orden_pago_exterior' orden.pk %}" class="btn btn-sm btn-outline-warning">Editar</a>
-                <a href="{% url 'eliminar_orden_pago_exterior' orden.pk %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                <a href="{% url 'detalle_orden_pago_exterior' orden.pk %}" class="btn btn-sm btn-outline-primary me-1" title="Ver detalles">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'editar_orden_pago_exterior' orden.pk %}" class="btn btn-sm btn-outline-secondary me-1" title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'eliminar_orden_pago_exterior' orden.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                  <i class="bi bi-trash"></i>
+                </a>
               </td>
             </tr>
             {% empty %}

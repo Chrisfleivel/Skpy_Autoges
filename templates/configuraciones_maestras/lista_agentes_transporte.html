@@ -93,23 +93,21 @@
                             <td class="text-muted small">{{ agente.contacto|truncatewords:2|default:"-" }}</td>
                             <td>
                                 {% if agente.estado %}
-                                    <span class="badge bg-success">Activo</span>
+                                    <span class="badge bg-success bg-opacity-10 text-success">Activo</span>
                                 {% else %}
-                                    <span class="badge bg-danger">Inactivo</span>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary">Inactivo</span>
                                 {% endif %}
                             </td>
                             <td class="text-end pe-4">
-                                <div class="btn-group" role="group">
-                                    <a href="{% url 'detalle_agente_transporte' agente.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalles">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="{% url 'editar_agente_transporte' agente.id %}" class="btn btn-sm btn-outline-secondary" title="Editar">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <a href="{% url 'eliminar_agente_transporte' agente.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Eliminar este agente? Esta acción no se puede deshacer.');">
-                                        <i class="bi bi-trash"></i>
-                                    </a>
-                                </div>
+                                <a href="{% url 'detalle_agente_transporte' agente.id %}" class="btn btn-sm btn-outline-primary me-1" title="Ver detalles">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'editar_agente_transporte' agente.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'eliminar_agente_transporte' agente.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Eliminar este agente? Esta acción no se puede deshacer.');">
+                                    <i class="bi bi-trash"></i>
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}

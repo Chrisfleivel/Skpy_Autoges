@@ -9,7 +9,9 @@
       <h2 class="mb-1">Bancos</h2>
       <p class="text-muted mb-0">Entidades bancarias correlacionadas en pagos exteriores.</p>
     </div>
-    <a href="{% url 'agregar_banco' %}" class="btn btn-primary">Nuevo banco</a>
+    <a href="{% url 'agregar_banco' %}" class="btn btn-primary shadow-sm">
+      <i class="bi bi-plus-circle-fill me-2"></i>Nuevo banco
+    </a>
   </div>
 
   <div class="card shadow-sm border-0">
@@ -32,7 +34,7 @@
               <td>{{ banco.nombre }}</td>
               <td>{{ banco.pais_codigo|default:'-' }}</td>
               <td>{{ banco.swift|default:'-' }}</td>
-              <td>{% if banco.activo %}Sí{% else %}No{% endif %}</td>
+              <td>{% if banco.activo %}<span class="badge bg-success bg-opacity-10 text-success">Activo</span>{% else %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Inactivo</span>{% endif %}</td>
             </tr>
             {% empty %}
             <tr>

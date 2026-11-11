@@ -128,19 +128,18 @@
               </td>
               <td>{{ proveedor.contacto }}</td>
               <td>
-                {% if proveedor.estado == 'ACTIVO' %}
-                <span class="badge bg-success bg-opacity-25 text-success">
-                  <i class="bi bi-check-circle-fill me-1"></i>{{ proveedor.estado|title }}
-                </span>
+                {% if proveedor.estado %}
+                <span class="badge bg-success bg-opacity-10 text-success">Activo</span>
                 {% else %}
-                <span class="badge bg-secondary bg-opacity-25 text-secondary">
-                  <i class="bi bi-x-circle-fill me-1"></i>{{ proveedor.estado|title }}
-                </span>
+                <span class="badge bg-secondary bg-opacity-10 text-secondary">Inactivo</span>
                 {% endif %}
               </td>
               <td class="text-end">
-                <a href="{% url 'detalle_proveedor' proveedor.id %}" class="btn btn-sm btn-outline-primary" title="Detalle">
+                <a href="{% url 'detalle_proveedor' proveedor.id %}" class="btn btn-sm btn-outline-primary me-1" title="Ver detalles">
                   <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'editar_proveedor' proveedor.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Editar">
+                  <i class="bi bi-pencil"></i>
                 </a>
                 <a href="{% url 'eliminar_proveedor' proveedor.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
                   <i class="bi bi-trash"></i>

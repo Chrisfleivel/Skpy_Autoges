@@ -63,22 +63,22 @@
                 {% endif %}
               </td>
               <td class="text-end">
-                <a href="{% url 'detalle_cargo' cargo.id %}" class="btn btn-sm btn-outline-primary me-1">
+                <a href="{% url 'detalle_cargo' cargo.id %}" class="btn btn-sm btn-outline-primary me-1" title="Ver detalles">
                   <i class="bi bi-eye"></i>
                 </a>
-                <a href="{% url 'editar_cargo' cargo.id %}" class="btn btn-sm btn-outline-secondary me-1">
+                <a href="{% url 'editar_cargo' cargo.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Editar">
                   <i class="bi bi-pencil"></i>
                 </a>
                 {% if cargo.estado %}
-                <a href="{% url 'inactivar_cargo' cargo.id %}" class="btn btn-sm btn-outline-warning me-1">
+                <a href="{% url 'inactivar_cargo' cargo.id %}" class="btn btn-sm btn-outline-warning me-1" title="Inactivar">
                   <i class="bi bi-slash-circle"></i>
                 </a>
                 {% else %}
-                <a href="{% url 'activar_cargo' cargo.id %}" class="btn btn-sm btn-outline-success me-1">
+                <a href="{% url 'activar_cargo' cargo.id %}" class="btn btn-sm btn-outline-success me-1" title="Activar">
                   <i class="bi bi-check-circle"></i>
                 </a>
                 {% endif %}
-                <a href="{% url 'eliminar_cargo' cargo.id %}" class="btn btn-sm btn-outline-danger">
+                <a href="{% url 'eliminar_cargo' cargo.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
                   <i class="bi bi-trash"></i>
                 </a>
               </td>

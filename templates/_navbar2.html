@@ -3,11 +3,11 @@
         
         <a class="navbar-brand" href="{% url 'home' %}">
             {% load static %}
-            <img src="{% static 'img/skpy_logo.png' %}" alt="Logo" width="40" height="40" class="d-inline-block align-text-top me-2">
+            <img src="{% static 'img/skpy_logo.png' %}" alt="" width="40" height="40" class="d-inline-block align-text-top me-2">
             SKPY AutoGest
         </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Mostrar menú de navegación">
             <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -16,10 +16,10 @@
                                 
                 <li class="nav-item dropdown">
 
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownConfig" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownVentas" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Ventas
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfig">
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownVentas">
                         {% if perms.clientes_pedidos.listar_pedidos or perms.clientes_pedidos.listar_clientes %}
                         <li><a class="dropdown-item" href="{% url 'lista_pedidos' %}">Pedidos</a></li>
                         <li><hr class="dropdown-divider"></li>
@@ -44,10 +44,10 @@
                 
                 <li class="nav-item dropdown">
 
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownConfig" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownInventario" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Inventario
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfig">
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownInventario">
                         <li><a class="dropdown-item" href="{% url 'lista_marcas_vehiculos' %}">Marcas de Vehículos</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'lista_modelos_vehiculos' %}">Modelos de Vehículos</a></li>
@@ -65,10 +65,10 @@
 
                 <li class="nav-item dropdown">
 
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownConfig" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownImportaciones" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Importaciones
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfig">
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownImportaciones">
                         <li><a class="dropdown-item" href="{% url 'lista_proveedores' %}">Proveedores</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'lista_agentes_transporte' %}">Agentes de Transporte</a></li>
@@ -105,10 +105,10 @@
     
                 <li class="nav-item dropdown">
 
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownConfig" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownConfiguracion" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Configuración
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfig">
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfiguracion">
                         {% if perms.configuraciones_maestras.lista_empresas %}
                         <li><a class="dropdown-item" href="{% url 'lista_empresas' %}">Empresa</a></li>
                         <li><hr class="dropdown-divider"></li>

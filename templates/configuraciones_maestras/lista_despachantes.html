@@ -115,23 +115,21 @@
                             <td class="text-muted small">{{ despachante.get_sistema_gestion_display|truncatewords:2 }}</td>
                             <td>
                                 {% if despachante.es_activo %}
-                                    <span class="badge bg-success">Activo</span>
+                                    <span class="badge bg-success bg-opacity-10 text-success">Activo</span>
                                 {% else %}
-                                    <span class="badge bg-danger">Inactivo</span>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary">Inactivo</span>
                                 {% endif %}
                             </td>
                             <td class="text-end pe-4">
-                                <div class="btn-group" role="group">
-                                    <a href="{% url 'detalle_despachante' despachante.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalles">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="{% url 'editar_despachante' despachante.id %}" class="btn btn-sm btn-outline-secondary" title="Editar">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <a href="{% url 'eliminar_despachante' despachante.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Eliminar este despachante? Esta acción no se puede deshacer.');">
-                                        <i class="bi bi-trash"></i>
-                                    </a>
-                                </div>
+                                <a href="{% url 'detalle_despachante' despachante.id %}" class="btn btn-sm btn-outline-primary me-1" title="Ver detalles">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'editar_despachante' despachante.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'eliminar_despachante' despachante.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Eliminar este despachante? Esta acción no se puede deshacer.');">
+                                    <i class="bi bi-trash"></i>
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}

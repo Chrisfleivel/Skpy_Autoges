@@ -11,8 +11,8 @@
           <h4 class="mb-1 fw-bold">Tasas de Cambio Diarias</h4>
           <p class="text-muted mb-0">Registra y consulta las tasas de cambio USD → Gs aplicadas en importaciones.</p>
         </div>
-        <a href="{% url 'agregar_tasa_cambio' %}" class="btn btn-primary">
-          <i class="bi bi-plus-circle me-2"></i>Cargar Tasa de Hoy
+        <a href="{% url 'agregar_tasa_cambio' %}" class="btn btn-primary shadow-sm">
+          <i class="bi bi-plus-circle-fill me-2"></i>Cargar Tasa de Hoy
         </a>
       </div>
     </div>
@@ -72,7 +72,7 @@
                   <th class="fw-semibold">Par de Monedas</th>
                   <th class="fw-semibold text-end">Tasa</th>
                   <th class="fw-semibold">Registrado por</th>
-                  <th class="fw-semibold text-center">Acciones</th>
+                  <th class="fw-semibold text-end">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -88,18 +88,16 @@
                       <small class="text-muted">Sistema</small>
                     {% endif %}
                   </td>
-                  <td class="text-center">
-                    <div class="btn-group btn-group-sm" role="group">
-                      <a href="{% url 'detalle_tasa_cambio' tasa.id %}" class="btn btn-outline-primary" title="Ver detalle">
+                  <td class="text-end">
+                      <a href="{% url 'detalle_tasa_cambio' tasa.id %}" class="btn btn-sm btn-outline-primary me-1" title="Ver detalle">
                         <i class="bi bi-eye"></i>
                       </a>
-                      <a href="{% url 'editar_tasa_cambio' tasa.id %}" class="btn btn-outline-warning" title="Editar">
+                      <a href="{% url 'editar_tasa_cambio' tasa.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Editar">
                         <i class="bi bi-pencil"></i>
                       </a>
-                      <a href="{% url 'eliminar_tasa_cambio' tasa.id %}" class="btn btn-outline-danger" title="Eliminar">
+                      <a href="{% url 'eliminar_tasa_cambio' tasa.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
                         <i class="bi bi-trash"></i>
                       </a>
-                    </div>
                   </td>
                 </tr>
                 {% endfor %}
