@@ -61,6 +61,12 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Archivos generados en runtime por los tests (PDFs y adjuntos de prueba)
+media/facturas/factura*.pdf
+media/configuraciones_maestras/
+media/importaciones/
+media/compras/
+
 # Flask stuff:
 instance/
 .webassets-cache

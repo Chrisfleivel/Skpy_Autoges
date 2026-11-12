@@ -78,6 +78,7 @@ class EmbarqueForm(forms.ModelForm):
             'eta',
             'fecha_arribo',
             'fecha_recepcion',
+            'deposito_destino',
             'observaciones',
         ]
         widgets = {
@@ -103,6 +104,7 @@ class EmbarqueForm(forms.ModelForm):
             'eta': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'fecha_arribo': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'fecha_recepcion': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'deposito_destino': forms.Select(attrs={'class': 'form-control'}),
             'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 

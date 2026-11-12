@@ -311,10 +311,109 @@
             {% csrf_token %}
             <button type="submit" class="btn btn-warning w-100">Prorratear gastos</button>
           </form>
-          <form method="post" action="{% url 'cerrar_embarque' embarque.pk %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-success w-100">Cerrar embarque</button>
-          </form>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header">Cierre a inventario</div>
+        <div class="card-body">
+          {% if cierre.bloqueos %}
+            <div class="alert alert-warning">
+              <p class="mb-1 fw-semibold">Todavía no se puede cerrar a inventario:</p>
+              <ul class="mb-0 small">
+                {% for bloqueo in cierre.bloqueos %}
+                  <li>{{ bloqueo }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          {% if cierre.avisos %}
+            <div class="alert alert-info">
+              <ul class="mb-0 small">
+                {% for aviso in cierre.avisos %}
+                  <li>{{ aviso }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          {% if cierre.lineas %}
+            <div class="table-responsive mb-3">
+              <table class="table table-sm align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Ítem</th>
+                    <th class="text-end">FOB (USD)</th>
+                    <th class="text-end">Gastos (USD)</th>
+                    <th class="text-end">Landed (USD)</th>
+                    <th class="text-end">Costo unitario (PYG)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for linea in cierre.lineas %}
+                    <tr>
+                      <td>
+                        {{ linea.descripcion }}
+                        <span class="badge text-bg-secondary ms-1">{{ linea.tipo }}</span>
+                      </td>
+                      <td class="text-end">{{ linea.fob_usd }}</td>
+                      <td class="text-end">{{ linea.gastos_usd }}</td>
+                      <td class="text-end">{{ linea.landed_usd }}</td>
+                      <td class="text-end">{{ linea.costo_unitario_pyg }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                  <tr>
+                    <th>Total</th>
+                    <th class="text-end">{{ cierre.total_fob_usd }}</th>
+                    <th class="text-end"></th>
+                    <th class="text-end">{{ cierre.total_landed_usd }}</th>
+                    <th class="text-end">{{ cierre.total_costo_pyg }}</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          {% endif %}
+
+          {% if cierre.tasa %}
+            <p class="small text-muted">
+              Tasa aplicada: 1 USD = {{ cierre.tasa.valor }} PYG (del {{ cierre.fecha_tasa }}).
+            </p>
+          {% endif %}
+
+          {% if cierre.puede_cerrarse %}
+            <form method="post" action="{% url 'cerrar_embarque' embarque.pk %}" class="d-grid gap-2">
+              {% csrf_token %}
+              <div>
+                <label for="deposito_destino" class="form-label">
+                  Depósito de ingreso de repuestos
+                </label>
+                <select name="deposito_destino" id="deposito_destino" class="form-select">
+                  <option value="">— Sin repuestos en el embarque —</option>
+                  {% for deposito in depositos %}
+                    <option value="{{ deposito.pk }}" {% if embarque.deposito_destino_id == deposito.pk %}selected{% endif %}>
+                      {{ deposito.nombre }}
+                    </option>
+                  {% endfor %}
+                </select>
+                <div class="form-text">
+                  Se usa cuando el embarque incluye repuestos. Los vehículos no ingresan a stock.
+                </div>
+              </div>
+              <div>
+                <label for="tasa_valor" class="form-label">Tasa del día (USD → PYG)</label>
+                <input type="number" step="0.0001" min="0" name="tasa_valor" id="tasa_valor"
+                       class="form-control" value="{{ cierre.tasa.valor|default_if_none:'' }}"
+                       placeholder="{{ cierre.tasa.valor|default_if_none:'' }}">
+                <div class="form-text">
+                  Dejalo vacío para usar la tasa vigente. Si informás otra, queda registrada como la tasa del día.
+                </div>
+              </div>
+              <button type="submit" class="btn btn-success">Cerrar embarque a inventario</button>
+            </form>
+          {% endif %}
         </div>
       </div>
 

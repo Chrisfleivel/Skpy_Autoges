@@ -98,8 +98,14 @@ class Deposito(models.Model):
             models.UniqueConstraint(fields=['es_principal'], condition=Q(es_principal=True), name='uniq_deposito_principal'),
         ]
 
-    def eliminable(self):
+    def eliminarable(self):
         return not self.vehiculos.exists() and not self.repuesto_set.exists()  # Solo se puede eliminar si no tiene vehículos ni repuestos asociados
+
+    @classmethod
+    def principal(cls):
+        """Depósito principal del sistema (se crea si todavía no existe)."""
+        from inventario.services import deposito_principal
+        return deposito_principal()
 
     def activar(self):
         self.activo = True
@@ -122,9 +128,26 @@ class Deposito(models.Model):
 
 
 class MovimientoStock(TimeStampedModel):
-    """Registra cada movimiento del stock físico de un repuesto."""
+    """
+    Registra cada movimiento del stock físico de un repuesto.
+
+    Convención de la casa: la **cantidad siempre es positiva**. La dirección
+    del movimiento la indican los depósitos:
+
+    - `deposito_destino` informado → el stock **entra** a ese depósito.
+    - `deposito_origen` informado → el stock **sale** de ese depósito.
+    - `AJUSTE` informa solo uno de los dos, según el signo de la diferencia.
+
+    Es lo que permite el constraint `movimiento_signo_coherente_con_tipo`
+    (`cantidad > 0`).
+    """
 
     class Tipo(models.TextChoices):
+        # Dirección que implica cada tipo (ver la convención del docstring):
+        #   entrada  -> ENTRADA, ENTRADA_COMPRA, TRANSFERENCIA_ENTRADA
+        #   salida   -> SALIDA, SALIDA_VENTA, TRANSFERENCIA_SALIDA
+        #   sin dirección -> RESERVA, LIBERA (reservas sobre `stock_actual`)
+        #   según el caso -> AJUSTE, TRANSFERENCIA
         ENTRADA = 'ENTRADA', 'Entrada'
         SALIDA = 'SALIDA', 'Salida'
         RESERVA = 'RESERVA', 'Reserva'
@@ -135,14 +158,18 @@ class MovimientoStock(TimeStampedModel):
         SALIDA_VENTA = 'SALIDA_VENTA', 'Salida por venta'
         TRANSFERENCIA_SALIDA = 'TRANSFERENCIA_SALIDA', 'Transferencia (sale)'
         TRANSFERENCIA_ENTRADA = 'TRANSFERENCIA_ENTRADA', 'Transferencia (entra)'
-        AJUSTE_POSITIVO = 'AJUSTE_POSITIVO', 'Ajuste positivo'
-        AJUSTE_NEGATIVO = 'AJUSTE_NEGATIVO', 'Ajuste negativo'
 
     TIPO_CHOICES = Tipo.choices
 
     repuesto = models.ForeignKey('Repuesto', on_delete=models.CASCADE, related_name='movimientos_stock')
     tipo = models.CharField(max_length=25, choices=TIPO_CHOICES)
-    cantidad = models.IntegerField(default=0, help_text='Con signo: positiva si entra, negativa si sale.')
+    cantidad = models.IntegerField(
+        default=0,
+        help_text=(
+            'Siempre positiva. La dirección la dan los depósitos: '
+            '`deposito_destino` (entrada) y `deposito_origen` (salida).'
+        ),
+    )
     motivo = models.CharField(max_length=255, blank=True, default='')
     deposito_origen = models.ForeignKey('Deposito', on_delete=models.SET_NULL, null=True, blank=True, related_name='movimientos_origen')
     deposito_destino = models.ForeignKey('Deposito', on_delete=models.SET_NULL, null=True, blank=True, related_name='movimientos_destino')
@@ -435,7 +462,7 @@ class Producto(models.Model):
             if moneda_usd:
                 self.moneda_costo_total_importacion = moneda_usd
 
-        if self.tasa_aplicada:
+        if self.tasa_aplicada and self.costo_total_importacion:
             self.costo_compra = (self.costo_total_importacion * Decimal(str(self.tasa_aplicada))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         elif self.costo_compra in (None, ''):
             self.costo_compra = self.costo_total_importacion
@@ -844,109 +871,87 @@ class Repuesto(Producto):
         return self.stock_disponible >= cantidad
     
     def reservar_stock(self, cantidad):
-        """Reserva stock para un pedido de venta"""
-        if not self.puede_reservar(cantidad):
-            raise ValidationError(
-                f"Stock insuficiente para reservar. Disponible: {self.stock_disponible}, Solicitado: {cantidad}"
-            )
-        self.stock_reservado += cantidad
-        self.save(update_fields=['stock_reservado'])
-        MovimientoStock.objects.create(
-            repuesto=self,
-            tipo='RESERVA',
-            cantidad=cantidad,
-            motivo='Reserva de stock por operación comercial',
-        )
-    
+        """Reserva stock para un pedido de venta."""
+        from inventario.services import reservar_unidades
+        movimiento = reservar_unidades(self, cantidad)
+        self.refresh_from_db(fields=['stock_actual', 'stock_reservado'])
+        return movimiento
+
     def liberar_reserva(self, cantidad):
         """Libera stock reservado (por cancelación de pedido)"""
-        cantidad = min(cantidad, self.stock_reservado)
-        self.stock_reservado = max(0, self.stock_reservado - cantidad)
-        self.save(update_fields=['stock_reservado'])
-        MovimientoStock.objects.create(
-            repuesto=self,
-            tipo='LIBERA',
-            cantidad=cantidad,
-            motivo='Liberación de reserva',
-        )
-    
+        from inventario.services import liberar_unidades
+        movimiento = liberar_unidades(self, cantidad)
+        self.refresh_from_db(fields=['stock_actual', 'stock_reservado'])
+        return movimiento
+
     def confirmar_venta(self, cantidad):
         """Confirma la venta: reduce stock_actual y stock_reservado"""
-        self.stock_reservado = max(0, self.stock_reservado - cantidad)
-        self.stock_actual = max(0, self.stock_actual - cantidad)
-        self.save(update_fields=['stock_actual', 'stock_reservado'])
-        MovimientoStock.objects.create(
-            repuesto=self,
-            tipo='SALIDA',
-            cantidad=cantidad,
+        from inventario.services import confirmar_venta, deposito_principal
+        movimiento = confirmar_venta(
+            self,
+            cantidad,
+            deposito=deposito_principal(),
             motivo='Confirmación de venta',
         )
+        self.refresh_from_db(fields=['stock_actual', 'stock_reservado'])
+        return movimiento
 
     def registrar_entrada(self, cantidad, motivo='Entrada de stock', deposito=None, referencia=''):
-        if cantidad <= 0:
-            raise ValidationError('La cantidad debe ser mayor a cero.')
-        self.stock_actual += cantidad
-        self.save(update_fields=['stock_actual'])
-        MovimientoStock.objects.create(
-            repuesto=self,
-            tipo='ENTRADA',
-            cantidad=cantidad,
+        from inventario.services import deposito_principal, registrar_entrada
+        movimiento = registrar_entrada(
+            self,
+            cantidad,
+            costo_unitario=self.costo_unitario or self.costo_compra or Decimal('0.00'),
+            tipo=MovimientoStock.Tipo.ENTRADA,
+            deposito=deposito or deposito_principal(),
             motivo=motivo,
-            deposito_destino=deposito,
             referencia=referencia,
         )
-        return self
+        self.refresh_from_db(fields=['stock_actual', 'stock_reservado', 'costo_unitario', 'costo_compra'])
+        return movimiento
 
     def registrar_salida(self, cantidad, motivo='Salida de stock', deposito=None, referencia=''):
-        if cantidad <= 0:
-            raise ValidationError('La cantidad debe ser mayor a cero.')
-        if self.stock_disponible < cantidad:
-            raise ValidationError(
-                f'Stock insuficiente para salida. Disponible: {self.stock_disponible}, solicitado: {cantidad}'
-            )
-        self.stock_actual = max(0, self.stock_actual - cantidad)
-        self.save(update_fields=['stock_actual'])
-        MovimientoStock.objects.create(
-            repuesto=self,
-            tipo='SALIDA',
-            cantidad=cantidad,
+        from inventario.services import deposito_principal, registrar_salida
+        movimiento = registrar_salida(
+            self,
+            cantidad,
+            deposito=deposito or deposito_principal(),
             motivo=motivo,
-            deposito_origen=deposito,
             referencia=referencia,
         )
-        return self
+        self.refresh_from_db(fields=['stock_actual', 'stock_reservado'])
+        return movimiento
 
     def ajustar_stock(self, cantidad, motivo='Ajuste de stock', deposito=None, referencia=''):
-        self.stock_actual = max(0, self.stock_actual + cantidad)
-        self.save(update_fields=['stock_actual'])
-        MovimientoStock.objects.create(
-            repuesto=self,
-            tipo='AJUSTE',
-            cantidad=abs(cantidad),
+        """Ajusta el stock en la cantidad informada (positiva suma, resta si es negativa)."""
+        from inventario.services import ajustar_stock, deposito_principal
+        deposito = deposito or deposito_principal()
+        cantidad_real = max(0, int(self.stock_actual) + int(cantidad))
+        movimiento = ajustar_stock(
+            self,
+            cantidad_real,
             motivo=motivo,
-            deposito_origen=deposito if cantidad < 0 else None,
-            deposito_destino=deposito if cantidad > 0 else None,
+            deposito=deposito,
             referencia=referencia,
         )
-        return self
+        self.refresh_from_db(fields=['stock_actual', 'stock_reservado'])
+        return movimiento
 
     def transferir_stock(self, cantidad, deposito_origen=None, deposito_destino=None, motivo='Transferencia de stock', referencia=''):
-        if cantidad <= 0:
-            raise ValidationError('La cantidad debe ser mayor a cero.')
-        if self.stock_disponible < cantidad:
-            raise ValidationError('No hay stock disponible para transferir.')
-        self.stock_actual = max(0, self.stock_actual - cantidad)
-        self.save(update_fields=['stock_actual'])
-        MovimientoStock.objects.create(
-            repuesto=self,
-            tipo='TRANSFERENCIA',
-            cantidad=cantidad,
+        from inventario.services import deposito_principal, transferir
+        principal = deposito_principal()
+        origen = deposito_origen or principal
+        destino = deposito_destino or principal
+        movimientos = transferir(
+            self,
+            cantidad,
+            deposito_origen=origen,
+            deposito_destino=destino,
             motivo=motivo,
-            deposito_origen=deposito_origen,
-            deposito_destino=deposito_destino,
             referencia=referencia,
         )
-        return self
+        self.refresh_from_db(fields=['stock_actual', 'stock_reservado'])
+        return movimientos
 
     def save(self, *args, **kwargs):
         try:

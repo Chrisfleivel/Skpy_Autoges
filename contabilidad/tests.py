@@ -1,11 +1,22 @@
+import unittest
 from decimal import Decimal
 from types import SimpleNamespace
 
+from django.conf import settings
 from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+
+# La app `contabilidad` está deshabilitada en INSTALLED_APPS (y depende de
+# `documentos_financieros`, también deshabilitada). Sus modelos no se pueden
+# importar sin registrarlos en INSTALLED_APPS, así que el módulo se saltea
+# en vez de fallar. Si se reactiva la app, los tests vuelven a correr solos.
+if 'contabilidad' not in settings.INSTALLED_APPS:
+    raise unittest.SkipTest(
+        'La app contabilidad está deshabilitada en INSTALLED_APPS; sus tests no aplican.'
+    )
 
 from configuraciones_maestras.models import Moneda, Proveedor
 from documentos_financieros.models import Autofactura, FacturaComercial

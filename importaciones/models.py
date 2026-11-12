@@ -6,7 +6,7 @@ from django.db import models
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from clientes_pedidos.models import Pedido
-from inventario.models import Vehiculo, Repuesto
+from inventario.models import Deposito, Vehiculo, Repuesto
 from configuraciones_maestras.models import Proveedor, AgenteTransporte, DespachanteAduana, Despachante
 from django.utils import timezone
 
@@ -71,6 +71,16 @@ class Embarque(EstadoMixin, TimeStampedModel):
     eta = models.DateField('ETA', null=True, blank=True)
     fecha_arribo = models.DateField(null=True, blank=True)
     fecha_recepcion = models.DateField('Recepción en depósito', null=True, blank=True)
+
+    # Depósito donde ingresan los repuestos del embarque al cerrarlo a inventario.
+    deposito_destino = models.ForeignKey(
+        Deposito,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='embarques',
+        help_text='Depósito donde se recibe el stock del embarque al cerrarlo.',
+    )
     
     # Lo marca el servicio de prorrateo cuando termina de repartir los gastos
     gastos_prorrateados = models.BooleanField(default=False, editable=False)
@@ -166,6 +176,14 @@ class Embarque(EstadoMixin, TimeStampedModel):
             raise TransicionInvalida('Los gastos todavía no fueron prorrateados entre los ítems.')
         if self.items.filter(costo_prorrateado__isnull=True).exists():
             raise TransicionInvalida('Hay ítems sin costo landed asignado.')
+        if self._tiene_repuestos() and not self.deposito_destino_id:
+            raise TransicionInvalida(
+                'Indique el depósito de destino: el embarque tiene repuestos para ingresar a stock.'
+            )
+
+    def _tiene_repuestos(self):
+        """True si algún ítem del embarque corresponde a un repuesto."""
+        return self.items.filter(factura_item__repuesto__isnull=False).exists()
 
     def validar_cancelado(self):
         if hasattr(self, 'despacho'):

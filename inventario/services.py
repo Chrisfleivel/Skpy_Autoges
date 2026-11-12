@@ -5,12 +5,16 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import F, Sum
+from django.db.models import Sum
 
 from inventario.calculos import DECIMALES_COSTO, asignar_reserva, costo_promedio_ponderado, unidades_a_reponer
 from inventario.models import Deposito, MovimientoStock, ReservaStock, Repuesto, StockRepuesto
 
 Tipo = MovimientoStock.Tipo
+
+# `Repuesto.costo_unitario` y `Repuesto.costo_compra` guardan 2 decimales,
+# mientras que el movimiento de stock guarda 4.
+DECIMALES_REPUESTO = Decimal('0.01')
 
 
 def _cantidad_entera(valor, nombre='La cantidad'):
@@ -27,8 +31,75 @@ def _bloquear(repuesto):
     return Repuesto.objects.select_for_update().get(pk=repuesto.pk)
 
 
-def _fila_stock(repuesto, deposito):
-    return Repuesto.objects.get_or_create(pk=repuesto.pk)[0]
+def deposito_principal():
+    """
+    Devuelve el depósito principal del sistema, creándolo si hace falta.
+
+    Es el depósito por defecto de los flujos que no manejan multi-depósito
+    (pedidos de venta de repuestos, consumos de taller, etc.).
+    """
+    deposito = Deposito.objects.filter(es_principal=True).first()
+    if deposito is not None:
+        return deposito
+
+    codigo = 'PRINCIPAL'
+    intento = 1
+    while Deposito.objects.filter(codigo=codigo).exists():
+        intento += 1
+        codigo = f'PRINCIPAL{intento}'
+
+    return Deposito.objects.create(
+        codigo=codigo,
+        nombre='Depósito Principal',
+        ubicacion='Asunción',
+        es_principal=True,
+        activo=True,
+    )
+
+
+def fila_stock(repuesto, deposito):
+    """
+    Fila de stock del repuesto en el depósito (se crea si no existe).
+
+    La primera vez que se toca un repuesto que solo vive en el inventario
+    heredado (`Repuesto.stock_actual`), ese stock se adopta como físico del
+    depósito: a partir de ahí manda `StockRepuesto`.
+    """
+    fila = StockRepuesto.objects.filter(repuesto=repuesto, deposito=deposito).first()
+    if fila is not None:
+        return fila
+
+    if not StockRepuesto.objects.filter(repuesto=repuesto).exists():
+        cantidad = int(repuesto.stock_actual or 0)
+        reservado = min(int(repuesto.stock_reservado or 0), cantidad)
+        return StockRepuesto.objects.create(
+            repuesto=repuesto,
+            deposito=deposito,
+            cantidad=cantidad,
+            reservado=reservado,
+        )
+
+    return StockRepuesto.objects.create(repuesto=repuesto, deposito=deposito, cantidad=0)
+
+
+def sincronizar_espejo(repuesto):
+    """
+    Refleja el stock multi-depósito en los campos heredados del repuesto.
+
+    `Repuesto.stock_actual` y `Repuesto.stock_reservado` siguen siendo leídos
+    por `clientes_pedidos` y por los reportes, así que se mantienen como
+    espejo de `StockRepuesto` (siempre dentro de la misma transacción).
+    """
+    stocks = StockRepuesto.objects.filter(repuesto=repuesto)
+    total = sum(stock.cantidad for stock in stocks)
+    reservado = sum(stock.reservado for stock in stocks)
+    Repuesto.objects.filter(pk=repuesto.pk).update(
+        stock_actual=total,
+        stock_reservado=reservado,
+    )
+    repuesto.stock_actual = total
+    repuesto.stock_reservado = reservado
+    return repuesto
 
 
 def _entero_positivo(valor, nombre='La cantidad'):
@@ -46,14 +117,12 @@ def _fisico_total(repuesto):
 
 
 def stock_total(repuesto):
-    if hasattr(repuesto, 'stock_actual'):
-        return int(repuesto.stock_actual)
-    return _fisico_total(repuesto)
+    """Físico total del repuesto, sumando todos sus depósitos."""
+    return int(_fisico_total(repuesto))
 
 
 def disponible_total(repuesto):
-    if hasattr(repuesto, 'stock_disponible'):
-        return int(repuesto.stock_disponible)
+    """Disponible total: físico menos lo reservado, en depósitos activos."""
     stocks = StockRepuesto.objects.filter(repuesto=repuesto, deposito__activo=True)
     return sum(s.disponible for s in stocks)
 
@@ -77,36 +146,12 @@ def repuestos_bajo_minimo():
 
 @transaction.atomic
 def registrar_entrada(repuesto, *args, **kwargs):
-    if hasattr(repuesto, 'stock_actual') and not hasattr(repuesto, 'stocks'):
-        cantidad = args[0] if args else kwargs.get('cantidad')
-        motivo = kwargs.get('motivo', 'Entrada de stock')
-        deposito = kwargs.get('deposito')
-        referencia = kwargs.get('referencia', '')
-        costo_unitario = kwargs.get('costo_unitario')
-        cantidad = _cantidad_entera(cantidad)
+    """
+    Registra una entrada de stock en un depósito.
 
-        repuesto = Repuesto.objects.select_for_update().get(pk=repuesto.pk)
-        stock_anterior = int(repuesto.stock_actual)
-        costo_base = repuesto.costo_unitario or repuesto.costo_compra or Decimal('0.00')
-
-        if costo_unitario is not None:
-            costo = Decimal(str(costo_unitario))
-            if costo < 0:
-                raise ValidationError('El costo unitario no puede ser negativo.')
-            repuesto.costo_unitario = costo_promedio_ponderado(stock_anterior, costo_base if costo_base else None, cantidad, costo)
-            repuesto.costo_compra = repuesto.costo_unitario
-
-        repuesto.stock_actual += cantidad
-        repuesto.save(update_fields=['stock_actual', 'costo_unitario', 'costo_compra', 'fecha_ultima_entrada'])
-        return MovimientoStock.objects.create(
-            repuesto=repuesto,
-            tipo='ENTRADA',
-            cantidad=cantidad,
-            motivo=motivo or 'Entrada de stock',
-            deposito_destino=deposito,
-            referencia=referencia,
-        )
-
+    La cantidad siempre es positiva (lo exige el constraint del modelo) y la
+    dirección se marca con `deposito_destino`.
+    """
     if args and isinstance(args[0], Deposito):
         deposito, cantidad, costo_unitario = args[0], args[1], args[2] if len(args) > 2 else kwargs.get('costo_unitario')
     else:
@@ -130,10 +175,13 @@ def registrar_entrada(repuesto, *args, **kwargs):
         raise ValidationError('Debe indicar un depósito activo para la entrada.')
 
     repuesto = Repuesto.objects.select_for_update().get(pk=repuesto.pk)
+    stock = fila_stock(repuesto, deposito)
     fisico_antes = stock_total(repuesto)
-    nuevo_promedio = costo_promedio_ponderado(fisico_antes, repuesto.costo_promedio, cantidad, costo)
+    costo_base = repuesto.costo_unitario or repuesto.costo_compra or Decimal('0.00')
+    nuevo_costo = costo_promedio_ponderado(
+        fisico_antes, costo_base if costo_base else None, cantidad, costo
+    )
 
-    stock = StockRepuesto.objects.get_or_create(repuesto=repuesto, deposito=deposito)[0]
     stock.cantidad += cantidad
     stock.save(update_fields=['cantidad', 'actualizado'])
 
@@ -149,43 +197,24 @@ def registrar_entrada(repuesto, *args, **kwargs):
         referencia=referencia,
         motivo=motivo.strip() if motivo else '',
     )
-    Repuesto.objects.filter(pk=repuesto.pk).update(costo_promedio=nuevo_promedio)
+    Repuesto.objects.filter(pk=repuesto.pk).update(
+        costo_unitario=nuevo_costo.quantize(DECIMALES_REPUESTO, rounding=ROUND_HALF_UP),
+        costo_compra=nuevo_costo.quantize(DECIMALES_REPUESTO, rounding=ROUND_HALF_UP),
+    )
+    repuesto.costo_unitario = nuevo_costo.quantize(DECIMALES_REPUESTO, rounding=ROUND_HALF_UP)
+    repuesto.costo_compra = repuesto.costo_unitario
+    sincronizar_espejo(repuesto)
     return movimiento
 
 
 @transaction.atomic
 def ajustar_stock(repuesto, *args, **kwargs):
-    if hasattr(repuesto, 'stock_actual') and not hasattr(repuesto, 'stocks'):
-        cantidad_real = args[0] if args else kwargs.get('cantidad_real')
-        motivo = kwargs.get('motivo')
-        deposito = kwargs.get('deposito')
-        referencia = kwargs.get('referencia', '')
-        if not motivo or not str(motivo).strip():
-            raise ValidationError('Debe indicar un motivo para el ajuste.')
-        cantidad_real = int(cantidad_real)
-        if cantidad_real < 0:
-            raise ValidationError('La cantidad real no puede ser negativa.')
+    """
+    Ajusta el físico de un depósito al conteo real.
 
-        repuesto = Repuesto.objects.select_for_update().get(pk=repuesto.pk)
-        if cantidad_real < repuesto.stock_reservado:
-            raise ValidationError(f'La cantidad real no puede ser menor que el stock reservado. Esperado mínimo: {repuesto.stock_reservado}.')
-
-        diferencia = cantidad_real - repuesto.stock_actual
-        if diferencia == 0:
-            return None
-
-        repuesto.stock_actual = cantidad_real
-        repuesto.save(update_fields=['stock_actual'])
-        return MovimientoStock.objects.create(
-            repuesto=repuesto,
-            tipo='AJUSTE',
-            cantidad=abs(diferencia),
-            motivo=str(motivo).strip(),
-            deposito_origen=deposito if diferencia < 0 else None,
-            deposito_destino=deposito if diferencia > 0 else None,
-            referencia=referencia,
-        )
-
+    La diferencia se registra como movimiento `AJUSTE` con cantidad positiva:
+    la dirección la indican `deposito_destino` (sube) o `deposito_origen` (baja).
+    """
     if args and isinstance(args[0], Deposito):
         deposito = args[0]
         cantidad_real = kwargs.get('cantidad_real')
@@ -202,7 +231,7 @@ def ajustar_stock(repuesto, *args, **kwargs):
         raise ValidationError('La cantidad real no puede ser negativa.')
 
     repuesto = Repuesto.objects.select_for_update().get(pk=repuesto.pk)
-    stock = StockRepuesto.objects.select_for_update().get(repuesto=repuesto, deposito=deposito)
+    stock = fila_stock(repuesto, deposito)
     diferencia = cantidad_real - stock.cantidad
     if diferencia == 0:
         return None
@@ -210,64 +239,174 @@ def ajustar_stock(repuesto, *args, **kwargs):
         raise ValidationError(f'La cantidad real no puede ser menor que lo reservado ({stock.reservado}).')
     stock.cantidad = cantidad_real
     stock.save(update_fields=['cantidad', 'actualizado'])
-    return MovimientoStock.objects.create(
+    movimiento = MovimientoStock.objects.create(
         repuesto=repuesto,
-        deposito=deposito,
-        tipo=Tipo.AJUSTE_NEGATIVO if diferencia < 0 else Tipo.AJUSTE_POSITIVO,
-        cantidad=diferencia,
-        costo_unitario=repuesto.costo_promedio,
+        deposito_origen=deposito if diferencia < 0 else None,
+        deposito_destino=deposito if diferencia > 0 else None,
+        tipo=Tipo.AJUSTE,
+        cantidad=abs(diferencia),
+        costo_unitario=repuesto.costo_unitario,
         saldo_posterior=stock.cantidad,
         motivo=str(motivo).strip(),
         usuario=kwargs.get('usuario'),
         referencia=kwargs.get('referencia', ''),
     )
+    sincronizar_espejo(repuesto)
+    return movimiento
 
 
 @transaction.atomic
-def confirmar_venta(repuesto, cantidad, *, motivo='Confirmación de venta', deposito=None, referencia=''):
+def confirmar_venta(repuesto, cantidad, *, motivo='Confirmación de venta', deposito=None, referencia='', usuario=None):
+    """
+    Confirma una salida de stock por venta en un depósito.
+
+    Descuenta el físico y la reserva del depósito, y deja el movimiento
+    `SALIDA` con cantidad positiva y `deposito_origen` apuntando al depósito.
+    """
     cantidad = _cantidad_entera(cantidad)
+    if deposito is None:
+        raise ValidationError('Debe indicar el depósito de salida.')
+
     repuesto = Repuesto.objects.select_for_update().get(pk=repuesto.pk)
-    if cantidad > repuesto.stock_actual:
-        raise ValidationError(f'Stock insuficiente para confirmar la venta. Actual: {repuesto.stock_actual}, solicitado: {cantidad}.')
-    repuesto.stock_reservado = max(0, repuesto.stock_reservado - cantidad)
-    repuesto.stock_actual = max(0, repuesto.stock_actual - cantidad)
-    repuesto.save(update_fields=['stock_actual', 'stock_reservado'])
-    return MovimientoStock.objects.create(
+    stock = fila_stock(repuesto, deposito)
+    if cantidad > stock.cantidad:
+        raise ValidationError(
+            f'Stock insuficiente para confirmar la venta. '
+            f'Actual: {stock.cantidad}, solicitado: {cantidad}.'
+        )
+    stock.cantidad -= cantidad
+    stock.reservado = max(0, stock.reservado - cantidad)
+    stock.save(update_fields=['cantidad', 'reservado', 'actualizado'])
+    movimiento = MovimientoStock.objects.create(
         repuesto=repuesto,
-        tipo='SALIDA',
-        cantidad=cantidad,
-        motivo=motivo or 'Confirmación de venta',
         deposito_origen=deposito,
+        tipo=Tipo.SALIDA,
+        cantidad=cantidad,
+        costo_unitario=repuesto.costo_unitario,
+        saldo_posterior=stock.cantidad,
+        motivo=motivo or 'Confirmación de venta',
+        usuario=usuario,
         referencia=referencia,
     )
+    sincronizar_espejo(repuesto)
+    return movimiento
+
+
+@transaction.atomic
+def registrar_salida(repuesto, cantidad, *, deposito=None, motivo='Salida de stock', referencia='', usuario=None, tipo=Tipo.SALIDA, costo_unitario=None):
+    """
+    Registra una salida de stock de un depósito.
+
+    Es la salida genérica (taller, consumo interno, merma): a diferencia de
+    `confirmar_venta`, no toca las reservas, porque no viene de una venta.
+
+    La cantidad siempre es positiva (lo exige el constraint del modelo) y la
+    dirección se marca con `deposito_origen`.
+    """
+    cantidad = _entero_positivo(cantidad)
+    if deposito is None:
+        raise ValidationError('Debe indicar el depósito de salida.')
+    if not deposito.activo:
+        raise ValidationError('El depósito de salida debe estar activo.')
+
+    repuesto = Repuesto.objects.select_for_update().get(pk=repuesto.pk)
+    stock = fila_stock(repuesto, deposito)
+    if stock.disponible < cantidad:
+        raise ValidationError(
+            f'Stock insuficiente para la salida. '
+            f'Disponible: {stock.disponible}, solicitado: {cantidad}.'
+        )
+
+    stock.cantidad -= cantidad
+    stock.save(update_fields=['cantidad', 'actualizado'])
+    movimiento = MovimientoStock.objects.create(
+        repuesto=repuesto,
+        deposito_origen=deposito,
+        tipo=tipo,
+        cantidad=cantidad,
+        costo_unitario=(
+            repuesto.costo_unitario if costo_unitario is None
+            else Decimal(str(costo_unitario)).quantize(DECIMALES_COSTO, rounding=ROUND_HALF_UP)
+        ),
+        saldo_posterior=stock.cantidad,
+        motivo=motivo or 'Salida de stock',
+        usuario=usuario,
+        referencia=referencia,
+    )
+    sincronizar_espejo(repuesto)
+    return movimiento
+
+
+@transaction.atomic
+def reservar_unidades(repuesto, cantidad, *, deposito=None, usuario=None, motivo='Reserva de stock por operación comercial'):
+    """
+    Reserva unidades de un repuesto sin mover el físico.
+
+    Es la reserva del flujo de pedidos (`clientes_pedidos`): no va por
+    `ReservaStock` (ese modelo pertenece al flujo de `ventas`), sino por el
+    contador `reservado` de la fila de stock del depósito.
+
+    El movimiento `RESERVA` **no lleva depósito**: una reserva no mueve
+    unidades, y anotarla en un depósito alteraría el cálculo del físico.
+    """
+    cantidad = _entero_positivo(cantidad)
+    deposito = deposito or deposito_principal()
+
+    repuesto = Repuesto.objects.select_for_update().get(pk=repuesto.pk)
+    stock = fila_stock(repuesto, deposito)
+    if stock.disponible < cantidad:
+        raise ValidationError(
+            f'Stock insuficiente para reservar. '
+            f'Disponible: {stock.disponible}, solicitado: {cantidad}.'
+        )
+
+    stock.reservado += cantidad
+    stock.save(update_fields=['reservado', 'actualizado'])
+    movimiento = MovimientoStock.objects.create(
+        repuesto=repuesto,
+        tipo=Tipo.RESERVA,
+        cantidad=cantidad,
+        motivo=motivo,
+        usuario=usuario,
+    )
+    sincronizar_espejo(repuesto)
+    return movimiento
+
+
+@transaction.atomic
+def liberar_unidades(repuesto, cantidad, *, deposito=None, usuario=None, motivo='Liberación de reserva'):
+    """Libera unidades reservadas (por cancelación de un pedido)."""
+    cantidad = _entero_positivo(cantidad)
+    deposito = deposito or deposito_principal()
+
+    repuesto = Repuesto.objects.select_for_update().get(pk=repuesto.pk)
+    stock = fila_stock(repuesto, deposito)
+    cantidad = min(cantidad, stock.reservado)
+    if cantidad <= 0:
+        return None
+
+    stock.reservado -= cantidad
+    stock.save(update_fields=['reservado', 'actualizado'])
+    movimiento = MovimientoStock.objects.create(
+        repuesto=repuesto,
+        tipo=Tipo.LIBERA,
+        cantidad=cantidad,
+        motivo=motivo,
+        usuario=usuario,
+    )
+    sincronizar_espejo(repuesto)
+    return movimiento
 
 
 @transaction.atomic
 def transferir(repuesto, *args, **kwargs):
-    if hasattr(repuesto, 'stock_actual') and not hasattr(repuesto, 'stocks'):
-        cantidad = args[0] if args else kwargs.get('cantidad')
-        deposito_origen = kwargs.get('deposito_origen')
-        deposito_destino = kwargs.get('deposito_destino')
-        motivo = kwargs.get('motivo', 'Transferencia de stock')
-        referencia = kwargs.get('referencia', '')
-        cantidad = _cantidad_entera(cantidad)
-        if not deposito_origen and not deposito_destino:
-            raise ValidationError('Debe indicar origen y/o destino para la transferencia.')
-        if deposito_origen and deposito_destino and deposito_origen.pk == deposito_destino.pk:
-            raise ValidationError('El origen y destino de la transferencia no pueden ser iguales.')
-        repuesto = Repuesto.objects.select_for_update().get(pk=repuesto.pk)
-        if repuesto.stock_disponible < cantidad:
-            raise ValidationError(f'Stock insuficiente para transferir. Disponible: {repuesto.stock_disponible}, solicitado: {cantidad}.')
-        return MovimientoStock.objects.create(
-            repuesto=repuesto,
-            tipo='TRANSFERENCIA',
-            cantidad=cantidad,
-            motivo=motivo or 'Transferencia de stock',
-            deposito_origen=deposito_origen,
-            deposito_destino=deposito_destino,
-            referencia=referencia,
-        )
+    """
+    Transfiere stock entre dos depósitos.
 
+    Genera los dos movimientos de la transferencia (salida y entrada) unitedos
+    por `grupo`, con cantidades positivas y la dirección marcada por
+    `deposito_origen` / `deposito_destino`.
+    """
     if args and isinstance(args[0], Deposito):
         origen, destino, cantidad = args[0], args[1], args[2]
         usuario = kwargs.get('usuario')
@@ -288,8 +427,8 @@ def transferir(repuesto, *args, **kwargs):
         raise ValidationError('El depósito destino debe estar activo.')
 
     repuesto = Repuesto.objects.select_for_update().get(pk=repuesto.pk)
-    stock_origen = StockRepuesto.objects.select_for_update().get(repuesto=repuesto, deposito=origen)
-    stock_destino = StockRepuesto.objects.select_for_update().get(repuesto=repuesto, deposito=destino)
+    stock_origen = fila_stock(repuesto, origen)
+    stock_destino = fila_stock(repuesto, destino)
     if stock_origen.disponible < cantidad:
         raise ValidationError(f'Stock insuficiente para transferir. Disponible: {stock_origen.disponible}, solicitado: {cantidad}.')
 
@@ -299,21 +438,22 @@ def transferir(repuesto, *args, **kwargs):
     stock_destino.save(update_fields=['cantidad', 'actualizado'])
 
     grupo = uuid.uuid4()
-    comunes = dict(repuesto=repuesto, costo_unitario=repuesto.costo_promedio, grupo=grupo, usuario=usuario, motivo=motivo)
+    comunes = dict(repuesto=repuesto, costo_unitario=repuesto.costo_unitario, grupo=grupo, usuario=usuario, motivo=motivo)
     salida = MovimientoStock.objects.create(
-        deposito=origen,
+        deposito_origen=origen,
         tipo=Tipo.TRANSFERENCIA_SALIDA,
-        cantidad=-cantidad,
+        cantidad=cantidad,
         saldo_posterior=stock_origen.cantidad,
         **comunes,
     )
     entrada = MovimientoStock.objects.create(
-        deposito=destino,
+        deposito_destino=destino,
         tipo=Tipo.TRANSFERENCIA_ENTRADA,
         cantidad=cantidad,
         saldo_posterior=stock_destino.cantidad,
         **comunes,
     )
+    sincronizar_espejo(repuesto)
     return salida, entrada
 
 
@@ -353,34 +493,18 @@ def reservar_stock(venta_item, *, usuario=None):
 
 @transaction.atomic
 def recibir_embarque(embarque, *, usuario=None):
-    items = list(embarque.items.select_related('factura_item__repuesto').filter(factura_item__repuesto__isnull=False))
-    if not items:
-        return []
-    if embarque.deposito_destino_id is None:
-        raise ValidationError('El embarque debe tener un depósito destino para recibir repuestos.')
+    """
+    Ingresa los repuestos de un embarque al depósito destino.
 
-    movimientos = []
-    for item in sorted(items, key=lambda i: i.factura_item.repuesto_id):
-        repuesto = item.factura_item.repuesto
-        if repuesto is None:
-            continue
-        cantidad = int(item.cantidad)
-        if cantidad <= 0:
-            continue
-        costo = Decimal(str(item.costo_unitario or item.factura_item.precio_unitario or 0))
-        movimientos.append(
-            registrar_entrada(
-                repuesto,
-                embarque.deposito_destino,
-                cantidad,
-                costo,
-                tipo=Tipo.ENTRADA_COMPRA,
-                referencia=f'Embarque {embarque.pk}',
-                motivo='Recepción de embarque',
-                usuario=usuario,
-            )
-        )
-    return movimientos
+    Atajo sobre el servicio de cierre (`importaciones.cierre.ejecutar_cierre`),
+    que además carga los costos de los vehículos y cierra el embarque. Se
+    mantiene solo como punto de entrada cómodo; el cálculo del costo landed
+    y de la tasa de cambio vive en `importaciones.cierre`.
+    """
+    from importaciones.cierre import ejecutar_cierre
+
+    resultado = ejecutar_cierre(embarque, usuario=usuario)
+    return resultado
 
 
 @transaction.atomic
@@ -428,10 +552,10 @@ def consumir_reserva(venta_item, cantidad, *, referencia='', usuario=None):
         reserva.save(update_fields=['consumida'])
         movimiento = MovimientoStock.objects.create(
             repuesto=reserva.repuesto,
-            deposito=reserva.deposito,
+            deposito_origen=reserva.deposito,
             tipo=Tipo.SALIDA_VENTA,
-            cantidad=-tomar,
-            costo_unitario=reserva.repuesto.costo_promedio,
+            cantidad=tomar,
+            costo_unitario=reserva.repuesto.costo_unitario,
             saldo_posterior=stock.cantidad,
             usuario=usuario,
             referencia=referencia,
@@ -444,19 +568,33 @@ def consumir_reserva(venta_item, cantidad, *, referencia='', usuario=None):
 
 
 def verificar_consistencia(repuesto=None):
+    """
+    Verifica que el físico de cada depósito cuadre con sus movimientos.
+
+    Las cantidades de los movimientos son siempre positivas; la dirección la
+    indican `deposito_destino` (entrada) y `deposito_origen` (salida).
+    """
     problemas = []
     stocks = StockRepuesto.objects.select_related('repuesto', 'deposito')
     if repuesto is not None:
         stocks = stocks.filter(repuesto=repuesto)
 
     for stock in stocks:
-        total_movimientos = MovimientoStock.objects.filter(repuesto=stock.repuesto, deposito=stock.deposito).aggregate(t=Sum('cantidad'))['t'] or 0
+        movimientos = MovimientoStock.objects.filter(repuesto=stock.repuesto)
+        entradas = movimientos.filter(deposito_destino=stock.deposito).aggregate(t=Sum('cantidad'))['t'] or 0
+        salidas = movimientos.filter(deposito_origen=stock.deposito).aggregate(t=Sum('cantidad'))['t'] or 0
+        total_movimientos = entradas - salidas
         if total_movimientos != stock.cantidad:
             problemas.append(f'Físico inconsistente para {stock.repuesto.codigo_repuesto} @ {stock.deposito.codigo}: esperado {total_movimientos} y hay {stock.cantidad}.')
-        reservado_esperado = sum(r.pendiente for r in ReservaStock.objects.filter(repuesto=stock.repuesto, deposito=stock.deposito))
-        if reservado_esperado != stock.reservado:
-            problemas.append(f'Reservado inconsistente para {stock.repuesto.codigo_repuesto} @ {stock.deposito.codigo}: esperado {reservado_esperado} y hay {stock.reservado}.')
-        ultimo = MovimientoStock.objects.filter(repuesto=stock.repuesto, deposito=stock.deposito).order_by('-id').first()
+        reservas = ReservaStock.objects.filter(repuesto=stock.repuesto, deposito=stock.deposito)
+        if reservas.exists():
+            # Solo el flujo de `ventas` usa `ReservaStock`. Las reservas del
+            # flujo de pedidos (`clientes_pedidos`) viven solo en el contador
+            # `reservado` de la fila de stock.
+            reservado_esperado = sum(r.pendiente for r in reservas)
+            if reservado_esperado != stock.reservado:
+                problemas.append(f'Reservado inconsistente para {stock.repuesto.codigo_repuesto} @ {stock.deposito.codigo}: esperado {reservado_esperado} y hay {stock.reservado}.')
+        ultimo = movimientos.filter(deposito_origen=stock.deposito).order_by('-id').first() or movimientos.filter(deposito_destino=stock.deposito).order_by('-id').first()
         if ultimo and ultimo.saldo_posterior is not None and ultimo.saldo_posterior != stock.cantidad:
             problemas.append(f'Último saldo posterior inconsistente para {stock.repuesto.codigo_repuesto} @ {stock.deposito.codigo}: {ultimo.saldo_posterior} vs {stock.cantidad}.')
     return problemas

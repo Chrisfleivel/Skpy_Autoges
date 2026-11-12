@@ -6,7 +6,7 @@ from typing import Any
 
 from django.conf import settings
 
-from importaciones.calculos import comparar_chasis, repartir_costos
+from importaciones.calculos import comparar_chasis, lineas_de_prorrateo, repartir_costos, repartir_gastos_por_tipo
 
 
 @dataclass(frozen=True)
@@ -64,7 +64,15 @@ def verificar_destino(embarque) -> dict[str, Any]:
     return {'ok': True, 'destino_final': destino}
 
 
-def prorratear_costos(embarque, *, criterio: str = 'POR_VALOR') -> dict[str, Any]:
+def prorratear_costos(embarque, *, criterio: str | None = None) -> dict[str, Any]:
+    """
+    Reparte los gastos costeables del embarque entre sus ítems.
+
+    Cada gasto se reparte con **su propio** `criterio_prorrateo` (salvo que se
+    fuerce uno con el parámetro `criterio`). El resultado se guarda en
+    `EmbarqueItem.costo_prorrateado` y el desglose por tipo de gasto queda
+    disponible para el cierre a inventario.
+    """
     gastos = list(embarque.gastos.filter(es_costeable=True))
     items = list(embarque.items.select_related('factura_item'))
 
@@ -74,21 +82,12 @@ def prorratear_costos(embarque, *, criterio: str = 'POR_VALOR') -> dict[str, Any
     if not gastos:
         return {'ok': False, 'mensaje': 'El embarque no tiene gastos costeables.', 'lineas': []}
 
+    lineas = lineas_de_prorrateo(items)
+    reparto = repartir_gastos_por_tipo(gastos, lineas, criterio=criterio)
     total = sum((gasto.monto_base for gasto in gastos), Decimal('0'))
-    lineas = []
+
     for item in items:
-        base = Decimal('0')
-        if getattr(item, 'factura_item', None) is not None:
-            base = (item.factura_item.precio_unitario * item.cantidad)
-        lineas.append({'id': item.pk, 'descripcion': item.factura_item.descripcion if item.factura_item else str(item), 'base': base})
-
-    reparto = repartir_costos(total, lineas, criterio=criterio)
-
-    for entrada in reparto:
-        item = next((i for i in items if i.pk == entrada['id']), None)
-        if item is None:
-            continue
-        item.costo_prorrateado = entrada['monto']
+        item.costo_prorrateado = reparto['totales'].get(item.pk, Decimal('0.00'))
         item.save(update_fields=['costo_prorrateado'])
 
     embarque.gastos_prorrateados = True
@@ -97,18 +96,19 @@ def prorratear_costos(embarque, *, criterio: str = 'POR_VALOR') -> dict[str, Any
     moneda_base = getattr(settings, 'MONEDA_BASE', 'USD')
     final_lines = [
         LineaCosto(
-            item_id=item['id'],
-            descripcion=item['descripcion'],
-            base=item['base'],
-            monto=item['monto'],
+            item_id=linea['id'],
+            descripcion=linea['descripcion'],
+            base=linea['base'],
+            monto=reparto['totales'].get(linea['id'], Decimal('0.00')),
             moneda=moneda_base,
         )
-        for item in reparto
+        for linea in lineas
     ]
 
     return {
         'ok': True,
         'total': total,
         'lineas': final_lines,
+        'detalle': reparto['detalle'],
         'mensaje': 'Prorrateo realizado correctamente.',
     }

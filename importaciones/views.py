@@ -33,6 +33,7 @@ from .forms import (
     GastoImportacionForm,
 )
 from .services import verificar_chasis, prorratear_costos
+from .cierre import ejecutar_cierre, previsualizar_cierre
 from .conciliacion import EstadoConciliacion, conciliar_factura, conciliar_facturas
 from seguridad_usuarios.decorators import revisar_permiso
 from django.contrib.auth.decorators import login_required
@@ -41,7 +42,8 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from inventario.models import Vehiculo
+from django.core.exceptions import ValidationError
+from inventario.models import Deposito, Vehiculo
 from .models import ImportacionVehiculo
 
 
@@ -413,6 +415,7 @@ def detalle_embarque(request, pk):
     documento_form = DocumentoEmbarqueForm()
     verificacion = verificar_chasis(embarque)
     flujo = embarque.flujo_operativo
+    cierre = previsualizar_cierre(embarque)
     return render(request, 'importaciones/detalle_embarque.html', {
         'embarque': embarque,
         'items': embarque.items.select_related('factura_item__factura', 'contenedor').all(),
@@ -425,6 +428,8 @@ def detalle_embarque(request, pk):
         'documento_form': documento_form,
         'verificacion': verificacion,
         'flujo_operativo': flujo,
+        'cierre': cierre,
+        'depositos': Deposito.objects.filter(activo=True).order_by('nombre'),
     })
 
 
@@ -565,12 +570,29 @@ def prorratear_embarque(request, pk):
 
 @revisar_permiso('importaciones.editar_importacion')
 def cerrar_embarque(request, pk):
+    """Cierra el embarque a inventario: costos de vehículos y stock de repuestos."""
     embarque = get_object_or_404(Embarque, pk=pk)
-    try:
-        embarque.cambiar_estado(Embarque.Estado.CERRADO)
-        messages.success(request, 'El embarque fue cerrado correctamente.')
-    except Exception as exc:
-        messages.error(request, str(exc))
+
+    if request.method == 'POST':
+        deposito_id = (request.POST.get('deposito_destino') or '').strip()
+        if deposito_id:
+            deposito = get_object_or_404(Deposito, pk=deposito_id)
+            if embarque.deposito_destino_id != deposito.pk:
+                embarque.deposito_destino = deposito
+                embarque.save(update_fields=['deposito_destino'])
+
+        tasa = (request.POST.get('tasa_valor') or '').strip()
+        try:
+            ejecutar_cierre(
+                embarque,
+                usuario=request.user,
+                tasa=tasa or None,
+            )
+            messages.success(request, 'El embarque fue cerrado a inventario correctamente.')
+        except ValidationError as exc:
+            messages.error(request, ' '.join(exc.messages))
+        except Exception as exc:  # pragma: no cover - red de seguridad
+            messages.error(request, f'No se pudo cerrar el embarque: {exc}')
     return redirect('detalle_embarque', pk=embarque.pk)
 
 

@@ -128,6 +128,17 @@
                   <div class="text-danger small">{{ field.errors|join:', ' }}</div>
                 {% endif %}
               </div>
+            {% elif field.name == 'deposito_destino' %}
+              <div class="col-md-4 mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                <div class="form-text">
+                  Depósito donde ingresan los repuestos del embarque al cerrarlo a inventario.
+                </div>
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
+                {% endif %}
+              </div>
             {% elif field.name == 'observaciones' %}
               <div class="col-md-12 mb-3">
                 <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>

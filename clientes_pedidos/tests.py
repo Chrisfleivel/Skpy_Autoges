@@ -156,7 +156,8 @@ class ItemPedidoFormTests(TestCase):
         self.client.force_login(self.user)
 
     def test_buscar_productos_api_devuelve_resultados_disponibles(self):
-        moneda = Moneda.objects.create(codigo='PYG4', nombre='Guaraní 4')
+        # Código de 3 letras (SQLite no valida max_length, pero el modelo sí lo exige).
+        moneda, _ = Moneda.objects.get_or_create(codigo='ARS', defaults={'nombre': 'Peso Argentino'})
         marca = MarcaVehiculo.objects.create(nombre='Marca Buscador')
         modelo = ModeloVehiculo.objects.create(marca=marca, nombre='Modelo Buscador')
 
@@ -209,7 +210,7 @@ class ItemPedidoFormTests(TestCase):
         self.assertTrue(any('buscador' in nombre.lower() for nombre in nombres_vehiculos))
 
     def test_item_pedido_form_filtra_productos_disponibles_para_ventas(self):
-        moneda = Moneda.objects.create(codigo='PYG', nombre='Guaraní')
+        moneda, _ = Moneda.objects.get_or_create(codigo='PYG', defaults={'nombre': 'Guaraní Paraguayo'})
         marca = MarcaVehiculo.objects.create(nombre='Marca Test')
         modelo = ModeloVehiculo.objects.create(marca=marca, nombre='Modelo Test')
 
@@ -268,7 +269,7 @@ class ItemPedidoFormTests(TestCase):
         self.assertNotIn(no_disponible_vehiculo, form.fields['vehiculo'].queryset)
 
     def test_item_pedido_form_filtra_productos_elegibles_para_busqueda_y_abastecimiento(self):
-        moneda = Moneda.objects.create(codigo='PYG', nombre='Guaraní')
+        moneda, _ = Moneda.objects.get_or_create(codigo='PYG', defaults={'nombre': 'Guaraní Paraguayo'})
         marca = MarcaVehiculo.objects.create(nombre='Marca Elegible')
         modelo = ModeloVehiculo.objects.create(marca=marca, nombre='Modelo Elegible')
 

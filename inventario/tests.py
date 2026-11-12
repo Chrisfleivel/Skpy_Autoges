@@ -14,8 +14,11 @@ from inventario.models import MarcaVehiculo, ModeloVehiculo, Repuesto, Vehiculo
 
 class VehiculoCostTests(TestCase):
     def test_calcula_costo_total_importacion_en_guaranies(self):
-        moneda_usd = Moneda.objects.create(codigo='USD', nombre='Dólar')
-        moneda_pyg = Moneda.objects.create(codigo='PYG', nombre='Guaraní')
+        # Las monedas base ya están sembradas por la migración de datos:
+        # se reutilizan en vez de crearlas de nuevo.
+        Moneda.ensure_defaults()
+        moneda_usd = Moneda.objects.get(codigo='USD')
+        moneda_pyg = Moneda.objects.get(codigo='PYG')
         marca = MarcaVehiculo.objects.create(nombre='Marca Test')
         modelo = ModeloVehiculo.objects.create(marca=marca, nombre='Modelo Test')
         vehiculo = Vehiculo.objects.create(

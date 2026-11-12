@@ -206,20 +206,37 @@ class Moneda(models.Model):
 
     @classmethod
     def ensure_defaults(cls):
-        """Crea la lista base de monedas si aún no existen."""
+        """
+        Crea la lista base de monedas si aún no existen.
+
+        Idempotente y barato: una sola consulta para saber cuáles ya están.
+        """
+        codigos = [codigo for codigo, _ in cls.DEFAULTS]
+        existentes = set(
+            cls.objects.filter(codigo__in=codigos).values_list('codigo', flat=True)
+        )
         created = []
         for codigo, nombre in cls.DEFAULTS:
-            moneda, was_created = cls.objects.get_or_create(
-                codigo=codigo,
-                defaults={'nombre': nombre},
-            )
-            if was_created:
-                created.append(moneda)
+            if codigo in existentes:
+                continue
+            created.append(cls.objects.create(codigo=codigo, nombre=nombre))
         return created
 
     @classmethod
     def get_choices(cls):
-        cls.ensure_defaults()
+        """
+        Lista (código, nombre) de las monedas del sistema.
+
+        Importante: este método **no escribe** en la base de datos. Se usa como
+        `choices` de varios campos de modelo y Django evalúa los callables de
+        `choices` durante los *system checks* (`manage.py check`), que se ejecutan
+        en `runserver`, `test`, `migrate` y `makemigrations`. Si escribiera aquí,
+        los checks modificarían la base de datos y la siembra quedaría como
+        efecto secundario invisible.
+
+        Las monedas base se siembran con la migración de datos
+        `0023_seed_monedas_iniciales` y, en runtime, con `ensure_defaults()`.
+        """
         return [(moneda.codigo, moneda.nombre) for moneda in cls.objects.order_by('codigo')]
 
     @classmethod
