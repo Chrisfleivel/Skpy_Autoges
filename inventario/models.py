@@ -580,7 +580,7 @@ class Vehiculo(Producto, EstadoMixin):
     precio_venta = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio de Venta Sugerido")
     fecha_ingreso = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name="Fecha de Ingreso al Inventario")
     color = ColorField(default='#FFFFFF', verbose_name="Color del Vehículo", blank=True, null=True, help_text="Selecciona el color del vehículo")
-    combustible = models.CharField(max_length=50, blank=True, null=True, choices=TIPO_COMBUSTIBLE, verbose_name="Tipo de Combustible", default='gasolina')
+    combustible = models.CharField(max_length=50, blank=True, null=True, choices=TIPO_COMBUSTIBLE, verbose_name="Tipo de Combustible", default='nafta')
     transmision = models.ForeignKey(TipoTransmision, on_delete=models.SET_NULL, null=True, blank=True, related_name='vehiculos', verbose_name="Tipo de Transmisión")
     
     precio_cif_usd = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Precio CIF (USD)")
@@ -735,6 +735,30 @@ class Vehiculo(Producto, EstadoMixin):
                 "El vehículo no tiene costo total de importación: complete los costos antes de venderlo."
             )
 
+
+class VehiculoFoto(models.Model):
+    """
+    Fotografía de un vehículo.
+
+    `Vehiculo.imagen` es la foto principal (la portada). Este modelo guarda
+    las fotos adicionales de la galería, ordenadas por `orden`.
+    """
+
+    vehiculo = models.ForeignKey(
+        Vehiculo, on_delete=models.CASCADE, related_name='fotos',
+        verbose_name="Vehículo")
+    imagen = models.ImageField(upload_to='vehiculos/fotos/%Y/%m/', verbose_name="Fotografía")
+    descripcion = models.CharField(max_length=120, blank=True, verbose_name="Descripción")
+    orden = models.PositiveSmallIntegerField(default=0, verbose_name="Orden")
+
+    class Meta:
+        verbose_name = "fotografía de vehículo"
+        verbose_name_plural = "fotografías de vehículo"
+        ordering = ['orden', 'id']
+
+    def __str__(self):
+        return f'Foto {self.orden} de {self.vehiculo}'
+
 # --------------------------------------------------------------------------
 # Modelo para representar un Repuesto en el inventario
 # --------------------------------------------------------------------------
@@ -765,7 +789,16 @@ class Repuesto(Producto):
     fecha_ultima_entrada = models.DateTimeField(auto_now=True, verbose_name="Fecha de Ultima Entrada")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripcion Adicional")
     categoria = models.ForeignKey('CategoriaRepuesto', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Categoría del Repuesto", default=None)
-    compatibilidad = models.CharField(max_length=200, blank=True, null=True, verbose_name="Compatibilidad (Modelos/Marcas)")
+    compatibilidad = models.CharField(
+        max_length=200, blank=True, null=True,
+        verbose_name="Compatibilidad (texto libre)",
+        help_text="Texto libre con la compatibilidad. Para consultas estructuradas usá los modelos compatibles.")
+    fabricante = models.CharField(max_length=100, blank=True, default='', verbose_name="Fabricante")
+    codigo_oem = models.CharField(
+        max_length=60, blank=True, default='', db_index=True, verbose_name="Código OEM")
+    modelos_compatibles = models.ManyToManyField(
+        'ModeloVehiculo', blank=True, related_name='repuestos_compatibles',
+        verbose_name="Modelos Compatibles")
     costo_unitario = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Costo Unitario (Guaranies)", default=0)
     tasa_aplicada = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True, verbose_name="Tasa de Cambio Aplicada")
     tasa_cambio = models.ForeignKey('configuraciones_maestras.TasaCambio', on_delete=models.SET_NULL, null=True, blank=True, related_name='repuestos', verbose_name="Tasa de Cambio Aplicada")
@@ -1016,33 +1049,94 @@ class Repuesto(Producto):
 
 class CategoriaRepuesto(models.Model):
     """
-    Modelo para representar las categorías de repuestos.
+    Categoría de repuestos, con jerarquía opcional.
+
+    Una categoría puede tener una categoría superior (`padre`): el nombre
+    es único **dentro de cada nivel** (raíces y subcategorías pueden
+    repetirse), y una categoría no puede ser su propio antepasado.
     """
-    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la Categoría")
+    nombre = models.CharField(max_length=100, verbose_name="Nombre de la Categoría")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción Adicional")
     estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
+    padre = models.ForeignKey(
+        'self', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='subcategorias', verbose_name="Categoría Superior")
 
     def eliminable(self):
-        return not self.repuesto_set.exists()  # Solo se puede eliminar si no tiene repuestos asociados
-    
+        """Solo se puede eliminar si no tiene repuestos ni subcategorías."""
+        return not self.repuesto_set.exists() and not self.subcategorias.exists()
+
     def activar(self):
         self.estado = True
         self.save()
-    
+
     def inactivar(self):
         self.estado = False
         self.save()
-    
+
     def esta_activo(self):
         return self.estado
+
+    @property
+    def ruta_completa(self):
+        """Ruta desde la raíz: 'Motor › Filtros › Aceites'."""
+        partes = [self.nombre]
+        actual = self.padre
+        # Guarda para no entrar en un bucle si algún dato quedó inconsistente.
+        vistos = {self.pk}
+        while actual is not None and actual.pk not in vistos:
+            vistos.add(actual.pk)
+            partes.insert(0, actual.nombre)
+            actual = actual.padre
+        return ' › '.join(partes)
+
+    def descendientes(self):
+        """Ids de la categoría y de todas sus subcategorías."""
+        ids = [self.pk]
+        pendientes = list(self.subcategorias.all())
+        while pendientes:
+            actual = pendientes.pop()
+            if actual.pk in ids:
+                continue
+            ids.append(actual.pk)
+            pendientes.extend(actual.subcategorias.all())
+        return ids
+
+    def ascendientes(self):
+        """Ids de la categoría y de todas sus categorías superiores."""
+        ids = [self.pk]
+        actual = self.padre
+        while actual is not None and actual.pk not in ids:
+            ids.append(actual.pk)
+            actual = actual.padre
+        return ids
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.padre_id and self.padre_id == self.pk:
+            raise ValidationError({'padre': 'Una categoría no puede ser su propia categoría superior.'})
+
+        # No se puede colgar de un descendiente: si la categoría ya es
+        # ancestro de su futuro padre, el enlace cerraría un ciclo.
+        if self.padre_id and self.pk:
+            if self.pk in self.padre.ascendientes():
+                raise ValidationError({'padre': 'Una categoría no puede colgar de una de sus subcategorías.'})
 
     class Meta:
         verbose_name = "Categoría de Repuesto"
         verbose_name_plural = "Categorías de Repuestos"
         ordering = ['nombre']
+        constraints = [
+            # El nombre es único dentro de cada nivel.
+            models.UniqueConstraint(fields=['padre', 'nombre'], name='uniq_categoria_por_padre'),
+            # Las raíces (sin categoría superior) no pueden repetir nombre.
+            models.UniqueConstraint(
+                fields=['nombre'], condition=Q(padre__isnull=True), name='uniq_categoria_raiz'),
+        ]
 
     def __str__(self):
-        return self.nombre
+        return self.ruta_completa
 
 
 

@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="mb-0 fw-bold">Editar Categoría</h5>
+                        <p class="text-muted mb-0">{{ categoria.ruta_completa }}</p>
+                    </div>
+                    <a href="{% url 'detalle_categoria_repuesto' categoria.id %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Volver
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label fw-semibold">Nombre de la Categoría</label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                                <div class="text-danger small mt-1">{{ form.nombre.errors|join:', ' }}</div>
+                            {% endif %}
+                            <div class="form-text text-muted">El nombre debe ser único dentro del mismo nivel.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.padre.id_for_label }}" class="form-label fw-semibold">Categoría Superior</label>
+                            {{ form.padre }}
+                            {% if form.padre.errors %}
+                                <div class="text-danger small mt-1">{{ form.padre.errors|join:', ' }}</div>
+                            {% endif %}
+                            <div class="form-text text-muted">No podés colgar la categoría de una de sus subcategorías.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label fw-semibold">Descripción</label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="text-danger small mt-1">{{ form.descripcion.errors|join:', ' }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.estado }}
+                                <label class="form-check-label" for="{{ form.estado.id_for_label }}">
+                                    {{ form.estado.label }}
+                                </label>
+                            </div>
+                            {% if form.estado.errors %}
+                                <div class="text-danger small mt-1">{{ form.estado.errors|join:', ' }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="{% url 'detalle_categoria_repuesto' categoria.id %}" class="btn btn-outline-secondary" title="Cancelar" aria-label="Cancelar y volver al detalle de la categoría">
+                                <i class="bi bi-x-circle me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle-fill me-2"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

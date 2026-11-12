@@ -44,9 +44,25 @@
                 {% if form.categoria.errors %}<div class="text-danger small mt-1">{{ form.categoria.errors|join:', ' }}</div>{% endif %}
               </div>
               <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.fabricante.id_for_label }}">Fabricante</label>
+                {{ form.fabricante }}
+                {% if form.fabricante.errors %}<div class="text-danger small mt-1">{{ form.fabricante.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="{{ form.codigo_oem.id_for_label }}">Código OEM</label>
+                {{ form.codigo_oem }}
+                {% if form.codigo_oem.errors %}<div class="text-danger small mt-1">{{ form.codigo_oem.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-12">
                 <label class="form-label fw-semibold" for="{{ form.compatibilidad.id_for_label }}">Compatibilidad</label>
                 {{ form.compatibilidad }}
                 {% if form.compatibilidad.errors %}<div class="text-danger small mt-1">{{ form.compatibilidad.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-12">
+                <label class="form-label fw-semibold" for="{{ form.modelos_compatibles.id_for_label }}">Modelos Compatibles</label>
+                {{ form.modelos_compatibles }}
+                {% if form.modelos_compatibles.errors %}<div class="text-danger small mt-1">{{ form.modelos_compatibles.errors|join:', ' }}</div>{% endif %}
+                <div class="form-text text-muted">Modelos de vehículo donde este repuesto calza.</div>
               </div>
             </div>
 

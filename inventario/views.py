@@ -5,8 +5,10 @@ from configuraciones_maestras.models import Moneda
 from django.contrib import messages
 from .forms import (
     VehiculoForm,
+    VehiculoFotoFormSet,
     RepuestoForm,
     RepuestoProveedorForm,
+    CategoriaRepuestoForm,
     MantenimientoForm,
     MantenimientoRepuestoFormSet,
     DepositoForm,
@@ -98,6 +100,16 @@ def lista_inventario(request):
 # Vistas para la gestión de Vehículos
 # --------------------------------------------------------------------------
 
+def _envia_fotos(request, prefix='fotos'):
+    """
+    ¿El envío incluye la gestión del formset de fotos?
+
+    La galería es opcional: si el cliente no manda el formset (una pestaña
+    vieja, un script, un alta sin fotos) el vehículo se guarda igual.
+    """
+    return f'{prefix}-TOTAL_FORMS' in request.POST
+
+
 @revisar_permiso('inventario.agregar_vehiculo')
 def registrar_vehiculo(request):
     """Registra un vehículo para compra futura o aprobación del negocio.
@@ -107,7 +119,9 @@ def registrar_vehiculo(request):
     """
     if request.method == 'POST':
         form = VehiculoForm(request.POST, request.FILES)
-        if form.is_valid():
+        formset = VehiculoFotoFormSet(request.POST, request.FILES)
+        enviar_fotos = _envia_fotos(request)
+        if form.is_valid() and (not enviar_fotos or formset.is_valid()):
             nuevo = form.cleaned_data.get('nuevo_modelo')
             estado = form.cleaned_data.get('estado') or 'pendiente_importacion'
 
@@ -128,6 +142,12 @@ def registrar_vehiculo(request):
                 vehiculo.precio_venta = 0
 
             vehiculo.save()
+
+            # Las fotos se guardan con el vehículo ya creado.
+            if enviar_fotos:
+                formset.instance = vehiculo
+                formset.save()
+
             messages.success(request, 'Vehículo registrado correctamente.')
             return redirect('lista_vehiculos')
 
@@ -138,8 +158,12 @@ def registrar_vehiculo(request):
         if proveedor_id:
             initial['proveedor'] = int(proveedor_id)
         form = VehiculoForm(initial=initial)
+        formset = VehiculoFotoFormSet()
 
-    return render(request, 'inventario/agregar_vehiculo.html', {'form': form})
+    return render(request, 'inventario/agregar_vehiculo.html', {
+        'form': form,
+        'formset': formset,
+    })
 
 
 @revisar_permiso('inventario.agregar_vehiculo')
@@ -204,7 +228,11 @@ def detalle_vehiculo(request, vehiculo_id):
     """Vista para ver los detalles de un vehículo en el inventario."""
     vehiculo = Vehiculo.objects.get(id=vehiculo_id)
     monedas = Moneda.objects.all().order_by('codigo')
-    return render(request, 'inventario/detalle_vehiculo.html', {'vehiculo': vehiculo, 'monedas': monedas})  
+    return render(request, 'inventario/detalle_vehiculo.html', {
+        'vehiculo': vehiculo,
+        'monedas': monedas,
+        'fotos': vehiculo.fotos.all(),
+    })
 
 @revisar_permiso('inventario.eliminar_vehiculo')
 def eliminar_vehiculo(request, vehiculo_id):
@@ -218,7 +246,9 @@ def editar_vehiculo(request, vehiculo_id):
     vehiculo = Vehiculo.objects.get(id=vehiculo_id)
     if request.method == 'POST':
         form = VehiculoForm(request.POST, request.FILES, instance=vehiculo)
-        if form.is_valid():
+        formset = VehiculoFotoFormSet(request.POST, request.FILES, instance=vehiculo)
+        enviar_fotos = _envia_fotos(request)
+        if form.is_valid() and (not enviar_fotos or formset.is_valid()):
             nuevo = form.cleaned_data.get('nuevo_modelo')
             if nuevo and form.cleaned_data.get('marca') and not form.cleaned_data.get('modelo'):
                 marca = form.cleaned_data.get('marca')
@@ -228,10 +258,18 @@ def editar_vehiculo(request, vehiculo_id):
                 veh.save()
             else:
                 form.save()
+            if enviar_fotos:
+                formset.save()
+            messages.success(request, 'Vehículo actualizado correctamente.')
             return redirect('detalle_vehiculo', vehiculo_id=vehiculo.id)
     else:
         form = VehiculoForm(instance=vehiculo)
-    return render(request, 'inventario/editar_vehiculo.html', {'form': form, 'vehiculo': vehiculo})
+        formset = VehiculoFotoFormSet(instance=vehiculo)
+    return render(request, 'inventario/editar_vehiculo.html', {
+        'form': form,
+        'formset': formset,
+        'vehiculo': vehiculo,
+    })
 
 def _actualizar_costos_importacion_desde_post(producto, request):
     if isinstance(producto, Repuesto):
@@ -469,6 +507,124 @@ def editar_repuesto(request, repuesto_id):
     else:
         form = RepuestoForm(instance=repuesto)
     return render(request, 'inventario/editar_repuesto.html', {'form': form, 'repuesto': repuesto})
+
+# --------------------------------------------------------------------------
+# Vistas para la gestión de Categorías de Repuestos
+# --------------------------------------------------------------------------
+
+@revisar_permiso('inventario.listar_categorias_repuestos')
+def lista_categorias_repuestos(request):
+    """Listado de categorías con búsqueda y filtros por nivel y estado."""
+    categorias = CategoriaRepuesto.objects.select_related('padre')
+
+    query = request.GET.get('search_query', '')
+    if query:
+        categorias = categorias.filter(nombre__icontains=query)
+
+    padre_id = request.GET.get('padre', '')
+    if padre_id:
+        categorias = categorias.filter(padre_id=padre_id)
+
+    solo_raices = request.GET.get('raices') == '1'
+    if solo_raices:
+        categorias = categorias.filter(padre__isnull=True)
+
+    estado = request.GET.get('estado', '')
+    if estado in ('activo', 'inactivo'):
+        categorias = categorias.filter(estado=(estado == 'activo'))
+
+    return render(request, 'inventario/lista_categorias_repuestos.html', {
+        'categorias': categorias,
+        'query': query,
+        'padre': padre_id,
+        'solo_raices': solo_raices,
+        'estado': estado,
+        'niveles': CategoriaRepuesto.objects.filter(estado=True).order_by('nombre'),
+    })
+
+
+@revisar_permiso('inventario.agregar_categoria_repuesto')
+def agregar_categoria_repuesto(request):
+    if request.method == 'POST':
+        form = CategoriaRepuestoForm(request.POST)
+        if form.is_valid():
+            categoria = form.save()
+            messages.success(request, 'Categoría registrada correctamente.')
+            return redirect('detalle_categoria_repuesto', categoria_id=categoria.id)
+    else:
+        # Se puede llegar desde el detalle de una categoría para colgar una subcategoría.
+        padre_id = request.GET.get('padre')
+        initial = {}
+        if padre_id:
+            padre = CategoriaRepuesto.objects.filter(pk=padre_id, estado=True).first()
+            if padre:
+                initial['padre'] = padre
+        form = CategoriaRepuestoForm(initial=initial)
+    return render(request, 'inventario/agregar_categoria_repuesto.html', {'form': form})
+
+
+@revisar_permiso('inventario.detallar_categoria_repuesto')
+def detalle_categoria_repuesto(request, categoria_id):
+    categoria = get_object_or_404(
+        CategoriaRepuesto.objects.select_related('padre'), pk=categoria_id)
+    return render(request, 'inventario/detalle_categoria_repuesto.html', {
+        'categoria': categoria,
+        'subcategorias': categoria.subcategorias.all(),
+        'repuestos': categoria.repuesto_set.select_related('proveedor')[:50],
+    })
+
+
+@revisar_permiso('inventario.editar_categoria_repuesto')
+def editar_categoria_repuesto(request, categoria_id):
+    categoria = get_object_or_404(CategoriaRepuesto, pk=categoria_id)
+    if request.method == 'POST':
+        form = CategoriaRepuestoForm(request.POST, instance=categoria)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Categoría actualizada correctamente.')
+            return redirect('detalle_categoria_repuesto', categoria_id=categoria.id)
+    else:
+        form = CategoriaRepuestoForm(instance=categoria)
+    return render(request, 'inventario/editar_categoria_repuesto.html', {
+        'form': form,
+        'categoria': categoria,
+    })
+
+
+@revisar_permiso('inventario.cambiar_estado_categoria_repuesto')
+def cambiar_estado_categoria_repuesto(request, categoria_id):
+    """Activa o inactiva una categoría (no la borra)."""
+    categoria = get_object_or_404(CategoriaRepuesto, pk=categoria_id)
+    if request.method != 'POST':
+        return redirect('detalle_categoria_repuesto', categoria_id=categoria.id)
+
+    if categoria.estado:
+        categoria.inactivar()
+        messages.success(request, 'Categoría inactivada.')
+    else:
+        categoria.activar()
+        messages.success(request, 'Categoría activada.')
+    return redirect('detalle_categoria_repuesto', categoria_id=categoria.id)
+
+
+@revisar_permiso('inventario.eliminar_categoria_repuesto')
+def eliminar_categoria_repuesto(request, categoria_id):
+    categoria = get_object_or_404(CategoriaRepuesto, pk=categoria_id)
+    if categoria.eliminable():
+        categoria.delete()
+        messages.success(request, 'Categoría eliminada.')
+    else:
+        if categoria.subcategorias.exists():
+            messages.error(
+                request,
+                'No se puede eliminar la categoría porque tiene subcategorías asociadas.',
+            )
+        else:
+            messages.error(
+                request,
+                'No se puede eliminar la categoría porque tiene repuestos asociados.',
+            )
+    return redirect('lista_categorias_repuestos')
 
 # --------------------------------------------------------------------------
 # Vistas para la gestión de Mantenimientos

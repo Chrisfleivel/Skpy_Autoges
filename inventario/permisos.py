@@ -74,6 +74,42 @@ def generar_permisos_iniciales_inventario():
         'sector': 'Inventario'
     },
     {
+        'codename': 'inventario.agregar_categoria_repuesto',
+        'nombre': 'Agregar Categoría de Repuesto',
+        'descripcion': 'Permite agregar una categoría de repuestos al inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.listar_categorias_repuestos',
+        'nombre': 'Listar Categorías de Repuestos',
+        'descripcion': 'Permite ver la lista de categorías de repuestos del inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.detallar_categoria_repuesto',
+        'nombre': 'Detalle Categoría de Repuesto',
+        'descripcion': 'Permite ver los detalles de una categoría de repuestos.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.editar_categoria_repuesto',
+        'nombre': 'Editar Categoría de Repuesto',
+        'descripcion': 'Permite editar una categoría de repuestos.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.eliminar_categoria_repuesto',
+        'nombre': 'Eliminar Categoría de Repuesto',
+        'descripcion': 'Permite eliminar una categoría de repuestos del inventario.',
+        'sector': 'Inventario'
+    },
+    {
+        'codename': 'inventario.cambiar_estado_categoria_repuesto',
+        'nombre': 'Cambiar Estado de la Categoría de Repuesto',
+        'descripcion': 'Permite activar o inactivar una categoría de repuestos.',
+        'sector': 'Inventario'
+    },
+    {
         'codename': 'inventario.agregar_mantenimiento',
         'nombre': 'Agregar Mantenimiento',
         'descripcion': 'Permite agregar un nuevo mantenimiento al inventario.',

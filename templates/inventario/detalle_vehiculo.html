@@ -31,6 +31,33 @@
       </div>
       {% endif %}
 
+      {% if fotos %}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+          <h6 class="mb-0 fw-bold">
+            <i class="bi bi-images text-primary me-2"></i>Galería de fotos
+          </h6>
+          <span class="text-muted small">{{ fotos|length }} foto{{ fotos|length|pluralize }}</span>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            {% for foto in fotos %}
+              <div class="col-6 col-md-4 col-lg-3">
+                <a href="{{ foto.imagen.url }}" target="_blank" rel="noopener" class="d-block">
+                  <img src="{{ foto.imagen.url }}" class="img-fluid rounded shadow-sm w-100"
+                       alt="{{ foto.descripcion|default:foto.vehiculo }}"
+                       style="height: 140px; object-fit: cover;">
+                </a>
+                {% if foto.descripcion %}
+                  <div class="small text-muted text-truncate mt-1">{{ foto.descripcion }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
       <div class="row gy-4">
         <div class="col-lg-6">
           <div class="card border-0 shadow-sm">

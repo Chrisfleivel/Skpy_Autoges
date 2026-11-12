@@ -5,6 +5,7 @@ from core.models import Moneda as MonedaFacade
 from configuraciones_maestras.models import Moneda as MonedaCatalogo
 from .models import (
     Vehiculo,
+    VehiculoFoto,
     Repuesto,
     MantenimientoVehiculo,
     MantenimientoRepuesto,
@@ -156,6 +157,16 @@ class VehiculoForm(forms.ModelForm):
         }
 
 class RepuestoForm(forms.ModelForm):
+    # Campos que la pantalla no muestra. Si no vienen en el POST se conserva
+    # el valor actual (o el del modelo en un alta), así el formulario nunca
+    # queda con un error de "campo obligatorio" invisible para el usuario.
+    CAMPOS_OPCIONALES = (
+        'stock_actual',
+        'stock_minimo',
+        'costo_unitario',
+        'moneda_del_costo_unitario',
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['tipo'].initial = 'repuesto'
@@ -166,12 +177,41 @@ class RepuestoForm(forms.ModelForm):
         for field in self.fields.values():
             field.widget.attrs.update({'class': 'form-control'})
         _aplicar_moneda_choices(self, 'moneda_venta')
+        # Los modelos compatibles se eligen de una lista múltiple.
+        self.fields['modelos_compatibles'].widget.attrs.update({
+            'class': 'form-select', 'size': '6',
+        })
+        for field_name in self.CAMPOS_OPCIONALES:
+            if field_name in self.fields:
+                self.fields[field_name].required = False
+
+    def _conservar_si_vacio(self, field_name):
+        """Devuelve el valor actual del modelo cuando el campo viene vacío."""
+        valor = self.cleaned_data.get(field_name)
+        if valor in (None, ''):
+            return getattr(self.instance, field_name)
+        return valor
+
+    def clean_stock_actual(self):
+        return self._conservar_si_vacio('stock_actual')
+
+    def clean_stock_minimo(self):
+        return self._conservar_si_vacio('stock_minimo')
+
+    def clean_costo_unitario(self):
+        return self._conservar_si_vacio('costo_unitario')
+
+    def clean_moneda_del_costo_unitario(self):
+        return self._conservar_si_vacio('moneda_del_costo_unitario')
 
     class Meta:
         model = Repuesto
-        exclude = ['fecha_ultima_entrada']
+        # `stock_reservado` es el espejo de StockRepuesto: lo maneja el
+        # servicio de stock, no el usuario.
+        exclude = ['fecha_ultima_entrada', 'stock_reservado']
         widgets = {
             'descripcion': forms.Textarea(attrs={'rows': 3}),
+            'compatibilidad': forms.Textarea(attrs={'rows': 3}),
         }
 
 
@@ -202,17 +242,131 @@ class RepuestoProveedorForm(forms.ModelForm):
         if 'imagen' in self.fields:
             self.fields['imagen'].widget.attrs.update({'class': 'form-control'})
 
+        # Los modelos compatibles se eligen de una lista múltiple.
+        if 'modelos_compatibles' in self.fields:
+            self.fields['modelos_compatibles'].widget.attrs.update({
+                'class': 'form-select', 'size': '6',
+            })
+
     class Meta:
         model = Repuesto
         fields = [
             'nombre', 'codigo_repuesto', 'proveedor', 'categoria', 'unidad_medida',
             'cantidad_a_comprar', 'costo_unitario_proveedor', 'moneda_compra_proveedor', 'moneda_venta',
-            'compatibilidad', 'descripcion', 'imagen', 'tipo', 'estado', 'costo_compra'
+            'compatibilidad', 'descripcion', 'imagen', 'tipo', 'estado', 'costo_compra',
+            'fabricante', 'codigo_oem', 'modelos_compatibles',
         ]
         widgets = {
             'descripcion': forms.Textarea(attrs={'rows': 3}),
             'compatibilidad': forms.Textarea(attrs={'rows': 3}),
         }
+
+class VehiculoFotoForm(forms.ModelForm):
+    """Una foto de la galería del vehículo."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # El orden es opcional: si no se informa, la foto se guarda al final.
+        self.fields['orden'].required = False
+        # En las filas nuevas (las extra del formset) el "orden" no debe marcar
+        # el formulario como modificado cuando la línea viene vacía: si no, la
+        # fila en blanco se valida como error y el formset nunca es válido.
+        if not self.instance.pk:
+            self.initial['orden'] = None
+
+    def clean_orden(self):
+        valor = self.cleaned_data.get('orden')
+        return 0 if valor is None else valor
+
+    class Meta:
+        model = VehiculoFoto
+        fields = ['imagen', 'descripcion', 'orden']
+        widgets = {
+            'imagen': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+            'descripcion': forms.TextInput(attrs={'placeholder': 'Ej.: frontal, lateral, interior'}),
+            'orden': forms.NumberInput(attrs={'min': '0'}),
+        }
+
+
+VehiculoFotoFormSet = inlineformset_factory(
+    Vehiculo,
+    VehiculoFoto,
+    form=VehiculoFotoForm,
+    extra=1,
+    can_delete=True,
+)
+
+
+class CategoriaRepuestoForm(forms.ModelForm):
+    """
+    Alta y edición de una categoría de repuestos.
+
+    El nombre tiene que ser único **dentro del mismo nivel**: dos raíces no
+    pueden llamarse igual, pero una subcategoría puede repetir el nombre de
+    su padre. Tampoco se puede colgar de un descendiente (crearía un ciclo).
+    """
+
+    class Meta:
+        model = CategoriaRepuesto
+        fields = ['nombre', 'descripcion', 'padre', 'estado']
+        widgets = {
+            'descripcion': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        queryset = CategoriaRepuesto.objects.filter(estado=True).order_by('nombre')
+        if self.instance and self.instance.pk:
+            # No se puede elegir la propia categoría ni una de sus descendientes.
+            queryset = queryset.exclude(pk__in=self.instance.descendientes())
+        self.fields['padre'].queryset = queryset
+        self.fields['padre'].empty_label = 'Sin categoría superior (raíz)'
+        self.fields['padre'].required = False
+        self.fields['estado'].label = 'Activa'
+
+        for field_name, field in self.fields.items():
+            if field_name == 'estado':
+                field.widget = forms.CheckboxInput(attrs={'class': 'form-check-input'})
+            elif field_name == 'padre':
+                field.widget.attrs.update({'class': 'form-select'})
+            else:
+                field.widget.attrs.update({'class': 'form-control'})
+
+    def clean_nombre(self):
+        nombre = (self.cleaned_data.get('nombre') or '').strip()
+        if not nombre:
+            return nombre
+
+        padre = self.cleaned_data.get('padre')
+        if padre:
+            repetidos = CategoriaRepuesto.objects.filter(
+                nombre__iexact=nombre, padre=padre)
+        else:
+            repetidos = CategoriaRepuesto.objects.filter(
+                nombre__iexact=nombre, padre__isnull=True)
+
+        if self.instance.pk:
+            repetidos = repetidos.exclude(pk=self.instance.pk)
+
+        if repetidos.exists():
+            nivel = f'"{padre.nombre}"' if padre else 'la raíz'
+            raise forms.ValidationError(
+                f'Ya existe una categoría con ese nombre en {nivel}.')
+        return nombre
+
+    def clean(self):
+        cleaned = super().clean()
+        padre = cleaned.get('padre')
+        if padre and self.instance.pk:
+            # El modelo valida esto en `CategoriaRepuesto.clean()`; acá se avisa
+            # antes para que el error caiga en el campo correcto.
+            if self.instance.pk in padre.ascendientes():
+                self.add_error(
+                    'padre',
+                    'Una categoría no puede colgar de una de sus subcategorías.',
+                )
+        return cleaned
+
 
 class MantenimientoForm(forms.ModelForm):
     """

@@ -66,12 +66,33 @@
                         <dt class="col-6">Unidad</dt>
                         <dd class="col-6 text-end">{% if repuesto.unidad_medida %}{{ repuesto.unidad_medida.nombre }}{% else %}N/A{% endif %}</dd>
 
+                        <dt class="col-6">Fabricante</dt>
+                        <dd class="col-6 text-end">{{ repuesto.fabricante|default:'—' }}</dd>
+
+                        <dt class="col-6">Código OEM</dt>
+                        <dd class="col-6 text-end">{{ repuesto.codigo_oem|default:'—' }}</dd>
+
                         <dt class="col-6">Compatibilidad</dt>
                         <dd class="col-6 text-end">{{ repuesto.compatibilidad|default:'Universal' }}</dd>
 
                         <dt class="col-6">Última entrada</dt>
                         <dd class="col-6 text-end">{{ repuesto.fecha_ultima_entrada|date:'d/m/Y H:i' }}</dd>
                     </dl>
+
+                    <div class="mt-3">
+                        <label class="text-muted small mb-1 d-block">Modelos compatibles</label>
+                        {% if repuesto.modelos_compatibles.exists %}
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for modelo in repuesto.modelos_compatibles.all %}
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                                        {{ modelo }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <span class="text-muted small">Sin modelos compatibles cargados.</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

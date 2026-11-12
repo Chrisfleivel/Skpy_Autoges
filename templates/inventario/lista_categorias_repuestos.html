@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                        <i class="bi bi-diagram-3 text-primary fs-2"></i>
+                    </div>
+                    <div>
+                        <h1 class="h3 mb-1 fw-bold text-dark">Categorías de Repuestos</h1>
+                        <p class="text-muted mb-0">Organiza el catálogo de repuestos por jerarquía.</p>
+                    </div>
+                </div>
+                <a href="{% url 'agregar_categoria_repuesto' %}" class="btn btn-primary shadow-sm" title="Agregar nueva categoría">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Agregar Categoría
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="search_query" class="form-label fw-semibold">Buscar categoría</label>
+                    <input type="text" id="search_query" name="search_query" class="form-control" placeholder="Nombre de la categoría..." value="{{ query }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="padre" class="form-label fw-semibold">Categoría superior</label>
+                    <select id="padre" name="padre" class="form-select">
+                        <option value="">Todas</option>
+                        {% for nivel in niveles %}
+                            <option value="{{ nivel.id }}" {% if padre == nivel.id|stringformat:'s' %}selected{% endif %}>
+                                {{ nivel.ruta_completa }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="estado" class="form-label fw-semibold">Estado</label>
+                    <select id="estado" name="estado" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="activo" {% if estado == 'activo' %}selected{% endif %}>Activas</option>
+                        <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Inactivas</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2 align-items-end">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="raices" name="raices" value="1" {% if solo_raices %}checked{% endif %}>
+                        <label class="form-check-label" for="raices">Solo raíces</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search me-2"></i>Buscar
+                    </button>
+                    <a href="{% url 'lista_categorias_repuestos' %}" class="btn btn-outline-secondary" title="Limpiar búsqueda">
+                        <i class="bi bi-x-circle me-2"></i>Limpiar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="mb-0 fw-bold">Lista de Categorías</h6>
+            </div>
+            <div class="text-muted small">Total: {{ categorias|length }}</div>
+        </div>
+        <div class="card-body p-0">
+            {% if categorias %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0 fw-semibold ps-4">#</th>
+                            <th class="border-0 fw-semibold">Categoría</th>
+                            <th class="border-0 fw-semibold">Categoría superior</th>
+                            <th class="border-0 fw-semibold text-center">Repuestos</th>
+                            <th class="border-0 fw-semibold">Estado</th>
+                            <th class="border-0 fw-semibold text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for categoria in categorias %}
+                        <tr>
+                            <td class="ps-4">{{ categoria.id }}</td>
+                            <td>
+                                <a href="{% url 'detalle_categoria_repuesto' categoria.id %}" class="text-decoration-none text-dark fw-semibold">
+                                    {{ categoria.nombre }}
+                                </a>
+                                {% if categoria.subcategorias.exists %}
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary ms-1" title="Tiene subcategorías">
+                                        <i class="bi bi-diagram-2"></i> {{ categoria.subcategorias.count }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted">
+                                {% if categoria.padre %}{{ categoria.padre.nombre }}{% else %}<span class="badge bg-light text-muted">Raíz</span>{% endif %}
+                            </td>
+                            <td class="text-center text-muted">{{ categoria.repuesto_set.count }}</td>
+                            <td>
+                                {% if categoria.estado %}
+                                    <span class="badge bg-success bg-opacity-10 text-success">Activa</span>
+                                {% else %}
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary">Inactiva</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'detalle_categoria_repuesto' categoria.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalles" aria-label="Ver detalles de la categoría">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'editar_categoria_repuesto' categoria.id %}" class="btn btn-sm btn-outline-secondary" title="Editar" aria-label="Editar categoría">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" action="{% url 'cambiar_estado_categoria_repuesto' categoria.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="{% if categoria.estado %}Inactivar{% else %}Activar{% endif %}" aria-label="Cambiar estado de la categoría">
+                                            <i class="bi bi-toggle-{% if categoria.estado %}on{% else %}off{% endif %}"></i>
+                                        </button>
+                                    </form>
+                                    <a href="{% url 'eliminar_categoria_repuesto' categoria.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar" aria-label="Eliminar categoría" onclick="return confirm('¿Eliminar esta categoría? Esta acción no se puede deshacer.');">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-diagram-3 display-1 text-muted"></i>
+                </div>
+                <h5 class="text-muted mb-3">No hay categorías registradas</h5>
+                <p class="text-muted mb-4">Agregá tu primera categoría de repuestos para organizar el catálogo.</p>
+                <a href="{% url 'agregar_categoria_repuesto' %}" class="btn btn-primary shadow-sm">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Agregar Categoría
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -84,9 +84,29 @@
 
                             <div class="form-section-title">Detalle y Archivo</div>
                             <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Fabricante</label>
+                                    {{ form.fabricante }}
+                                    {% if form.fabricante.errors %}<div class="text-danger small">{{ form.fabricante.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Código OEM</label>
+                                    {{ form.codigo_oem }}
+                                    {% if form.codigo_oem.errors %}<div class="text-danger small">{{ form.codigo_oem.errors }}</div>{% endif %}
+                                    <div class="form-text text-muted">Código del fabricante (referencia de catálogo).</div>
+                                </div>
                                 <div class="col-md-12">
                                     <label class="form-label">Compatibilidad</label>
                                     {{ form.compatibilidad }}
+                                    {% if form.compatibilidad.errors %}<div class="text-danger small">{{ form.compatibilidad.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Modelos Compatibles</label>
+                                    {{ form.modelos_compatibles }}
+                                    {% if form.modelos_compatibles.errors %}<div class="text-danger small">{{ form.modelos_compatibles.errors }}</div>{% endif %}
+                                    <div class="form-text text-muted">
+                                        Modelos de vehículo donde este repuesto calza (seleccioná varios con Ctrl).
+                                    </div>
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label">Descripción</label>

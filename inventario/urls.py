@@ -25,6 +25,14 @@ urlpatterns = [
     path('repuestos/<int:repuesto_id>/editar_precio/', views.editar_precio_repuesto, name='editar_precio_repuesto'),
     path('repuestos/<int:repuesto_id>/eliminar/', views.eliminar_repuesto, name='eliminar_repuesto'),
 
+    # Vistas para la gestión de Categorías de Repuestos
+    path('categorias_repuestos/', views.lista_categorias_repuestos, name='lista_categorias_repuestos'),
+    path('categorias_repuestos/agregar/', views.agregar_categoria_repuesto, name='agregar_categoria_repuesto'),
+    path('categorias_repuestos/<int:categoria_id>/', views.detalle_categoria_repuesto, name='detalle_categoria_repuesto'),
+    path('categorias_repuestos/<int:categoria_id>/editar/', views.editar_categoria_repuesto, name='editar_categoria_repuesto'),
+    path('categorias_repuestos/<int:categoria_id>/eliminar/', views.eliminar_categoria_repuesto, name='eliminar_categoria_repuesto'),
+    path('categorias_repuestos/<int:categoria_id>/estado/', views.cambiar_estado_categoria_repuesto, name='cambiar_estado_categoria_repuesto'),
+
     # Vistas para la gestión de Mantenimientos
     path('mantenimientos/', views.lista_mantenimientos, name='lista_mantenimientos'),
     path('mantenimientos/agregar/', views.agregar_mantenimiento, name='agregar_mantenimiento'),

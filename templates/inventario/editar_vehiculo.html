@@ -127,6 +127,58 @@
                 <label class="form-label fw-semibold" for="{{ form.imagen.id_for_label }}">Imagen del Vehículo</label>
                 {{ form.imagen }}
                 {% if form.imagen.errors %}<div class="text-danger small mt-1">{{ form.imagen.errors|join:', ' }}</div>{% endif %}
+                <div class="form-text">Esta es la foto principal (la portada del vehículo).</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Galería de fotos</label>
+                {{ formset.management_form }}
+                {% if formset.non_form_errors %}
+                  <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+                {% endif %}
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th style="width: 30%;">Fotografía</th>
+                        <th style="width: 25%;">Vista previa</th>
+                        <th style="width: 30%;">Descripción</th>
+                        <th style="width: 15%;">Orden</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for foto_form in formset.forms %}
+                        <tr>
+                          <td>
+                            {{ foto_form.id }}
+                            {{ foto_form.imagen }}
+                            {% if foto_form.imagen.errors %}<div class="text-danger small">{{ foto_form.imagen.errors }}</div>{% endif %}
+                          </td>
+                          <td>
+                            {% if foto_form.instance.pk and foto_form.instance.imagen %}
+                              <img src="{{ foto_form.instance.imagen.url }}" alt="{{ foto_form.instance.descripcion }}" class="img-thumbnail" style="max-height: 70px;">
+                            {% else %}
+                              <span class="text-muted small">Sin foto</span>
+                            {% endif %}
+                          </td>
+                          <td>
+                            {{ foto_form.descripcion }}
+                            {% if foto_form.descripcion.errors %}<div class="text-danger small">{{ foto_form.descripcion.errors }}</div>{% endif %}
+                          </td>
+                          <td>
+                            {{ foto_form.orden }}
+                            {% if foto_form.orden.errors %}<div class="text-danger small">{{ foto_form.orden.errors }}</div>{% endif %}
+                            {% if foto_form.instance.pk %}
+                              <label class="form-check-label small d-block mt-1">
+                                {{ foto_form.DELETE }} Quitar
+                              </label>
+                            {% endif %}
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                <div class="form-text">El orden define cómo se muestran en el detalle del vehículo.</div>
               </div>
               <div class="col-12">
                 <label class="form-label fw-semibold" for="{{ form.descripcion.id_for_label }}">Descripción</label>

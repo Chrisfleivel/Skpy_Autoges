@@ -147,6 +147,46 @@
                   <label class="form-label fw-semibold" for="{{ form.imagen.id_for_label }}">Imagen del vehículo</label>
                   {{ form.imagen }}
                   {% if form.imagen.errors %}<div class="text-danger small mt-1">{{ form.imagen.errors|join:', ' }}</div>{% endif %}
+                  <div class="form-text">Esta es la foto principal (la portada del vehículo).</div>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Galería de fotos</label>
+                  {{ formset.management_form }}
+                  {% if formset.non_form_errors %}
+                    <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+                  {% endif %}
+                  <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                      <thead class="table-light">
+                        <tr>
+                          <th style="width: 40%;">Fotografía</th>
+                          <th style="width: 40%;">Descripción</th>
+                          <th style="width: 20%;">Orden</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for foto_form in formset.forms %}
+                          <tr>
+                            <td>
+                              {{ foto_form.id }}
+                              {{ foto_form.imagen }}
+                              {% if foto_form.imagen.errors %}<div class="text-danger small">{{ foto_form.imagen.errors }}</div>{% endif %}
+                            </td>
+                            <td>
+                              {{ foto_form.descripcion }}
+                              {% if foto_form.descripcion.errors %}<div class="text-danger small">{{ foto_form.descripcion.errors }}</div>{% endif %}
+                            </td>
+                            <td>
+                              {{ foto_form.orden }}
+                              {% if foto_form.orden.errors %}<div class="text-danger small">{{ foto_form.orden.errors }}</div>{% endif %}
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="form-text">Podés cargar varias fotos; el orden define cómo se muestran.</div>
                 </div>
 
                 <div class="col-12">

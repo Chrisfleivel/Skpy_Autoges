@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'core',
     'seguridad_usuarios',
     'configuraciones_maestras',
-    #'catalogo.apps.CatalogoConfig',
     'compras',
     'ventas.apps.VentasConfig',
     'finanzas.apps.FinanzasConfig',
@@ -56,10 +55,6 @@ INSTALLED_APPS = [
     'reposicion_stock',
     'colorfield',
 ]
-
-MIGRATION_MODULES = {
-    'catalogo': None,
-}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

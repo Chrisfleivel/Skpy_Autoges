@@ -66,6 +66,7 @@ media/facturas/factura*.pdf
 media/configuraciones_maestras/
 media/importaciones/
 media/compras/
+media/vehiculos/
 
 # Flask stuff:
 instance/
