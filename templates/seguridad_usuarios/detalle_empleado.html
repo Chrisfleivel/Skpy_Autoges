@@ -97,6 +97,10 @@
                 <div class="col-6">{{ empleado.departamento.nombre|default:'-' }}</div>
               </div>
               <div class="row mb-3">
+                <div class="col-6 fw-semibold text-muted">Sucursal:</div>
+                <div class="col-6">{{ empleado.sucursal.nombre|default:'-' }}</div>
+              </div>
+              <div class="row mb-3">
                 <div class="col-6 fw-semibold text-muted">Cargo:</div>
                 <div class="col-6">{{ empleado.cargo.nombre|default:'-' }}</div>
               </div>

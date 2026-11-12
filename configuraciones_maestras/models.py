@@ -436,6 +436,7 @@ class Departamento(models.Model):
     Modelo que representa la Dependencia en la empresa.
     '''
 
+    empresa = models.ForeignKey('Empresa', on_delete=models.PROTECT, related_name='departamentos', null=True, blank=True, verbose_name="Empresa")
     nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre del Departamento")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción del Departamento")
     fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
@@ -620,6 +621,11 @@ class Empresa(models.Model):
     ruc = models.CharField(max_length=20, blank=True, null=True, verbose_name="RUC de la Empresa")
     timbrado = models.CharField(max_length=20, blank=True, null=True, verbose_name="Número de Timbrado")
 
+    @classmethod
+    def get_empresa_activa(cls):
+        """Devuelve la empresa activa del sistema. Solo debe existir una."""
+        return cls.objects.order_by('id').first()
+
     class Meta:
         verbose_name = "Empresa"
         verbose_name_plural = "Empresas"
@@ -635,6 +641,7 @@ class Sucursal(models.Model):
     Modelo que representa una sucursal de la empresa.
     Cada sucursal puede tener varias cajas, empleados y operaciones de cobranza.
     """
+    empresa = models.ForeignKey('Empresa', on_delete=models.PROTECT, related_name='sucursales_registradas', null=True, blank=True, verbose_name="Empresa")
     nombre = models.CharField(max_length=255, verbose_name="Nombre de la Sucursal")
     direccion = models.CharField(max_length=255, blank=True, null=True, verbose_name="Dirección")
     telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")

@@ -25,6 +25,9 @@
             <a href="{% url 'agregar_repuesto_proveedor' %}?proveedor={{ proveedor.id }}" class="btn btn-success">
               <i class="bi bi-tools me-2"></i>Registrar nuevo repuesto encontrado
             </a>
+            <a href="{% url 'registrar_vehiculo' %}?proveedor={{ proveedor.id }}" class="btn btn-warning text-dark">
+              <i class="bi bi-car-front me-2"></i>Registrar vehículo
+            </a>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#comprarRepuestoModal">
               <i class="bi bi-cart-plus me-2"></i>Registrar compra
             </button>

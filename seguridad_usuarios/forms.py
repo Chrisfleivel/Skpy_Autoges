@@ -3,6 +3,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.forms import inlineformset_factory
+from configuraciones_maestras.models import Empresa, Sucursal, Departamento, Cargo
 from .models import Rol, Permiso, Empleado, UsuarioPerfil, ContactoEmpleado
 
 class UserRegisterForm(forms.ModelForm):
@@ -86,22 +87,59 @@ class PermisoForm(forms.ModelForm):
 class EmpleadoForm(forms.ModelForm):
     """
     Formulario para crear o editar un empleado.
+    Solo muestra sucursales, departamentos y cargos de la empresa activa.
     """
 
     class Meta:
         model = Empleado
-        fields = ['tipo_persona', 'nombre', 'apellidos', 'documento_identidad', 'ruc', 'email', 'departamento', 'cargo', 'estado']
+        fields = [
+            'tipo_persona',
+            'nombre',
+            'apellidos',
+            'documento_identidad',
+            'ruc',
+            'telefono',
+            'email',
+            'departamento',
+            'sucursal',
+            'cargo',
+            'estado',
+        ]
         widgets = {
-            'nombre': forms.TextInput(attrs={'required': 'required','class': 'form-control', 'placeholder': 'Ej: Jose Luis'}),
+            'nombre': forms.TextInput(attrs={'required': 'required', 'class': 'form-control', 'placeholder': 'Ej: Jose Luis'}),
             'apellidos': forms.TextInput(attrs={'required': 'required', 'class': 'form-control', 'placeholder': 'Ej: Perez Gomez'}),
             'documento_identidad': forms.TextInput(attrs={'required': 'required', 'class': 'form-control', 'placeholder': 'Ej: 12345678'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: +595 981 123 456'}),
             'email': forms.EmailInput(attrs={'required': 'required', 'class': 'form-control', 'placeholder': 'Ej: jose@example.com'}),
-            'departamento': forms.Select(attrs={'id': 'id_departamento', 'class': 'form-control'}),
-            'cargo': forms.Select(attrs={'id': 'id_cargo', 'class': 'form-control'}),
+            'departamento': forms.Select(attrs={'id': 'id_departamento', 'class': 'form-select'}),
+            'sucursal': forms.Select(attrs={'id': 'id_sucursal', 'class': 'form-select'}),
+            'cargo': forms.Select(attrs={'id': 'id_cargo', 'class': 'form-select'}),
             'ruc': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 1234567-7'}),
             'estado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'tipo_persona': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        empresa_activa = Empresa.get_empresa_activa()
+
+        if empresa_activa:
+            self.fields['sucursal'].queryset = Sucursal.objects.filter(
+                empresa=empresa_activa
+            ).order_by('nombre')
+
+            self.fields['departamento'].queryset = Departamento.objects.filter(
+                empresa=empresa_activa
+            ).order_by('nombre')
+
+            self.fields['cargo'].queryset = Cargo.objects.filter(
+                departamento__empresa=empresa_activa
+            ).order_by('nombre')
+        else:
+            self.fields['sucursal'].queryset = Sucursal.objects.none()
+            self.fields['departamento'].queryset = Departamento.objects.none()
+            self.fields['cargo'].queryset = Cargo.objects.none()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -111,38 +149,35 @@ class EmpleadoForm(forms.ModelForm):
         documento_identidad = cleaned_data.get('documento_identidad')
         ruc = cleaned_data.get('ruc')
         email = cleaned_data.get('email')
-        
-   
+
         if tipo_persona == 'FISICA':
             if not nombre:
-                self.add_error('nombre', 'El nombre es obligatorio para persona física')
+                self.add_error('nombre', 'El nombre es obligatorio para persona física.')
             if not documento_identidad:
-                self.add_error('documento_identidad', 'El documento de identidad es obligatorio para persona física')
-        
+                self.add_error('documento_identidad', 'El documento de identidad es obligatorio para persona física.')
+
         if tipo_persona == 'JURIDICA':
             if not ruc:
-                self.add_error('ruc', 'El RUC es obligatorio para persona jurídica')
+                self.add_error('ruc', 'El RUC es obligatorio para persona jurídica.')
 
         if not nombre and tipo_persona != 'JURIDICA':
-            self.add_error('nombre', 'El nombre es obligatorio')
+            self.add_error('nombre', 'El nombre es obligatorio.')
         if not apellidos:
-            self.add_error('apellidos', 'Los apellidos son obligatorios')
+            self.add_error('apellidos', 'Los apellidos son obligatorios.')
         if not documento_identidad:
-                self.add_error('documento_identidad', 'El documento de identidad es obligatorio ')
+            self.add_error('documento_identidad', 'El documento de identidad es obligatorio.')
         if not email:
-                self.add_error('email', 'El correo electrónico es obligatorio')
-        # Validaciones de unicidad para documento_identidad y ruc
+            self.add_error('email', 'El correo electrónico es obligatorio.')
+
         qs = Empleado.objects.all()
         if self.instance and getattr(self.instance, 'pk', None):
             qs = qs.exclude(pk=self.instance.pk)
 
-        if documento_identidad:
-            if qs.filter(documento_identidad=documento_identidad).exists():
-                self.add_error('documento_identidad', 'El documento de identidad ya está registrado para otro empleado.')
+        if documento_identidad and qs.filter(documento_identidad=documento_identidad).exists():
+            self.add_error('documento_identidad', 'El documento de identidad ya está registrado para otro empleado.')
 
-        if ruc:
-            if qs.filter(ruc=ruc).exists():
-                self.add_error('ruc', 'El RUC ya está registrado para otro empleado.')
+        if ruc and qs.filter(ruc=ruc).exists():
+            self.add_error('ruc', 'El RUC ya está registrado para otro empleado.')
 
         return cleaned_data
 

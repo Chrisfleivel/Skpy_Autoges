@@ -7,6 +7,7 @@ urlpatterns = [
     
     # Vistas para la gestión de Vehículos
     path('vehiculos/', views.lista_vehiculos, name='lista_vehiculos'),
+    path('vehiculos/registrar/', views.registrar_vehiculo, name='registrar_vehiculo'),
     path('vehiculos/agregar/', views.agregar_vehiculo, name='agregar_vehiculo'),
     path('vehiculos/<int:vehiculo_id>/', views.detalle_vehiculo, name='detalle_vehiculo'),
     path('vehiculos/<int:vehiculo_id>/editar/', views.editar_vehiculo, name='editar_vehiculo'),

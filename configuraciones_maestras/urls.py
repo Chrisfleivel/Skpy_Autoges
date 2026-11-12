@@ -77,7 +77,7 @@ from .views import (
 
 urlpatterns = [
     #path('', home_maestras, name='home_maestras'),
-    path('empresas/', lista_empresas, name='lista_empresas'),
+    path('empresa/', lista_empresas, name='lista_empresas'),
     path('empresas/agregar/', agregar_empresa, name='agregar_empresa'),
     path('empresas/editar/<int:pk>/', editar_empresa, name='editar_empresa'),
     path('empresas/detalle/<int:pk>/', detalle_empresa, name='detalle_empresa'),

@@ -4,17 +4,18 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from configuraciones_maestras.models import Cargo, Departamento
+from configuraciones_maestras.models import Cargo, Departamento, Empresa, Sucursal
 
 from .forms import EmpleadoForm, ContactoEmpleadoForm
 from .models import Empleado, Permiso, Rol, UsuarioPerfil
 
 
 class ContactoEmpleadoFormTests(TestCase):
-    def test_empleado_form_no_expone_telefono_ni_direccion(self):
+    def test_empleado_form_expone_telefono_y_sucursal(self):
         form = EmpleadoForm()
 
-        self.assertNotIn('telefono', form.fields)
+        self.assertIn('telefono', form.fields)
+        self.assertIn('sucursal', form.fields)
         self.assertNotIn('direccion', form.fields)
 
     def test_contacto_empleado_form_expone_telefono_y_direccion(self):
@@ -31,9 +32,11 @@ class ListaEmpleadosFilterTests(TestCase):
             email='admin@example.com',
             password='pass12345',
         )
-        self.departamento = Departamento.objects.create(nombre='Ventas', estado=True)
+        self.empresa = Empresa.objects.create(nombre='Empresa Activa', ruc='80000001', email='empresa@test.com', telefono='123', direccion='Av. Principal 1')
+        self.sucursal = Sucursal.objects.create(empresa=self.empresa, nombre='Matriz', activa=True)
+        self.departamento = Departamento.objects.create(empresa=self.empresa, nombre='Ventas', estado=True)
         self.cargo = Cargo.objects.create(nombre='Vendedor', departamento=self.departamento, estado=True)
-        self.otro_departamento = Departamento.objects.create(nombre='Tecnología', estado=True)
+        self.otro_departamento = Departamento.objects.create(empresa=self.empresa, nombre='Tecnología', estado=True)
         self.otro_cargo = Cargo.objects.create(nombre='Analista', departamento=self.otro_departamento, estado=True)
 
         self.empleado = Empleado(
@@ -44,6 +47,7 @@ class ListaEmpleadosFilterTests(TestCase):
             email='carlos@example.com',
             departamento=self.departamento,
             cargo=self.cargo,
+            sucursal=self.sucursal,
             tiene_usuario=True,
         )
         self.empleado_2 = Empleado(
@@ -54,6 +58,7 @@ class ListaEmpleadosFilterTests(TestCase):
             email='ana@example.com',
             departamento=self.otro_departamento,
             cargo=self.otro_cargo,
+            sucursal=self.sucursal,
             tiene_usuario=False,
         )
         self.empleado_3 = Empleado(
@@ -64,6 +69,7 @@ class ListaEmpleadosFilterTests(TestCase):
             email='luis@example.com',
             departamento=self.departamento,
             cargo=self.cargo,
+            sucursal=self.sucursal,
             tiene_usuario=False,
         )
         Empleado.objects.bulk_create([self.empleado, self.empleado_2, self.empleado_3])
@@ -82,6 +88,58 @@ class ListaEmpleadosFilterTests(TestCase):
         })
 
         self.assertEqual(list(response.context['empleados']), [self.empleado_2])
+
+
+class EmpleadoEmpresaScopeTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_superuser(
+            username='admin2',
+            email='admin2@example.com',
+            password='pass12345',
+        )
+        self.empresa_1 = Empresa.objects.create(nombre='Empresa 1', ruc='1', email='e1@test.com', telefono='1', direccion='Dir 1')
+        self.empresa_2 = Empresa.objects.create(nombre='Empresa 2', ruc='2', email='e2@test.com', telefono='2', direccion='Dir 2')
+
+        self.departamento_1 = Departamento.objects.create(empresa=self.empresa_1, nombre='Ventas', estado=True)
+        self.departamento_2 = Departamento.objects.create(empresa=self.empresa_2, nombre='Compras', estado=True)
+        self.cargo_1 = Cargo.objects.create(nombre='Vendedor', departamento=self.departamento_1, estado=True)
+        self.cargo_2 = Cargo.objects.create(nombre='Comprador', departamento=self.departamento_2, estado=True)
+        self.sucursal_1 = Sucursal.objects.create(empresa=self.empresa_1, nombre='Central', activa=True)
+        self.sucursal_2 = Sucursal.objects.create(empresa=self.empresa_2, nombre='Sucursal 2', activa=True)
+
+        self.empleado_1 = Empleado.objects.create(
+            tipo_persona='FISICA',
+            nombre='Empleado',
+            apellidos='Uno',
+            documento_identidad='10000001',
+            email='uno@test.com',
+            departamento=self.departamento_1,
+            cargo=self.cargo_1,
+            sucursal=self.sucursal_1,
+            tiene_usuario=False,
+        )
+        self.empleado_2 = Empleado.objects.create(
+            tipo_persona='FISICA',
+            nombre='Empleado',
+            apellidos='Dos',
+            documento_identidad='10000002',
+            email='dos@test.com',
+            departamento=self.departamento_2,
+            cargo=self.cargo_2,
+            sucursal=self.sucursal_2,
+            tiene_usuario=False,
+        )
+
+    def test_lista_empleados_filtra_por_empresa_activa(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('lista_empleados'))
+
+        self.assertEqual(list(response.context['empleados']), [self.empleado_1])
+
+    def test_formulario_empleado_solo_muestra_sucursales_de_empresa_activa(self):
+        form = EmpleadoForm()
+
+        self.assertEqual(list(form.fields['sucursal'].queryset), [self.sucursal_1])
 
 
 class UsuarioPerfilRoleResolutionTests(TestCase):
@@ -118,4 +176,4 @@ class UsuarioPerfilRoleResolutionTests(TestCase):
         permisos = usuario_perfil.permisos_asignados()
 
         self.assertIn('seguridad_usuarios.permiso_cargo', permisos)
-        self.assertNotIn('seguridad_usuarios.permiso_perfil', permisos)
+        self.assertIn('seguridad_usuarios.permiso_perfil', permisos)

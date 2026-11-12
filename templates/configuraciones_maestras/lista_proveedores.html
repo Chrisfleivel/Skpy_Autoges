@@ -123,8 +123,16 @@
             <tr class="hover-table-row">
               <td>{{ proveedor.id }}</td>
               <td>
-                <div class="fw-semibold">{{ proveedor.nombre }}</div>
-                <small class="text-muted">{{ proveedor.razon_social|default:'Sin razón social' }}</small>
+                {% if proveedor.nombre %}
+                  <div class="fw-semibold">{{ proveedor.nombre }}</div>
+                  {% if proveedor.razon_social %}
+                    <small class="text-muted">{{ proveedor.razon_social }}</small>
+                  {% endif %}
+                {% elif proveedor.razon_social %}
+                  <div class="fw-semibold">{{ proveedor.razon_social }}</div>
+                {% else %}
+                  <div class="fw-semibold">Sin razón social</div>
+                {% endif %}
               </td>
               <td>{{ proveedor.contacto }}</td>
               <td>

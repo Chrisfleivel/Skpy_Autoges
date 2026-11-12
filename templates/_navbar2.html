@@ -12,85 +12,173 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            {% if user.is_authenticated and user.perfil %}
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                                
+                {% if 'listar_pedidos' in user.perfil.permisos_simplificados or 'listar_clientes' in user.perfil.permisos_simplificados or 'listar_pedidos_despacho' in user.perfil.permisos_simplificados or 'listar_pedidos_busqueda' in user.perfil.permisos_simplificados or 'listar_pedidos_transferencia' in user.perfil.permisos_simplificados or user.is_staff %}
                 <li class="nav-item dropdown">
-
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownVentas" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Ventas
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownVentas">
-                        {% if perms.clientes_pedidos.listar_pedidos or perms.clientes_pedidos.listar_clientes %}
+                        {% if 'listar_pedidos' in user.perfil.permisos_simplificados or 'listar_clientes' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_pedidos' %}">Pedidos</a></li>
                         <li><hr class="dropdown-divider"></li>
                         {% endif %}
-                        {% if perms.clientes_pedidos.listar_clientes %}
+                        {% if 'listar_clientes' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_clientes' %}">Clientes</a></li>
                         <li><hr class="dropdown-divider"></li>
                         {% endif %}
-                        {% if perms.cobranzas.lista_pedidos_despacho %}
+                        {% if 'listar_pedidos_despacho' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_pedidos_despacho' %}">Despacho Productos</a></li>
                         <li><hr class="dropdown-divider"></li>
                         {% endif %}
-                        {% if perms.cobranzas.lista_pedidos_busqueda %}
+                        {% if 'listar_pedidos_busqueda' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_pedidos_busqueda' %}">Pedidos de Búsqueda</a></li>
                         <li><hr class="dropdown-divider"></li>
                         {% endif %}
-                        {% if perms.cobranzas.lista_pedidos_transferencia %}
+                        {% if 'listar_pedidos_transferencia' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_pedidos_transferencia' %}">Transferencia Vehículos</a></li>
                         {% endif %}
                     </ul>
                 </li>
-                
-                <li class="nav-item dropdown">
+                {% endif %}
 
+                {% if 'listar_marcas_vehiculos' in user.perfil.permisos_simplificados or 'listar_modelos_vehiculos' in user.perfil.permisos_simplificados or 'listar_tipos_transmision' in user.perfil.permisos_simplificados or 'listar_tipos_vehiculos' in user.perfil.permisos_simplificados or 'listar_tipos_combustible' in user.perfil.permisos_simplificados or 'listar_vehiculos' in user.perfil.permisos_simplificados or 'listar_repuestos' in user.perfil.permisos_simplificados or user.is_staff %}
+                <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownInventario" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Inventario
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownInventario">
+                        {% if 'listar_marcas_vehiculos' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_marcas_vehiculos' %}">Marcas de Vehículos</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_modelos_vehiculos' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_modelos_vehiculos' %}">Modelos de Vehículos</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_tipos_transmision' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_tipos_transmision' %}">Tipos de Transmisión</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_tipos_vehiculos' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_tipos_vehiculos' %}">Tipos de Vehículos</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_vehiculos' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_vehiculos' %}">Vehículos</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_repuestos' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_repuestos' %}">Repuestos</a></li>
-
+                        {% endif %}
                     </ul>
                 </li>
+                {% endif %}
 
+                {% if 'listar_proveedores' in user.perfil.permisos_simplificados or 'listar_agentes_transporte' in user.perfil.permisos_simplificados or 'listar_despachantes' in user.perfil.permisos_simplificados or 'listar_tasas_cambio' in user.perfil.permisos_simplificados or 'listar_pedidos_seleccion' in user.perfil.permisos_simplificados or 'listar_embarques' in user.perfil.permisos_simplificados or 'listar_pedidos_busqueda' in user.perfil.permisos_simplificados or 'listar_pedidos_abastecimiento' in user.perfil.permisos_simplificados or 'listar_pedidos_transferencia' in user.perfil.permisos_simplificados or user.is_staff %}
                 <li class="nav-item dropdown">
-
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownImportaciones" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Importaciones
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownImportaciones">
+                        {% if 'listar_proveedores' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_proveedores' %}">Proveedores</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_agentes_transporte' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_agentes_transporte' %}">Agentes de Transporte</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_despachantes' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_despachantes' %}">Despachantes de Aduana</a></li>
-                        
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_tasas_cambio' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_tasas_cambio' %}">Tasas de Cambio</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_pedidos_seleccion' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'listar_pedidos_seleccion' %}">Pedidos de Selección</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        
+                        {% endif %}
+                        {% if 'listar_importaciones' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_importaciones' %}">Importaciones</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_embarques' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_embarques' %}">Embarques</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_pedidos_busqueda' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_pedidos_busqueda' %}">Pedidos de Búsqueda</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_pedidos_abastecimiento' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_pedidos_abastecimiento' %}">Pedidos de Abastecimiento</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'lista_contenedores' %}">Contenedores</a></li>
+                        {% endif %}
+                        {% if 'listar_pedidos_transferencia' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_pedidos_transferencia' %}">Pedidos de Transferencia</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                {% endif %}
 
+                {% if 'lista_empresas' in user.perfil.permisos_simplificados or 'lista_sucursales' in user.perfil.permisos_simplificados or 'lista_cajas' in user.perfil.permisos_simplificados or 'lista_departamentos' in user.perfil.permisos_simplificados or 'lista_cargos' in user.perfil.permisos_simplificados or 'lista_ordenes_pago_exterior' in user.perfil.permisos_simplificados or 'lista_bancos' in user.perfil.permisos_simplificados or 'lista_empleados' in user.perfil.permisos_simplificados or user.is_staff %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownConfiguracion" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Configuración
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfiguracion">
+                        {% if 'lista_empresas' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_empresas' %}">Empresa</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'lista_sucursales' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_sucursales' %}">Sucursales</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'lista_cajas' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'todas_las_cajas' %}">Cajas</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'lista_departamentos' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_departamentos' %}">Dependencias</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'lista_cargos' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_cargos' %}">Cargos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'lista_ordenes_pago_exterior' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_ordenes_pago_exterior' %}">Pagos exteriores</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'lista_bancos' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_bancos' %}">Bancos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'lista_empleados' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_empleados' %}">Empleados</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                {% endif %}
+
+                {% if 'lista_perfiles' in user.perfil.permisos_simplificados or 'lista_roles' in user.perfil.permisos_simplificados or user.is_staff %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Seguridad
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        {% if 'lista_perfiles' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_perfiles' %}">Usuarios</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'lista_roles' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_roles' %}">Configurar Roles</a></li>
+                        {% endif %}
                     </ul>
                 </li>
 
@@ -102,62 +190,25 @@
                         <li><span class="dropdown-item text-muted disabled">Módulo deshabilitado en esta etapa</span></li>
                     </ul>
                 </li>
-    
-                <li class="nav-item dropdown">
-
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownConfiguracion" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Configuración
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdownConfiguracion">
-                        {% if perms.configuraciones_maestras.lista_empresas %}
-                        <li><a class="dropdown-item" href="{% url 'lista_empresas' %}">Empresa</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        {% endif %}
-                        {% if perms.configuraciones_maestras.lista_sucursales %}
-                        <li><a class="dropdown-item" href="{% url 'lista_sucursales' %}">Sucursales</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        {% endif %}
-                        {% if perms.configuraciones_maestras.lista_cajas %}
-                        <li><a class="dropdown-item" href="{% url 'todas_las_cajas' %}">Cajas</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        {% endif %}
-                        {% if perms.configuraciones_maestras.lista_departamentos %}
-                        <li><a class="dropdown-item" href="{% url 'lista_departamentos' %}">Dependencias</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        {% endif %}
-                        {% if perms.configuraciones_maestras.lista_cargos %}
-                        <li><a class="dropdown-item" href="{% url 'lista_cargos' %}">Cargos</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        {% endif %}
-                        {% if perms.configuraciones_maestras.lista_ordenes_pago_exterior %}
-                        <li><a class="dropdown-item" href="{% url 'lista_ordenes_pago_exterior' %}">Pagos exteriores</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        {% endif %}
-                        {% if perms.configuraciones_maestras.lista_bancos %}
-                        <li><a class="dropdown-item" href="{% url 'lista_bancos' %}">Bancos</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        {% endif %}
-                        {% if perms.seguridad_usuarios.lista_empleados %}
-                        <li><a class="dropdown-item" href="{% url 'lista_empleados' %}">Empleados</a></li>
-                        {% endif %}
-                    </ul>
-                </li>
-
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Seguridad
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="{% url 'lista_perfiles' %}">Usuarios</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'lista_roles' %}">Configurar Roles</a></li>
-                        
-                    </ul>
-                </li>
+                {% endif %}
             </ul>
+            {% endif %}
 
             <ul class="navbar-nav ms-auto">
                 {% if user.is_authenticated %}
+                    {% if user.is_superuser %}
+                        <span class="navbar-text text-white me-3">
+                            Bienvenido/a, {{ user.first_name|default:user.username }} {{ user.last_name|default:'' }}
+                        </span>
+                    {% elif user.perfil and user.perfil.empleado %}
+                        <span class="navbar-text text-white me-3">
+                            Bienvenido/a, {{ user.perfil.empleado.nombre }} {{ user.perfil.empleado.apellidos }}
+                        </span>
+                    {% else %}
+                        <span class="navbar-text text-white me-3">
+                            Bienvenido/a, {{ user.username }}
+                        </span>
+                    {% endif %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-person-circle"></i> Mi Perfil

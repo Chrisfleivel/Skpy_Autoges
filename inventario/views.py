@@ -84,15 +84,18 @@ def lista_inventario(request):
 # --------------------------------------------------------------------------
 
 @revisar_permiso('inventario.agregar_vehiculo')
-def agregar_vehiculo(request):
-    """Vista para agregar un nuevo vehículo al inventario."""
+def registrar_vehiculo(request):
+    """Registra un vehículo para compra futura o aprobación del negocio.
+
+    El vehículo queda guardado con estado pendiente de aprobación/compraventa,
+    y puede avanzar a otras etapas una vez que el negocio lo apruebe.
+    """
     if request.method == 'POST':
-        # Lógica para procesar el formulario y agregar el vehículo
         form = VehiculoForm(request.POST, request.FILES)
         if form.is_valid():
             nuevo = form.cleaned_data.get('nuevo_modelo')
-            estado = form.cleaned_data.get('estado') or 'disponible'
-            # Si se escribió un nuevo modelo, crear o obtener y asignar
+            estado = form.cleaned_data.get('estado') or 'pendiente_importacion'
+
             if nuevo and form.cleaned_data.get('marca') and not form.cleaned_data.get('modelo'):
                 marca = form.cleaned_data.get('marca')
                 modelo_obj, _ = ModeloVehiculo.objects.get_or_create(marca=marca, nombre=nuevo)
@@ -100,25 +103,34 @@ def agregar_vehiculo(request):
                 vehiculo.modelo = modelo_obj
             else:
                 vehiculo = form.save(commit=False)
+
             vehiculo.tipo = 'vehiculo'
             vehiculo.estado = estado
-            # Asignar valores requeridos que no están en el formulario
+
             if vehiculo.costo_compra is None:
                 vehiculo.costo_compra = 0
             if vehiculo.precio_venta is None:
                 vehiculo.precio_venta = 0
+
             vehiculo.save()
-            return redirect('lista_vehiculos')  # Redirige a la lista de vehículos
-        else:
-            # Debug: imprimir errores del formulario
-            print(f"Errores del formulario: {form.errors}")
+            messages.success(request, 'Vehículo registrado correctamente.')
+            return redirect('lista_vehiculos')
+
+        print(f"Errores del formulario: {form.errors}")
     else:
         proveedor_id = request.GET.get('proveedor')
         initial = {}
         if proveedor_id:
             initial['proveedor'] = int(proveedor_id)
         form = VehiculoForm(initial=initial)
+
     return render(request, 'inventario/agregar_vehiculo.html', {'form': form})
+
+
+@revisar_permiso('inventario.agregar_vehiculo')
+def agregar_vehiculo(request):
+    """Alias de compatibilidad para mantener el flujo existente."""
+    return registrar_vehiculo(request)
 
 @login_required
 def ajax_modelos_por_marca(request):

@@ -65,9 +65,20 @@ class CierreCajaOperativaForm(forms.ModelForm):
 
 
 class SucursalForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        empresa_activa = Empresa.get_empresa_activa()
+        if empresa_activa is None:
+            self.fields['empresa'].queryset = Empresa.objects.none()
+            self.fields['empresa'].widget = forms.HiddenInput()
+        else:
+            self.fields['empresa'].queryset = Empresa.objects.filter(pk=empresa_activa.pk)
+            self.fields['empresa'].initial = empresa_activa.pk
+            self.fields['empresa'].widget = forms.HiddenInput()
+
     class Meta:
         model = Sucursal
-        fields = ['nombre', 'direccion', 'telefono', 'email', 'activa']
+        fields = ['empresa', 'nombre', 'direccion', 'telefono', 'email', 'activa']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de la sucursal'}),
             'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Dirección de la sucursal'}),
@@ -380,12 +391,22 @@ class OrdenPagoExteriorForm(forms.ModelForm):
 class DepartamentoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        empresa_activa = Empresa.get_empresa_activa()
+        if empresa_activa is None:
+            self.fields['empresa'].queryset = Empresa.objects.none()
+            self.fields['empresa'].widget = forms.HiddenInput()
+        else:
+            self.fields['empresa'].queryset = Empresa.objects.filter(pk=empresa_activa.pk)
+            self.fields['empresa'].initial = empresa_activa.pk
+            self.fields['empresa'].widget = forms.HiddenInput()
         for field in self.fields.values():
+            if field is self.fields.get('empresa'):
+                continue
             field.widget.attrs.update({'class': 'form-control'})
 
     class Meta:
         model = Departamento
-        fields = ['nombre', 'descripcion']
+        fields = ['empresa', 'nombre', 'descripcion']
 
 class CargoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):

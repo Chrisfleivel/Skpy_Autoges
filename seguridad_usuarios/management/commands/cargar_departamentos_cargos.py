@@ -1,11 +1,20 @@
 from django.core.management.base import BaseCommand
-from seguridad_usuarios.models import Permiso
 from configuraciones_maestras.models import Departamento, Cargo
 
-class Command(BaseCommand):
-    help = 'Carga departamentos y cargos iniciales en la base de datos'
 
-    def handle(self, *args, **kwargs):
+class Command(BaseCommand):
+    help = 'Carga y repara departamentos y cargos iniciales en la base de datos.'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--reset',
+            action='store_true',
+            help='Elimina los departamentos y cargos base y los vuelve a crear desde cero.',
+        )
+
+    def handle(self, *args, **options):
+        reset = options.get('reset', False)
+
         departamentos_cargos_iniciales = [
             {
                 'departamento': {
@@ -119,26 +128,46 @@ class Command(BaseCommand):
             },
         ]
 
+        if reset:
+            nombres_departamentos = [item['departamento']['nombre'] for item in departamentos_cargos_iniciales]
+            nombres_cargos = [cargo['nombre'] for item in departamentos_cargos_iniciales for cargo in item['cargos']]
+            Cargo.objects.filter(nombre__in=nombres_cargos).delete()
+            Departamento.objects.filter(nombre__in=nombres_departamentos).delete()
+            self.stdout.write(self.style.WARNING('Se reiniciaron los departamentos y cargos base.'))
+
         for item in departamentos_cargos_iniciales:
             departamento_data = item['departamento']
-            departamento, created = Departamento.objects.get_or_create(
-                nombre=departamento_data['nombre'],
-                defaults={'descripcion': departamento_data['descripcion']}
-            )
-            if created:
+            departamento = Departamento.objects.filter(nombre=departamento_data['nombre']).first()
+
+            if departamento is None:
+                departamento = Departamento.objects.create(
+                    nombre=departamento_data['nombre'],
+                    descripcion=departamento_data['descripcion'],
+                    estado=True,
+                )
                 self.stdout.write(self.style.SUCCESS(f'Departamento "{departamento.nombre}" creado.'))
             else:
-                self.stdout.write(f'Departamento "{departamento.nombre}" ya existe.')
+                departamento.descripcion = departamento_data['descripcion']
+                departamento.estado = True
+                departamento.save(update_fields=['descripcion', 'estado'])
+                self.stdout.write(f'Departamento "{departamento.nombre}" restaurado/actualizado.')
 
             for cargo_data in item['cargos']:
-                cargo, created = Cargo.objects.get_or_create(
-                    nombre=cargo_data['nombre'],
-                    departamento=departamento,
-                    defaults={'descripcion': cargo_data['descripcion']}
-                )
-                if created:
+                cargo = Cargo.objects.filter(nombre=cargo_data['nombre']).first()
+
+                if cargo is None:
+                    cargo = Cargo.objects.create(
+                        nombre=cargo_data['nombre'],
+                        descripcion=cargo_data['descripcion'],
+                        departamento=departamento,
+                        estado=True,
+                    )
                     self.stdout.write(self.style.SUCCESS(f'  Cargo "{cargo.nombre}" creado en el departamento "{departamento.nombre}".'))
                 else:
-                    self.stdout.write(f'  Cargo "{cargo.nombre}" ya existe en el departamento "{departamento.nombre}".')
+                    cargo.descripcion = cargo_data['descripcion']
+                    cargo.departamento = departamento
+                    cargo.estado = True
+                    cargo.save(update_fields=['descripcion', 'departamento', 'estado'])
+                    self.stdout.write(f'  Cargo "{cargo.nombre}" restaurado/actualizado para el departamento "{departamento.nombre}".')
 
         self.stdout.write(self.style.SUCCESS('Departamentos y cargos cargados correctamente.'))

@@ -74,7 +74,10 @@ class Rol(models.Model):
         self.fecha_vigencia = timezone.now()
         self.estado = False
         self.save()
-    
+
+    def permisos_asignados_simplificados(self):
+        return [permiso.obtener_permisos_simplificados() for permiso in self.permisos.all()]
+
     def __str__(self):
         return self.nombre
 
@@ -99,6 +102,10 @@ class Permiso(models.Model):
             return f" ({self.sector.upper()}) - {self.nombre}"
         return self.nombre
 
+    def obtener_permisos_simplificados(self):
+        """Devuelve el codename simplificado del permiso, que es la parte después del punto."""
+        return self.codename.split('.')[-1]  # Obtener la parte después del punto
+         
     class Meta:
         verbose_name = "Permiso"
         verbose_name_plural = "Permisos"
@@ -188,11 +195,19 @@ class Empleado(Persona):
     """
     departamento = models.ForeignKey('configuraciones_maestras.Departamento', on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Departamento")
     cargo = models.ForeignKey('configuraciones_maestras.Cargo', on_delete=models.SET_NULL, null=True, blank=True, related_name='empleados', verbose_name="Cargo")
+    sucursal = models.ForeignKey(
+        'configuraciones_maestras.Sucursal',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='empleados',
+        verbose_name='Sucursal'
+    )
     fecha_contratacion = models.DateField(blank=True, null=True, verbose_name="Fecha de Contratación")
     fecha_terminacion = models.DateField(blank=True, null=True, verbose_name="Fecha de Terminación")
     descripcion_trabajo = models.TextField(blank=True, null=True, verbose_name="Descripción del Trabajo")
     tiene_usuario = models.BooleanField(default=False, verbose_name="Tiene Usuario")
-    
+
     class Meta:
         verbose_name = "Empleado"
         verbose_name_plural = "Empleados"
@@ -355,19 +370,33 @@ class UsuarioPerfil(models.Model):
 
     def roles_asignados(self):
         if self.empleado and getattr(self.empleado, 'cargo_id', None):
-            return self.empleado.cargo.roles.all()
-        return self.roles.none()
+            return self.empleado.cargo.roles.all() | self.roles.all()
+        return self.roles.all()
 
     def permisos_asignados(self):
         permisos = set()
         for rol in self.roles_asignados():
             permisos.update(rol.permisos.values_list('codename', flat=True))
         return permisos
+
+    def permisos_simplificados(self):
+        permisos = set()
+        for rol in self.roles_asignados():
+            for permiso in rol.permisos.all():
+                permisos.add(permiso.obtener_permisos_simplificados())
+        return permisos
     
     def enviar_contrasena_temporal(self):
         if self.empleado and self.empleado.email:
             enviar_contrasena_temporal(self.empleado.email)
 
+    def tiene_permiso(self, codename):
+        return codename in self.permisos_asignados()
+
+    def tiene_any_permiso(self, *codename_permisos):
+        permisos = self.permisos_asignados()
+        return any(codename in permisos for codename in codename_permisos)
+    
     class Meta:
         verbose_name = "Usuario Perfil"
         verbose_name_plural = "Usuarios Perfil"

@@ -61,6 +61,31 @@ class VehiculoFormTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="proveedor"')
 
+    def test_registrar_vehiculo_guarda_vehiculo_en_estado_pendiente(self):
+        self.client.force_login(self.user)
+        marca = MarcaVehiculo.objects.create(nombre='Toyota')
+        modelo = ModeloVehiculo.objects.create(marca=marca, nombre='Corolla')
+
+        response = self.client.post(
+            reverse('registrar_vehiculo'),
+            {
+                'tipo': 'vehiculo',
+                'marca': marca.pk,
+                'modelo': modelo.pk,
+                'año': 2024,
+                'kilometraje': 0,
+                'codigo_chasis': '1HGBH41JXMN109186',
+                'combustible': 'nafta',
+                'estado': 'pendiente_importacion',
+                'proveedor': self.proveedor.pk,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        vehiculo = Vehiculo.objects.get(codigo_chasis='1HGBH41JXMN109186')
+        self.assertEqual(vehiculo.estado, 'pendiente_importacion')
+        self.assertEqual(vehiculo.proveedor_id, self.proveedor.pk)
+
 
 class RepuestoCommandTests(TestCase):
     def test_cargar_repuestos_recrea_repuesto_sin_pedidos_y_lo_deja_disponible(self):

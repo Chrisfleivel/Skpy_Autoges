@@ -130,12 +130,16 @@ def agregar_banco(request):
 # CRUD Empresa
 @revisar_permiso('configuraciones_maestras.lista_empresas')
 def lista_empresas(request):
-    empresas = Empresa.objects.all().order_by('nombre')
-    return render(request, 'configuraciones_maestras/lista_empresas.html', {'empresas': empresas})
+    empresa = Empresa.get_empresa_activa()
+    return render(request, 'configuraciones_maestras/lista_empresas.html', {'empresa': empresa})
 
 
 @revisar_permiso('configuraciones_maestras.agregar_empresa')
 def agregar_empresa(request):
+    if Empresa.objects.exists():
+        messages.warning(request, 'El sistema solo admite una empresa activa. Se trabaja sobre la empresa registrada.')
+        return redirect('lista_empresas')
+
     if request.method == 'POST':
         form = EmpresaForm(request.POST, request.FILES)
         if form.is_valid():
@@ -143,6 +147,7 @@ def agregar_empresa(request):
             empresa.usuario_modifico = request.user if request.user.is_authenticated else None
             empresa.save()
             form.save_m2m()
+            messages.success(request, 'Empresa registrada correctamente.')
             return redirect('lista_empresas')
     else:
         form = EmpresaForm()
@@ -183,8 +188,8 @@ def eliminar_empresa(request, pk):
 # CRUD Sucursal
 @revisar_permiso('configuraciones_maestras.lista_sucursales')
 def lista_sucursales(request):
-    sucursales = Sucursal.objects.all().order_by('nombre')
-    # Leyenda: totales de sucursales registradas por estado
+    empresa_activa = Empresa.get_empresa_activa()
+    sucursales = Sucursal.objects.filter(empresa=empresa_activa).order_by('nombre') if empresa_activa else Sucursal.objects.none()
     total_sucursales = sucursales.count()
     total_activas = sucursales.filter(activa=True).count()
     total_inactivas = total_sucursales - total_activas
@@ -198,12 +203,18 @@ def lista_sucursales(request):
 
 @revisar_permiso('configuraciones_maestras.agregar_sucursal')
 def agregar_sucursal(request):
+    empresa_activa = Empresa.get_empresa_activa()
+    if empresa_activa is None:
+        messages.warning(request, 'Primero debe crear la empresa activa antes de registrar sucursales.')
+        return redirect('lista_empresas')
     if request.method == 'POST':
         form = SucursalForm(request.POST)
         if form.is_valid():
             sucursal = form.save(commit=False)
+            sucursal.empresa = empresa_activa
             sucursal.usuario_modifico = request.user if request.user.is_authenticated else None
             sucursal.save()
+            empresa_activa.sucursales.add(sucursal)
             messages.success(request, 'Sucursal registrada correctamente.')
             return redirect('lista_sucursales')
     else:
@@ -954,15 +965,22 @@ def detalle_moneda(request, pk):
 
 @revisar_permiso('configuraciones_maestras.listar_departamentos')
 def lista_departamentos(request):
-    departamentos = Departamento.objects.all()
+    empresa_activa = Empresa.get_empresa_activa()
+    departamentos = Departamento.objects.filter(empresa=empresa_activa) if empresa_activa else Departamento.objects.none()
     return render(request, 'configuraciones_maestras/lista_departamentos.html', {'departamentos': departamentos})
 
 @revisar_permiso('configuraciones_maestras.agregar_departamento')
 def agregar_departamento(request):
+    empresa_activa = Empresa.get_empresa_activa()
+    if empresa_activa is None:
+        messages.warning(request, 'Primero debe crear la empresa activa antes de registrar dependencias.')
+        return redirect('lista_empresas')
     if request.method == 'POST':
         form = DepartamentoForm(request.POST)
         if form.is_valid():
-            form.save()
+            departamento = form.save(commit=False)
+            departamento.empresa = empresa_activa
+            departamento.save()
             return redirect('lista_departamentos')
     else:
         form = DepartamentoForm()

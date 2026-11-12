@@ -67,12 +67,17 @@
 
             <h6 class="mb-3 fw-semibold text-primary">Información Laboral</h6>
             <div class="row g-3 mb-4">
-              <div class="col-md-6">
+              <div class="col-md-4">
                 <label class="form-label fw-semibold" for="{{ form.departamento.id_for_label }}">Departamento</label>
                 {{ form.departamento }}
                 {% if form.departamento.errors %}<div class="text-danger small mt-1">{{ form.departamento.errors|join:', ' }}</div>{% endif %}
               </div>
-              <div class="col-md-6">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="{{ form.sucursal.id_for_label }}">Sucursal</label>
+                {{ form.sucursal }}
+                {% if form.sucursal.errors %}<div class="text-danger small mt-1">{{ form.sucursal.errors|join:', ' }}</div>{% endif %}
+              </div>
+              <div class="col-md-4">
                 <label class="form-label fw-semibold" for="{{ form.cargo.id_for_label }}">Cargo</label>
                 {{ form.cargo }}
                 {% if form.cargo.errors %}<div class="text-danger small mt-1">{{ form.cargo.errors|join:', ' }}</div>{% endif %}

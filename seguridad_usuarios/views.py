@@ -10,6 +10,7 @@ from datetime import datetime
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 from .forms import UserRegisterForm, PermisoForm, RolForm, PasswordChangeForm, EmpleadoForm, PerfilUsuarioForm, ContactoEmpleadoFormSet
+from configuraciones_maestras.models import Empresa
 # User
 from django.contrib.auth.models import User, Group, Permission, PermissionManager
 from .decorators import revisar_permiso
@@ -253,7 +254,12 @@ def lista_empleados(request):
     """
     Vista optimizada para listar empleados con filtros dinámicos.
     """
-    empleados = Empleado.objects.select_related('departamento', 'cargo').all()
+    empresa_activa = Empresa.get_empresa_activa()
+    empleados = Empleado.objects.select_related('departamento', 'cargo', 'sucursal').all()
+    if empresa_activa:
+        empleados = empleados.filter(Q(sucursal__empresa=empresa_activa) | Q(departamento__empresa=empresa_activa))
+    else:
+        empleados = empleados.none()
 
     nombre = request.GET.get('nombre', '').strip()
     apellido = request.GET.get('apellido', '').strip()
@@ -319,8 +325,12 @@ def lista_empleados(request):
         empleados = empleados.filter(tiene_usuario=False)
 
     from configuraciones_maestras.models import Cargo, Departamento
-    departamentos = Departamento.objects.filter(estado=True).order_by('nombre')
-    cargos = Cargo.objects.filter(estado=True).order_by('nombre')
+    if empresa_activa:
+        departamentos = Departamento.objects.filter(estado=True, empresa=empresa_activa).order_by('nombre')
+        cargos = Cargo.objects.filter(estado=True, departamento__empresa=empresa_activa).order_by('nombre')
+    else:
+        departamentos = Departamento.objects.none()
+        cargos = Cargo.objects.none()
 
     context = {
         'empleados': empleados,
@@ -344,7 +354,12 @@ def lista_empleados(request):
 @revisar_permiso('seguridad_usuarios.detallar_empleado')
 def reporte_empleados(request):
     """Exporta un CSV con los empleados resultantes de los filtros GET."""
-    empleados = Empleado.objects.select_related('departamento', 'cargo').all()
+    empresa_activa = Empresa.get_empresa_activa()
+    empleados = Empleado.objects.select_related('departamento', 'cargo', 'sucursal').all()
+    if empresa_activa:
+        empleados = empleados.filter(Q(sucursal__empresa=empresa_activa) | Q(departamento__empresa=empresa_activa))
+    else:
+        empleados = empleados.none()
 
     # Reutilizar parámetros de filtrado (parciales de lista_empleados)
     busqueda = request.GET.get('busqueda', '').strip()
@@ -424,7 +439,12 @@ def reporte_empleados(request):
 @revisar_permiso('seguridad_usuarios.detallar_empleado')
 def reporte_empleados_pdf(request):
     """Genera un PDF con los empleados resultantes de los filtros GET."""
-    empleados = Empleado.objects.select_related('departamento', 'cargo').all()
+    empresa_activa = Empresa.get_empresa_activa()
+    empleados = Empleado.objects.select_related('departamento', 'cargo', 'sucursal').all()
+    if empresa_activa:
+        empleados = empleados.filter(Q(sucursal__empresa=empresa_activa) | Q(departamento__empresa=empresa_activa))
+    else:
+        empleados = empleados.none()
 
     # aplicar mismos filtros que en reporte_empleados (simplificado)
     busqueda = request.GET.get('busqueda', '').strip()
@@ -486,6 +506,11 @@ def agregar_empleado(request):
     Vista para agregar un nuevo empleado.
     redirige al detalle del empleado al crearlo.
     """
+    empresa_activa = Empresa.get_empresa_activa()
+    if not empresa_activa:
+        messages.error(request, 'Debe inicializar la empresa activa antes de crear empleados.')
+        return redirect('lista_empresas')
+
     empleado = Empleado()
     try:
         if request.method == 'POST':
@@ -493,7 +518,7 @@ def agregar_empleado(request):
             contact_formset = ContactoEmpleadoFormSet(request.POST, instance=empleado)
             if form.is_valid() and contact_formset.is_valid():
                 empleado = form.save(commit=False)
-                empleado.fecha_contratacion = str(datetime.now().date())  # Asignar la fecha actual como fecha de contratación
+                empleado.fecha_contratacion = str(datetime.now().date())
                 empleado.save()
                 contactos = contact_formset.save(commit=False)
                 for contacto in contactos:
@@ -518,7 +543,11 @@ def editar_empleado(request, pk):
     Vista para editar un empleado existente.
     """
     try:
-        empleado = get_object_or_404(Empleado, id=pk)
+        empresa_activa = Empresa.get_empresa_activa()
+        filtros = Q(id=pk)
+        if empresa_activa:
+            filtros &= Q(sucursal__empresa=empresa_activa) | Q(departamento__empresa=empresa_activa)
+        empleado = get_object_or_404(Empleado.objects.filter(filtros), id=pk)
         if request.method == 'POST':
             form = EmpleadoForm(request.POST, instance=empleado)
             contact_formset = ContactoEmpleadoFormSet(request.POST, instance=empleado)
@@ -548,7 +577,11 @@ def eliminar_empleado(request, empleado_id):
 
     """
     try:
-        empleado = get_object_or_404(Empleado, id=empleado_id)
+        empresa_activa = Empresa.get_empresa_activa()
+        filtros = Q(id=empleado_id)
+        if empresa_activa:
+            filtros &= Q(sucursal__empresa=empresa_activa) | Q(departamento__empresa=empresa_activa)
+        empleado = get_object_or_404(Empleado.objects.filter(filtros), id=empleado_id)
         if request.method == 'POST':
             empleado.delete()
             messages.success(request, 'Empleado eliminado correctamente.')
@@ -565,7 +598,11 @@ def detalle_empleado(request, pk):
     Vista para ver los detalles de un empleado.
     """
     try:
-        empleado = get_object_or_404(Empleado, pk=pk)
+        empresa_activa = Empresa.get_empresa_activa()
+        filtros = Q(pk=pk)
+        if empresa_activa:
+            filtros &= Q(sucursal__empresa=empresa_activa) | Q(departamento__empresa=empresa_activa)
+        empleado = get_object_or_404(Empleado.objects.filter(filtros), pk=pk)
         contactos = empleado.contactos.all()
         return render(request, 'seguridad_usuarios/detalle_empleado.html', {'empleado': empleado, 'contactos': contactos})
     except Exception as e:
@@ -579,7 +616,11 @@ def desactivar_empleado(request, pk):
     Vista para inactivar un empleado existente.
     """
     try:
-        empleado = get_object_or_404(Empleado, pk=pk)
+        empresa_activa = Empresa.get_empresa_activa()
+        filtros = Q(pk=pk)
+        if empresa_activa:
+            filtros &= Q(sucursal__empresa=empresa_activa) | Q(departamento__empresa=empresa_activa)
+        empleado = get_object_or_404(Empleado.objects.filter(filtros), pk=pk)
         if request.method == 'POST':
             empleado.estado = False
             empleado.save()
@@ -597,7 +638,11 @@ def activar_empleado(request, pk):
     Vista para activar un empleado existente.
     """
     try:
-        empleado = get_object_or_404(Empleado, pk=pk)
+        empresa_activa = Empresa.get_empresa_activa()
+        filtros = Q(pk=pk)
+        if empresa_activa:
+            filtros &= Q(sucursal__empresa=empresa_activa) | Q(departamento__empresa=empresa_activa)
+        empleado = get_object_or_404(Empleado.objects.filter(filtros), pk=pk)
         if request.method == 'POST':
             empleado.estado = True
             empleado.save()

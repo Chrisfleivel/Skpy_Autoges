@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
-from seguridad_usuarios.models import Rol
-from .models import Cargo, Departamento, Empresa, Moneda
+from seguridad_usuarios.models import Rol, Permiso
+from .models import Cargo, Departamento, Empresa, Moneda, Sucursal
 from seguridad_usuarios.models import Empleado
 
 
@@ -47,10 +47,17 @@ class MonedaCatalogTests(TestCase):
 class EmpresaCrudTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username='empresa_user', password='testpass123')
-        content_type = ContentType.objects.get(app_label='configuraciones_maestras', model='empresa')
-        for codename in ['view_empresa', 'add_empresa', 'change_empresa', 'delete_empresa']:
-            permission = Permission.objects.get(content_type=content_type, codename=codename)
-            self.user.user_permissions.add(permission)
+        self.rol = Rol.objects.create(nombre='Administrador de Empresas')
+        for codename, nombre in [
+            ('configuraciones_maestras.lista_empresas', 'Listar Empresas'),
+            ('configuraciones_maestras.agregar_empresa', 'Agregar Empresa'),
+            ('configuraciones_maestras.editar_empresa', 'Editar Empresa'),
+            ('configuraciones_maestras.detalles_empresa', 'Detalles de Empresa'),
+            ('configuraciones_maestras.eliminar_empresa', 'Eliminar Empresa'),
+        ]:
+            permiso, _ = Permiso.objects.get_or_create(codename=codename, defaults={'nombre': nombre})
+            self.rol.permisos.add(permiso)
+        self.user.perfil.roles.add(self.rol)
         self.user.save()
         self.client.force_login(self.user)
 
@@ -72,6 +79,21 @@ class EmpresaCrudTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Empresa.objects.filter(nombre='SKPY Importaciones').exists())
+
+    def test_solo_puede_haber_una_empresa_activa_y_sus_sucursales_y_departamentos_quedan_escopados(self):
+        empresa_1 = Empresa.objects.create(nombre='Empresa Uno', direccion='Asunción')
+        sucursal_1 = Sucursal.objects.create(empresa=empresa_1, nombre='Sucursal Principal', direccion='Calle 1')
+        empresa_1.sucursales.add(sucursal_1)
+        departamento_1 = Departamento.objects.create(empresa=empresa_1, nombre='Finanzas', descripcion='Departamento principal')
+
+        response = self.client.get(reverse('lista_empresas'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Empresa.objects.count(), 1)
+        self.assertEqual(Empresa.get_empresa_activa(), empresa_1)
+        self.assertEqual(list(Empresa.get_empresa_activa().sucursales.values_list('id', flat=True)), [sucursal_1.id])
+        self.assertEqual(list(Empresa.get_empresa_activa().departamentos.values_list('id', flat=True)), [departamento_1.id])
+        self.assertContains(response, 'Empresa Uno')
 
 
 class CargoRoleAssignmentTests(TestCase):
