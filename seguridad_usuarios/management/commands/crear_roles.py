@@ -34,6 +34,18 @@ DEFAULT_ROLES = [
         'prefijos': ['configuraciones_maestras.'],
         'sectores': ['Configuraciones Maestras'],
     },
+    {
+        'nombre': 'Compras',
+        'descripcion': 'Gestiona facturas comerciales y compras a proveedores.',
+        'prefijos': ['compras.'],
+        'sectores': ['Compras'],
+    },
+    {
+        'nombre': 'Importaciones',
+        'descripcion': 'Gestiona embarques, documentos y conciliación de importación.',
+        'prefijos': ['importaciones.'],
+        'sectores': ['Importaciones'],
+    },
 ]
 
 

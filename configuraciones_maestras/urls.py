@@ -55,6 +55,7 @@ from .views import (
     editar_orden_pago_exterior,
     detalle_orden_pago_exterior,
     eliminar_orden_pago_exterior,
+    registrar_pago_desde_liquidacion,
     agregar_departamento,
     editar_departamento,
     eliminar_departamento,
@@ -166,5 +167,10 @@ urlpatterns = [
     path('ordenes-pago-exterior/editar/<int:pk>/', editar_orden_pago_exterior, name='editar_orden_pago_exterior'),
     path('ordenes-pago-exterior/detalle/<int:pk>/', detalle_orden_pago_exterior, name='detalle_orden_pago_exterior'),
     path('ordenes-pago-exterior/eliminar/<int:pk>/', eliminar_orden_pago_exterior, name='eliminar_orden_pago_exterior'),
+    path(
+        'ordenes-pago-exterior/<int:pk>/registrar-pago/',
+        registrar_pago_desde_liquidacion,
+        name='registrar_pago_orden_pago_exterior',
+    ),
     
 ]

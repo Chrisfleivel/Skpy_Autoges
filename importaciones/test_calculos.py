@@ -6,7 +6,7 @@ from django.test import TestCase
 from compras.models import FacturaComercial, FacturaItem
 from configuraciones_maestras.models import Proveedor
 from importaciones.calculos import comparar_chasis, normalizar_chasis, repartir_costos
-from importaciones.models import Embarque, EmbarqueItem, GastoImportacion
+from importaciones.models import Embarque, EmbarqueContenedor, EmbarqueItem, GastoImportacion
 from importaciones.services import prorratear_costos, verificar_chasis
 from inventario.models import MarcaVehiculo, ModeloVehiculo, Vehiculo
 
@@ -81,6 +81,8 @@ class ImportacionesCalculosTests(TestCase):
             factura_item=factura_item,
             cantidad=1,
             chasis_bl='1HGCM82633A004352',
+            contenedor=EmbarqueContenedor.objects.create(
+                embarque=embarque, numero='CONT-CALC-001', tipo='40HC'),
         )
         GastoImportacion.objects.create(
             embarque=embarque,

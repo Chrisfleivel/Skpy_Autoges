@@ -82,6 +82,10 @@
                         Importaciones
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownImportaciones">
+                        {% if 'compras.lista_facturas' in permisos_usuario %}
+                        <li><a class="dropdown-item" href="{% url 'lista_facturas_comerciales' %}">Facturas Comerciales</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
                         {% if 'listar_proveedores' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_proveedores' %}">Proveedores</a></li>
                         <li><hr class="dropdown-divider"></li>
@@ -108,6 +112,10 @@
                         {% endif %}
                         {% if 'listar_embarques' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_embarques' %}">Embarques</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_conciliacion' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_conciliacion' %}">Conciliación de documentos</a></li>
                         <li><hr class="dropdown-divider"></li>
                         {% endif %}
                         {% if 'listar_pedidos_busqueda' in user.perfil.permisos_simplificados or user.is_staff %}

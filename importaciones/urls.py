@@ -31,12 +31,19 @@ from .views import (
     editar_embarque,
     detalle_embarque,
     agregar_item_embarque,
+    agregar_contenedor_embarque,
+    eliminar_contenedor_embarque,
+    agregar_documento_embarque,
+    eliminar_documento_embarque,
     agregar_gasto_embarque,
     verificar_embarque,
     prorratear_embarque,
     cerrar_embarque,
     resumen_embarque,
     exportar_resumen_embarque,
+    lista_conciliacion,
+    detalle_conciliacion,
+    exportar_conciliacion,
 )
 
 urlpatterns = [
@@ -80,10 +87,27 @@ urlpatterns = [
     path('embarques/<int:pk>/', detalle_embarque, name='detalle_embarque'),
     path('embarques/<int:pk>/editar/', editar_embarque, name='editar_embarque'),
     path('embarques/<int:pk>/items/agregar/', agregar_item_embarque, name='agregar_item_embarque'),
+    path('embarques/<int:pk>/contenedores/agregar/', agregar_contenedor_embarque, name='agregar_contenedor_embarque'),
+    path(
+        'embarques/<int:pk>/contenedores/<int:contenedor_pk>/eliminar/',
+        eliminar_contenedor_embarque,
+        name='eliminar_contenedor_embarque',
+    ),
+    path('embarques/<int:pk>/documentos/agregar/', agregar_documento_embarque, name='agregar_documento_embarque'),
+    path(
+        'embarques/<int:pk>/documentos/<int:documento_pk>/eliminar/',
+        eliminar_documento_embarque,
+        name='eliminar_documento_embarque',
+    ),
     path('embarques/<int:pk>/gastos/agregar/', agregar_gasto_embarque, name='agregar_gasto_embarque'),
     path('embarques/<int:pk>/verificar/', verificar_embarque, name='verificar_embarque'),
     path('embarques/<int:pk>/prorratear/', prorratear_embarque, name='prorratear_embarque'),
     path('embarques/<int:pk>/cerrar/', cerrar_embarque, name='cerrar_embarque'),
     path('embarques/<int:pk>/resumen/', resumen_embarque, name='resumen_embarque'),
     path('embarques/<int:pk>/resumen/exportar/', exportar_resumen_embarque, name='exportar_resumen_embarque'),
+
+    # Conciliación informativa de los documentos (factura / B/L / liquidación)
+    path('conciliacion/', lista_conciliacion, name='lista_conciliacion'),
+    path('conciliacion/exportar/', exportar_conciliacion, name='exportar_conciliacion'),
+    path('conciliacion/<int:pk>/', detalle_conciliacion, name='detalle_conciliacion'),
 ]

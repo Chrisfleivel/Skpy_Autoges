@@ -6,7 +6,7 @@ from django.test import TestCase
 
 from compras.models import FacturaComercial, FacturaItem
 from configuraciones_maestras.models import Proveedor
-from importaciones.models import Embarque, EmbarqueItem, GastoImportacion
+from importaciones.models import Embarque, EmbarqueContenedor, EmbarqueItem, GastoImportacion
 from inventario.models import MarcaVehiculo, ModeloVehiculo, Vehiculo
 
 
@@ -60,11 +60,18 @@ class ImportacionesUiTests(TestCase):
             destino_final='Asunción',
             estado=Embarque.Estado.PROGRAMADO,
         )
+        self.contenedor = EmbarqueContenedor.objects.create(
+            embarque=self.embarque,
+            numero='MEDUKC733517',
+            tipo='40HC',
+            peso_bruto_kg=Decimal('6030.00'),
+        )
         self.embarque_item = EmbarqueItem.objects.create(
             embarque=self.embarque,
             factura_item=self.item_fact,
             cantidad=1,
             chasis_bl='1HGCM82633A004352',
+            contenedor=self.contenedor,
         )
         GastoImportacion.objects.create(
             embarque=self.embarque,

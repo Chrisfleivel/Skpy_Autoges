@@ -1,6 +1,7 @@
 # configuraciones_maestras/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.forms import inlineformset_factory
 from django.utils import timezone
@@ -25,7 +26,9 @@ from .forms import (
     MonedaForm,
     BancoForm,
     OrdenPagoExteriorForm,
+    RegistroPagoDesdeOrdenForm,
 )
+from .services import registrar_pago_desde_orden
 from seguridad_usuarios.decorators import revisar_permiso
 from cobranzas.models import Caja as CajaOperativa, AperturaCaja as AperturaCajaOperativa, CierreCaja as CierreCajaOperativa
 # login_required
@@ -52,20 +55,19 @@ def home_maestras(request):
 
 @revisar_permiso('configuraciones_maestras.lista_ordenes_pago_exterior')
 def lista_ordenes_pago_exterior(request):
-    ordenes = OrdenPagoExterior.objects.select_related('moneda', 'banco_corresponsal', 'banco_beneficiario').all().order_by('-fecha_operacion', '-created_at')
+    ordenes = OrdenPagoExterior.objects.select_related(
+        'moneda', 'banco_corresponsal', 'banco_beneficiario', 'factura', 'embarque',
+    ).all().order_by('-fecha_operacion', '-created_at')
     return render(request, 'configuraciones_maestras/lista_ordenes_pago_exterior.html', {'ordenes': ordenes})
 
 
 @revisar_permiso('configuraciones_maestras.agregar_orden_pago_exterior')
 def agregar_orden_pago_exterior(request):
     if request.method == 'POST':
-        form = OrdenPagoExteriorForm(request.POST)
+        form = OrdenPagoExteriorForm(request.POST, request.FILES)
         if form.is_valid():
             orden = form.save(commit=False)
             orden.usuario_creo = request.user if request.user.is_authenticated else None
-            orden.capital = orden.importe_orden
-            orden.comision = orden.comision_orden
-            orden.total = orden.total_orden or (orden.importe_orden + orden.comision_orden)
             orden.save()
             messages.success(request, 'Orden de pago exterior registrada correctamente.')
             return redirect('lista_ordenes_pago_exterior')
@@ -78,15 +80,12 @@ def agregar_orden_pago_exterior(request):
 def editar_orden_pago_exterior(request, pk):
     orden = get_object_or_404(OrdenPagoExterior, pk=pk)
     if request.method == 'POST':
-        form = OrdenPagoExteriorForm(request.POST, instance=orden)
+        form = OrdenPagoExteriorForm(request.POST, request.FILES, instance=orden)
         if form.is_valid():
             orden = form.save(commit=False)
-            orden.capital = orden.importe_orden
-            orden.comision = orden.comision_orden
-            orden.total = orden.total_orden or (orden.importe_orden + orden.comision_orden)
             orden.save()
             messages.success(request, 'Orden actualizada correctamente.')
-            return redirect('lista_ordenes_pago_exterior')
+            return redirect('detalle_orden_pago_exterior', pk=orden.pk)
     else:
         form = OrdenPagoExteriorForm(instance=orden)
     return render(request, 'configuraciones_maestras/editar_orden_pago_exterior.html', {'form': form, 'orden': orden})
@@ -94,18 +93,80 @@ def editar_orden_pago_exterior(request, pk):
 
 @revisar_permiso('configuraciones_maestras.detalle_orden_pago_exterior')
 def detalle_orden_pago_exterior(request, pk):
-    orden = get_object_or_404(OrdenPagoExterior, pk=pk)
+    orden = get_object_or_404(
+        OrdenPagoExterior.objects.select_related(
+            'moneda', 'banco_corresponsal', 'banco_beneficiario', 'factura__proveedor',
+            'embarque', 'pago_exterior',
+        ),
+        pk=pk,
+    )
     return render(request, 'configuraciones_maestras/detalle_orden_pago_exterior.html', {'orden': orden})
 
 
 @revisar_permiso('configuraciones_maestras.eliminar_orden_pago_exterior')
 def eliminar_orden_pago_exterior(request, pk):
     orden = get_object_or_404(OrdenPagoExterior, pk=pk)
+    if orden.pago_registrado:
+        messages.error(request, 'La liquidación tiene un pago registrado: no se puede eliminar.')
+        return redirect('detalle_orden_pago_exterior', pk=orden.pk)
     if request.method == 'POST':
         orden.delete()
         messages.success(request, 'Orden eliminada correctamente.')
         return redirect('lista_ordenes_pago_exterior')
     return render(request, 'configuraciones_maestras/eliminar_orden_pago_exterior.html', {'orden': orden})
+
+
+@revisar_permiso('configuraciones_maestras.registrar_pago_orden_exterior')
+def registrar_pago_desde_liquidacion(request, pk):
+    """
+    Registra el pago al exterior a partir de la liquidación.
+
+    La liquidación aporta los datos bancarios y los importes; el usuario
+    confirma a qué factura se imputa y en qué embarque se carga la comisión.
+    """
+    orden = get_object_or_404(
+        OrdenPagoExterior.objects.select_related('moneda', 'factura', 'embarque'),
+        pk=pk,
+    )
+
+    if orden.pago_registrado:
+        messages.info(request, 'Esta liquidación ya tiene un pago registrado.')
+        return redirect('detalle_orden_pago_exterior', pk=orden.pk)
+
+    if request.method == 'POST':
+        form = RegistroPagoDesdeOrdenForm(request.POST, orden=orden)
+        if form.is_valid():
+            try:
+                pago = registrar_pago_desde_orden(
+                    orden,
+                    factura=form.cleaned_data['factura'],
+                    fecha_operacion=form.cleaned_data['fecha_operacion'],
+                    importe=form.cleaned_data['importe'],
+                    comision=form.cleaned_data.get('comision') or Decimal('0'),
+                    cotizacion=form.cleaned_data.get('cotizacion'),
+                    embarque=form.cleaned_data.get('embarque'),
+                    forma_pago=form.cleaned_data.get('forma_pago'),
+                    referencia_op=form.cleaned_data.get('referencia_op') or '',
+                    numero_lote=form.cleaned_data.get('numero_lote') or '',
+                    usuario=request.user if request.user.is_authenticated else None,
+                )
+            except ValidationError as exc:
+                messages.error(request, '; '.join(exc.messages))
+            else:
+                messages.success(
+                    request,
+                    f'Pago {pago.referencia_op or pago.pk} registrado. '
+                    f'La factura {pago.factura.numero} quedó con saldo pendiente {pago.factura.saldo_pendiente}.',
+                )
+                return redirect('detalle_orden_pago_exterior', pk=orden.pk)
+    else:
+        form = RegistroPagoDesdeOrdenForm(orden=orden)
+
+    return render(
+        request,
+        'configuraciones_maestras/registrar_pago_orden_pago_exterior.html',
+        {'form': form, 'orden': orden},
+    )
 
 
 @revisar_permiso('configuraciones_maestras.lista_bancos')

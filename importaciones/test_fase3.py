@@ -7,7 +7,7 @@ from django.test import TestCase
 from compras.models import FacturaComercial, FacturaItem
 from configuraciones_maestras.models import Proveedor
 from core.models import TransicionInvalida
-from importaciones.models import DespachoAduana, Embarque, GastoImportacion
+from importaciones.models import DespachoAduana, Embarque, EmbarqueContenedor, GastoImportacion
 from importaciones.services import verificar_chasis, prorratear_costos
 from inventario.models import MarcaVehiculo, ModeloVehiculo, Vehiculo
 
@@ -38,6 +38,10 @@ class EmbarqueImportacionFase3TestCase(TestCase):
             precio_unitario=Decimal('1500.00'),
         )
 
+    def _contenedor(self, embarque, numero='CONT-001'):
+        """Crea el contenedor donde se cargan los ítems del embarque."""
+        return EmbarqueContenedor.objects.create(embarque=embarque, numero=numero, tipo='40HC')
+
     def test_embarque_puede_avanzar_a_embarcado_con_bl_y_fecha(self):
         embarque = Embarque.objects.create(
             referencia_interna='EMB-001',
@@ -45,7 +49,12 @@ class EmbarqueImportacionFase3TestCase(TestCase):
             fecha_embarque=date(2026, 2, 1),
             estado=Embarque.Estado.PROGRAMADO,
         )
-        embarque.items.create(factura_item=self.item, cantidad=1, chasis_bl='VIN-123')
+        embarque.items.create(
+            factura_item=self.item,
+            cantidad=1,
+            chasis_bl='VIN-123',
+            contenedor=self._contenedor(embarque),
+        )
 
         embarque.cambiar_estado(Embarque.Estado.EMBARCADO)
 
@@ -58,7 +67,12 @@ class EmbarqueImportacionFase3TestCase(TestCase):
             fecha_embarque=date(2026, 2, 1),
             estado=Embarque.Estado.EMBARCADO,
         )
-        embarque.items.create(factura_item=self.item, cantidad=1, chasis_bl='VIN-456')
+        embarque.items.create(
+            factura_item=self.item,
+            cantidad=1,
+            chasis_bl='VIN-456',
+            contenedor=self._contenedor(embarque),
+        )
 
         with self.assertRaises(TransicionInvalida):
             embarque.cambiar_estado(Embarque.Estado.EN_TRANSITO)
@@ -78,6 +92,7 @@ class EmbarqueImportacionFase3TestCase(TestCase):
             cantidad=1,
             chasis_bl='VIN-789',
             costo_prorrateado=Decimal('1500.00'),
+            contenedor=self._contenedor(embarque),
         )
         embarque.gastos_prorrateados = True
         embarque.save(update_fields=['gastos_prorrateados'])
@@ -112,6 +127,7 @@ class EmbarqueImportacionFase3TestCase(TestCase):
             factura_item=self.item,
             cantidad=1,
             chasis_bl='VIN-100',
+            contenedor=self._contenedor(embarque),
         )
         gasto = GastoImportacion.objects.create(
             embarque=embarque,
@@ -192,6 +208,7 @@ class EmbarqueImportacionFase3TestCase(TestCase):
             factura_item=self.item,
             cantidad=1,
             chasis_bl='VIN-REAL-001',
+            contenedor=self._contenedor(embarque),
         )
         GastoImportacion.objects.create(
             embarque=embarque,
@@ -243,6 +260,7 @@ class EmbarqueImportacionFase3TestCase(TestCase):
             factura_item=self.item,
             cantidad=1,
             chasis_bl='VIN-555',
+            contenedor=self._contenedor(embarque),
         )
         self.assertFalse(Embarque.objects.get(pk=embarque.pk).gastos_prorrateados)
 

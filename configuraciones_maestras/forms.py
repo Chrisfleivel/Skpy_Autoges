@@ -326,10 +326,12 @@ class OrdenPagoExteriorForm(forms.ModelForm):
             'moneda',
             'importe_orden',
             'comision_orden',
-            'total_orden',
             'referencia_op',
             'numero_lote',
             'fecha_operacion',
+            'hora_operacion',
+            'usuario_banco',
+            'firmante',
             'banco_corresponsal',
             'ordenante',
             'banco_beneficiario',
@@ -339,6 +341,9 @@ class OrdenPagoExteriorForm(forms.ModelForm):
             'motivo_transferencia',
             'concepto',
             'cotizacion',
+            'factura',
+            'embarque',
+            'archivo',
             'estado',
             'observaciones',
         ]
@@ -353,10 +358,12 @@ class OrdenPagoExteriorForm(forms.ModelForm):
             'moneda': forms.Select(attrs={'class': 'form-select'}),
             'importe_orden': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'comision_orden': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'total_orden': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'referencia_op': forms.TextInput(attrs={'class': 'form-control'}),
             'numero_lote': forms.TextInput(attrs={'class': 'form-control'}),
             'fecha_operacion': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'hora_operacion': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'usuario_banco': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej.: NVILLAMA'}),
+            'firmante': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej.: NERY VILLAMAYOR'}),
             'banco_corresponsal': forms.Select(attrs={'class': 'form-select'}),
             'ordenante': forms.TextInput(attrs={'class': 'form-control'}),
             'banco_beneficiario': forms.Select(attrs={'class': 'form-select'}),
@@ -366,27 +373,136 @@ class OrdenPagoExteriorForm(forms.ModelForm):
             'motivo_transferencia': forms.TextInput(attrs={'class': 'form-control'}),
             'concepto': forms.TextInput(attrs={'class': 'form-control'}),
             'cotizacion': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.0001'}),
+            'factura': forms.Select(attrs={'class': 'form-select'}),
+            'embarque': forms.Select(attrs={'class': 'form-select'}),
+            'archivo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'estado': forms.Select(attrs={'class': 'form-select'}),
             'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        MonedaFacade.ensure_defaults()
-        moneda_choices = [(codigo, f"{codigo} - {nombre}") for codigo, nombre in MonedaFacade.get_choices()]
-        self.fields['moneda'].choices = [('', 'Seleccione moneda')] + moneda_choices
+        Moneda.ensure_defaults()
+        # La moneda es una FK, pero el documento maneja el código (USD, PYG...).
+        # `to_field_name` hace que el formulario_envíe y valide el código.
+        self.fields['moneda'].to_field_name = 'codigo'
+        self.fields['moneda'].queryset = Moneda.objects.order_by('codigo')
+        self.fields['moneda'].label_from_instance = lambda obj: f'{obj.codigo} - {obj.nombre}'
+        self.fields['moneda'].empty_label = 'Seleccione moneda'
         for field in self.fields.values():
             if not isinstance(field.widget, forms.Select):
                 field.widget.attrs.update({'class': 'form-control'})
+
+        # La factura y el embarque son vínculos opcionales con la operación.
+        from compras.models import FacturaComercial
+        from importaciones.models import Embarque
+
+        self.fields['factura'].queryset = (
+            FacturaComercial.objects.exclude(estado=FacturaComercial.Estado.ANULADA)
+            .select_related('proveedor')
+            .order_by('-fecha', '-id')
+        )
+        self.fields['factura'].empty_label = 'Sin factura vinculada'
+        self.fields['embarque'].queryset = (
+            Embarque.objects.exclude(estado=Embarque.Estado.CANCELADO)
+            .order_by('-pk')
+        )
+        self.fields['embarque'].empty_label = 'Sin embarque vinculado'
 
     def clean(self):
         cleaned_data = super().clean()
         importe = cleaned_data.get('importe_orden') or 0
         comision = cleaned_data.get('comision_orden') or 0
-        total = cleaned_data.get('total_orden') or 0
-        if total and float(total) != float(importe) + float(comision):
-            self.add_error('total_orden', 'El total debe ser igual a importe + comisión.')
+        if importe <= 0:
+            self.add_error('importe_orden', 'El importe de la orden debe ser mayor que cero.')
+        if comision < 0:
+            self.add_error('comision_orden', 'La comisión no puede ser negativa.')
+
+        factura = cleaned_data.get('factura')
+        moneda = cleaned_data.get('moneda')
+        if factura and moneda and factura.moneda != moneda.codigo:
+            self.add_error(
+                'moneda',
+                f'La moneda de la factura ({factura.moneda}) no coincide con la de la liquidación.',
+            )
         return cleaned_data
+
+
+class RegistroPagoDesdeOrdenForm(forms.Form):
+    """
+    Confirmación del asiento financiero a partir de una liquidación.
+
+    Los datos vienen precargados con el documento; el usuario confirma la
+    factura y el embarque donde se imputa la comisión.
+    """
+
+    factura = forms.ModelChoiceField(queryset=None, label='Factura comercial')
+    embarque = forms.ModelChoiceField(queryset=None, required=False, label='Embarque (imputa la comisión)')
+    fecha_operacion = forms.DateField(label='Fecha de operación', widget=forms.DateInput(attrs={'type': 'date'}))
+    importe = forms.DecimalField(label='Importe de la orden', min_value=0.01, decimal_places=2)
+    comision = forms.DecimalField(label='Comisión bancaria', required=False, min_value=0, decimal_places=2)
+    cotizacion = forms.DecimalField(
+        label='Cotización a moneda base', required=False, min_value=0, decimal_places=4,
+        help_text='Solo si la moneda del pago no es la moneda base (USD).',
+    )
+    forma_pago = forms.ChoiceField(label='Forma de pago')
+    referencia_op = forms.CharField(label='Referencia OP', required=False, max_length=40)
+    numero_lote = forms.CharField(label='Nro. de lote', required=False, max_length=40)
+
+    def __init__(self, *args, orden=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        from compras.models import FacturaComercial
+        from finanzas.models import PagoExterior
+        from importaciones.models import Embarque
+
+        self.orden = orden
+        self.fields['factura'].queryset = (
+            FacturaComercial.objects.exclude(estado=FacturaComercial.Estado.ANULADA)
+            .select_related('proveedor')
+            .order_by('-fecha', '-id')
+        )
+        self.fields['embarque'].queryset = (
+            Embarque.objects.exclude(estado=Embarque.Estado.CANCELADO).order_by('-pk')
+        )
+        self.fields['embarque'].empty_label = 'Sin embarque (la comisión queda solo en el pago)'
+        self.fields['forma_pago'].choices = PagoExterior.FormaPago.choices
+
+        if orden is not None:
+            self.fields['forma_pago'].initial = orden.forma_pago_finanzas
+            self.initial.setdefault('factura', orden.factura_id)
+            self.initial.setdefault('embarque', orden.embarque_id)
+            self.initial.setdefault('fecha_operacion', orden.fecha_operacion)
+            self.initial.setdefault('importe', orden.importe_orden)
+            self.initial.setdefault('comision', orden.comision_orden)
+            self.initial.setdefault('cotizacion', orden.cotizacion)
+            self.initial.setdefault('referencia_op', orden.referencia_op or '')
+            self.initial.setdefault('numero_lote', orden.numero_lote or '')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        importe = cleaned_data.get('importe')
+        comision = cleaned_data.get('comision') or 0
+        factura = cleaned_data.get('factura')
+        orden = self.orden
+
+        if orden is not None and orden.moneda_id and factura and factura.moneda != orden.moneda.codigo:
+            self.add_error(
+                'factura',
+                f'La factura está en {factura.moneda} y la liquidación en {orden.moneda.codigo}.',
+            )
+
+        if importe and factura and importe > factura.saldo_pendiente:
+            self.add_error(
+                'importe',
+                f'El importe supera el saldo pendiente de la factura ({factura.saldo_pendiente}).',
+            )
+
+        if comision > 0 and not cleaned_data.get('embarque'):
+            # No bloquea: la comisión queda solo en el pago, sin imputar a un embarque.
+            self.comision_sin_embarque = True
+
+        return cleaned_data
+
 
 class DepartamentoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):

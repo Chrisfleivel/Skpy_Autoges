@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import (
     Embarque,
+    EmbarqueContenedor,
     GastoImportacion,
     DespachoAduana,
     DocumentoAdjunto,
@@ -15,6 +16,13 @@ class EmbarqueAdmin(admin.ModelAdmin):
     list_filter = ('estado', 'bl_liberado', 'fecha_embarque')
     search_fields = ('referencia_interna', 'bl_numero', 'naviera', 'buque_viaje')
     readonly_fields = ('estado',)
+
+
+@admin.register(EmbarqueContenedor)
+class EmbarqueContenedorAdmin(admin.ModelAdmin):
+    list_display = ('numero', 'tipo', 'sello', 'embarque', 'peso_bruto_kg', 'volumen_m3')
+    list_filter = ('tipo',)
+    search_fields = ('numero', 'sello', 'embarque__referencia_interna', 'embarque__bl_numero')
 
 
 @admin.register(GastoImportacion)

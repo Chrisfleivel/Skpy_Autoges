@@ -91,12 +91,41 @@
   </div>
 
   <div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-light">Contenedores</div>
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Nº de contenedor</th>
+            <th>Tipo</th>
+            <th>Sello</th>
+            <th class="text-end">Unidades</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for contenedor in contenedores %}
+          <tr>
+            <td>{{ contenedor.numero }}</td>
+            <td>{{ contenedor.tipo|default:'-' }}</td>
+            <td>{{ contenedor.sello|default:'-' }}</td>
+            <td class="text-end">{{ contenedor.unidades }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-3">Sin contenedores cargados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 mt-4">
     <div class="card-header bg-light">Detalle de items</div>
     <div class="card-body p-0">
       <table class="table table-hover mb-0">
         <thead>
           <tr>
             <th>Item</th>
+            <th>Contenedor</th>
             <th>Chasis BL</th>
             <th>Costo prorrateado</th>
           </tr>
@@ -105,11 +134,12 @@
           {% for item in items %}
           <tr>
             <td>{{ item.factura_item.descripcion }}</td>
+            <td>{{ item.contenedor.numero|default:'-' }}</td>
             <td>{{ item.chasis_bl|default:'-' }}</td>
             <td>{{ item.costo_prorrateado|default:'0.00' }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="3" class="text-center text-muted py-3">Sin items cargados.</td></tr>
+          <tr><td colspan="4" class="text-center text-muted py-3">Sin items cargados.</td></tr>
           {% endfor %}
         </tbody>
       </table>

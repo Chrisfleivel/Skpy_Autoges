@@ -52,22 +52,21 @@ class Embarque(EstadoMixin, TimeStampedModel):
     naviera = models.CharField(max_length=120, blank=True)
     buque_viaje = models.CharField('Buque / viaje', max_length=120, blank=True)
     
-    shipper = models.CharField(max_length=200, blank=True)
-    consignatario = models.CharField(max_length=200, blank=True)
+    shipper = models.CharField('Shipper', max_length=200, blank=True)
+    consignatario = models.CharField('Consignee', max_length=200, blank=True)
     notify = models.CharField('Notify party', max_length=200, blank=True)
-    # ---- Contenedor y ruta -----------------------------------------------
-    
-    contenedor_numero = models.CharField(max_length=20, blank=True)
-    contenedor_tipo = models.CharField(max_length=30, blank=True)
-    sello = models.CharField(max_length=30, blank=True)
-    puerto_carga = models.CharField(max_length=120, blank=True)
-    puerto_descarga = models.CharField(max_length=120, blank=True)
-    destino_final = models.CharField(max_length=120, blank=True)
-    
-    peso_bruto_kg = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
-    volumen_m3 = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
-    
+    # ---- Ruta -----------------------------------------------------------
+    lugar_recepcion = models.CharField('Lugar de recepción', max_length=120, blank=True)
+    puerto_carga = models.CharField('Puerto de carga', max_length=120, blank=True)
+    puerto_descarga = models.CharField('Puerto de descarga', max_length=120, blank=True)
+    destino_final = models.CharField('Destino final', max_length=120, blank=True)
+
+    peso_bruto_kg = models.DecimalField('Peso bruto (kg)', max_digits=12, decimal_places=3, null=True, blank=True)
+    volumen_m3 = models.DecimalField('Volumen (m³)', max_digits=10, decimal_places=3, null=True, blank=True)
+    numero_bultos = models.PositiveIntegerField('Nº de bultos', null=True, blank=True)
+
     # ---- Fechas ----------------------------------------------------------
+    fecha_emision = models.DateField('Fecha de emisión del B/L', null=True, blank=True)
     fecha_embarque = models.DateField(null=True, blank=True)
     eta = models.DateField('ETA', null=True, blank=True)
     fecha_arribo = models.DateField(null=True, blank=True)
@@ -88,6 +87,11 @@ class Embarque(EstadoMixin, TimeStampedModel):
     @property
     def cantidad_unidades(self):
         return sum((item.cantidad for item in self.items.all()), 0)
+
+    @property
+    def cantidad_contenedores(self):
+        """Cantidad de contenedores físicos del embarque."""
+        return self.contenedores.count()
 
     @property
     def valor_fob(self):
@@ -111,6 +115,7 @@ class Embarque(EstadoMixin, TimeStampedModel):
 
         return {
             'embarque_registrado': bool(self.bl_numero and self.fecha_embarque),
+            'contenedores_cargados': self.contenedores.exists(),
             'costos_cargados': self.gastos.exists(),
             'items_asociados': bool(items),
             'chasis_verificado': chasis_verificado,
@@ -176,9 +181,69 @@ class Embarque(EstadoMixin, TimeStampedModel):
         ).update(estado=estado_vehiculo)
 
 
+class EmbarqueContenedor(TimeStampedModel):
+    """
+    Contenedor físico de un embarque.
+
+    Un mismo B/L puede traer más de un contenedor, por eso los datos del
+    contenedor (número, tipo, sello, peso y volumen) viven en su propia tabla
+    y los ítems del embarque se asignan a un contenedor concreto.
+    """
+
+    embarque = models.ForeignKey(Embarque, on_delete=models.CASCADE, related_name='contenedores')
+    numero = models.CharField('Nº de contenedor', max_length=20)
+    tipo = models.CharField('Tipo', max_length=30, blank=True,
+                            help_text='Ej.: 20ft, 40ft, 40HC')
+    sello = models.CharField('Nº de sello', max_length=30, blank=True)
+    peso_bruto_kg = models.DecimalField('Peso bruto (kg)', max_digits=12, decimal_places=3, null=True, blank=True)
+    volumen_m3 = models.DecimalField('Volumen (m³)', max_digits=10, decimal_places=3, null=True, blank=True)
+    bultos = models.PositiveIntegerField('Bultos', null=True, blank=True)
+    observaciones = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['embarque', 'id']
+        verbose_name = 'contenedor de embarque'
+        verbose_name_plural = 'contenedores de embarque'
+        constraints = [
+            models.UniqueConstraint(fields=['embarque', 'numero'], name='uniq_contenedor_por_embarque'),
+        ]
+
+    def __str__(self):
+        return f'{self.numero} · {self.embarque}'
+
+    def clean(self):
+        super().clean()
+        if not self.embarque_id or not self.numero:
+            return
+        repetidos = EmbarqueContenedor.objects.filter(
+            embarque_id=self.embarque_id,
+            numero__iexact=self.numero.strip(),
+        ).exclude(pk=self.pk)
+        if repetidos.exists():
+            raise ValidationError(
+                f'El contenedor {self.numero.strip()} ya está cargado en este embarque.'
+            )
+
+    @property
+    def unidades(self):
+        """Unidades embarcadas en este contenedor."""
+        return sum((item.cantidad for item in self.items.all()), 0)
+
+    @property
+    def chasis(self):
+        """Chasis declarados en el B/L para este contenedor."""
+        return [item.chasis_bl for item in self.items.all() if item.chasis_bl]
+
+
 class EmbarqueItem(TimeStampedModel):
     embarque = models.ForeignKey(Embarque, on_delete=models.CASCADE, related_name='items')
     factura_item = models.ForeignKey('compras.FacturaItem', on_delete=models.PROTECT, related_name='embarque_items')
+    contenedor = models.ForeignKey(
+        EmbarqueContenedor,
+        on_delete=models.PROTECT,
+        related_name='items',
+        help_text='Contenedor del embarque donde se carga esta unidad.',
+    )
     cantidad = models.PositiveIntegerField(default=1)
     peso_kg = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
@@ -189,7 +254,10 @@ class EmbarqueItem(TimeStampedModel):
     class Meta:
         ordering = ['embarque', 'id']
         constraints = [
-            models.UniqueConstraint(fields=['embarque', 'factura_item'], name='uniq_embarque_factura_item'),
+            models.UniqueConstraint(
+                fields=['embarque', 'factura_item', 'contenedor'],
+                name='uniq_embarque_factura_item',
+            ),
             models.CheckConstraint(condition=Q(cantidad__gte=1), name='embarque_item_cantidad_positiva'),
         ]
 
@@ -197,9 +265,12 @@ class EmbarqueItem(TimeStampedModel):
         return f'{self.factura_item.descripcion} → {self.embarque}'
 
     def clean(self):
+        super().clean()
         
         if not self.factura_item_id:
             return
+        if self.contenedor_id and self.embarque_id and self.contenedor.embarque_id != self.embarque_id:
+            raise ValidationError('El contenedor seleccionado pertenece a otro embarque.')
         ya_embarcado = (
             self.factura_item.embarque_items.exclude(pk=self.pk)
             .aggregate(total=models.Sum("cantidad"))["total"] or 0

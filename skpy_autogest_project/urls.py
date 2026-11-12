@@ -32,6 +32,7 @@ urlpatterns = [
     path('clientes_pedidos/', include('clientes_pedidos.urls')),  # Incluir las URLs de la app clientes_pedidos
     path('reposicion_stock/', include('reposicion_stock.urls')),  # Incluir las URLs de la app reposicion_stock
     path('importaciones/', include('importaciones.urls')),
+    path('compras/', include('compras.urls')),
     # path('documentos_financieros/', include('documentos_financieros.urls')),  # Deshabilitado porque depende de contabilidad
     path('cobranzas/', include('cobranzas.urls')),
     path('pedido_busqueda/', include('pedido_busqueda.urls')),

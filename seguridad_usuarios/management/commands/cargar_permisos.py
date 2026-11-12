@@ -12,6 +12,7 @@ from inventario.permisos import generar_permisos_iniciales_inventario
 from cobranzas.permisos import generar_permisos_iniciales_cobranzas
 from clientes_pedidos.permisos import generar_permisos_iniciales_clientes_pedidos
 from importaciones.permisos import generar_permisos_iniciales_importaciones
+from compras.permisos import generar_permisos_iniciales_compras
 
 
 class Command(BaseCommand):
@@ -64,5 +65,6 @@ def buscar_permisos():
     permisos.extend(generar_permisos_iniciales_inventario())
     permisos.extend(generar_permisos_iniciales_cobranzas())
     permisos.extend(generar_permisos_iniciales_importaciones())
+    permisos.extend(generar_permisos_iniciales_compras())
     
     return permisos

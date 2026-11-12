@@ -425,6 +425,12 @@ def generar_permisos_iniciales_configuraciones_maestras():
             'nombre': 'Eliminar Orden de Pago Exterior',
             'descripcion': 'Permite eliminar órdenes de pago exterior del sistema.',
             'sector': 'Configuraciones Maestras'
+        },
+        {
+            'codename': 'configuraciones_maestras.registrar_pago_orden_exterior',
+            'nombre': 'Registrar Pago de Orden de Pago Exterior',
+            'descripcion': 'Permite registrar el pago al exterior a partir de una liquidación bancaria.',
+            'sector': 'Configuraciones Maestras'
         }
 
     ]

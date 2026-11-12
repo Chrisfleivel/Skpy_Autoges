@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar factura {{ factura.numero }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-danger text-white">
+          <h5 class="mb-0">Eliminar factura comercial</h5>
+        </div>
+        <div class="card-body">
+          <p class="mb-3">
+            ¿Confirma la eliminación de la factura <strong>{{ factura.numero }}</strong> del proveedor
+            <strong>{{ factura.proveedor.razon_social|default:factura.proveedor.nombre }}</strong>?
+          </p>
+          <div class="alert alert-warning mb-4">
+            Esta acción no se puede deshacer y eliminará también sus líneas y documentos adjuntos.
+          </div>
+          <form method="post" class="d-flex justify-content-between">
+            {% csrf_token %}
+            <a href="{% url 'detalle_factura_comercial' factura.pk %}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-danger">Eliminar factura</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

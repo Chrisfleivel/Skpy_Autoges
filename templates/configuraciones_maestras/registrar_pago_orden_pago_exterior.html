@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar pago de la liquidación{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-1">Registrar pago al exterior</h4>
+      <p class="text-muted mb-0">
+        Liquidación {% if orden.referencia_op %}{{ orden.referencia_op }}{% else %}sin referencia{% endif %}
+        · {{ orden.importe_orden }} {{ orden.moneda.codigo }}
+        {% if orden.comision_orden %}+ comisión {{ orden.comision_orden }}{% endif %}
+      </p>
+    </div>
+    <a href="{% url 'detalle_orden_pago_exterior' orden.pk %}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-lg-5">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-light">Datos que trae la liquidación</div>
+        <div class="card-body">
+          <div class="row g-2 small">
+            <div class="col-5 text-muted">Beneficiario</div>
+            <div class="col-7">{{ orden.beneficiario|default:'-' }}</div>
+            <div class="col-5 text-muted">Banco beneficiario</div>
+            <div class="col-7">{{ orden.banco_beneficiario|default:'-' }}</div>
+            <div class="col-5 text-muted">Cuenta beneficiaria</div>
+            <div class="col-7">{{ orden.cuenta_beneficiaria|default:'-' }}</div>
+            <div class="col-5 text-muted">Referencia OP</div>
+            <div class="col-7">{{ orden.referencia_op|default:'-' }}</div>
+            <div class="col-5 text-muted">Lote</div>
+            <div class="col-7">{{ orden.numero_lote|default:'-' }}</div>
+            <div class="col-5 text-muted">Motivo</div>
+            <div class="col-7">{{ orden.motivo_transferencia|default:'-' }}</div>
+            <div class="col-5 text-muted">Fecha operación</div>
+            <div class="col-7">{{ orden.fecha_operacion }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">Confirmación del asiento</div>
+        <div class="card-body">
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="row g-3">
+              {% for field in form %}
+                <div class="col-md-6">
+                  <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                  {% endif %}
+                  {% if field.errors %}
+                    <div class="text-danger small">{{ field.errors|striptags }}</div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+            <div class="alert alert-info mt-3 mb-0 small">
+              Si indicás un embarque, la comisión bancaria se imputa como gasto de importación
+              (<code>COMISION_BANCARIA</code>) en ese embarque. Sin embarque, la comisión queda solo en el pago.
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+              <a href="{% url 'detalle_orden_pago_exterior' orden.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+              <button type="submit" class="btn btn-primary">Registrar pago</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

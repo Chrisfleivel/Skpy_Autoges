@@ -272,13 +272,22 @@ class OrdenPagoExterior(models.Model):
         ('OTRO', 'Otro'),
     ]
 
-    ESTADO_CHOICES = [
-        ('BORRADOR', 'Borrador'),
-        ('PENDIENTE', 'Pendiente'),
-        ('APROBADA', 'Aprobada'),
-        ('ENVIADA', 'Enviada'),
-        ('CANCELADA', 'Cancelada'),
-    ]
+    class Estado(models.TextChoices):
+        BORRADOR = 'BORRADOR', 'Borrador'
+        PENDIENTE = 'PENDIENTE', 'Pendiente'
+        APROBADA = 'APROBADA', 'Aprobada'
+        ENVIADA = 'ENVIADA', 'Enviada'
+        CANCELADA = 'CANCELADA', 'Cancelada'
+
+    ESTADO_CHOICES = Estado.choices
+
+    # Formas de pago del documento -> formas de pago del asiento financiero.
+    MAPEO_FORMA_PAGO = {
+        'DBCUENTA': 'DEBITO_CUENTA',
+        'TRANSFERENCIA': 'DEBITO_CUENTA',
+        'CHEQUE': 'CHEQUE',
+        'OTRO': 'OTRA',
+    }
 
     tipo_documento_remitente = models.CharField(max_length=20, choices=TIPO_DOCUMENTO_CHOICES, verbose_name="Tipo de Documento del Remitente")
     numero_documento_remitente = models.CharField(max_length=50, verbose_name="Nro. Documento del Remitente")
@@ -311,11 +320,47 @@ class OrdenPagoExterior(models.Model):
     comision_orden = models.DecimalField(max_digits=14, decimal_places=2, default=0, verbose_name="Comisión Orden")
     total_orden = models.DecimalField(max_digits=14, decimal_places=2, default=0, verbose_name="Total Orden")
 
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='BORRADOR', verbose_name="Estado")
+    estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.BORRADOR, verbose_name="Estado")
     observaciones = models.TextField(blank=True, null=True, verbose_name="Observaciones")
     usuario_creo = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='ordenes_pago_exterior_creadas', verbose_name="Usuario que creó")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Creado el")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Actualizado el")
+
+    # ---- Captura manual del documento ------------------------------------
+    archivo = models.FileField(
+        'Imagen o PDF de la liquidación',
+        upload_to='configuraciones_maestras/ordenes_pago/%Y/%m/',
+        blank=True,
+    )
+    firmante = models.CharField('Firmante', max_length=200, blank=True)
+    hora_operacion = models.TimeField('Hora de operación', null=True, blank=True)
+    usuario_banco = models.CharField('Usuario del banco', max_length=120, blank=True)
+
+    # ---- Vínculos con la operación ---------------------------------------
+    factura = models.ForeignKey(
+        'compras.FacturaComercial',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='ordenes_pago',
+        verbose_name='Factura comercial',
+    )
+    embarque = models.ForeignKey(
+        'importaciones.Embarque',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='ordenes_pago',
+        verbose_name='Embarque',
+    )
+    pago_exterior = models.OneToOneField(
+        'finanzas.PagoExterior',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='orden_pago',
+        verbose_name='Pago al exterior',
+    )
 
     class Meta:
         verbose_name = "Orden de Pago Exterior"
@@ -324,6 +369,21 @@ class OrdenPagoExterior(models.Model):
 
     def __str__(self):
         return f"OP-{self.pk or 'nuevo'} {self.beneficiario} - {self.total_orden} {self.moneda.codigo}"
+
+    def save(self, *args, **kwargs):
+        """Los totales del documento se calculan siempre a partir del importe y la comisión."""
+        self.guardar_totales_desde_documento()
+        super().save(*args, **kwargs)
+
+    @property
+    def pago_registrado(self):
+        """Indica si la liquidación ya tiene su asiento financiero."""
+        return self.pago_exterior_id is not None
+
+    @property
+    def forma_pago_finanzas(self):
+        """Forma de pago del documento traducida al asiento financiero."""
+        return self.MAPEO_FORMA_PAGO.get(self.forma_pago, 'OTRA')
 
     def recalcular_totales(self):
         self.capital = self.importe_orden

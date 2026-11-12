@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="h4 fw-bold mb-1">{{ titulo }}</h1>
+      <p class="text-muted mb-0">Complete los datos del documento y las líneas facturadas.</p>
+    </div>
+    <a href="{% url 'lista_facturas_comerciales' %}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" id="form-factura">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold">Datos de la factura</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          {% for field in form %}
+            <div class="col-md-4">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+                <div class="form-text">{{ field.help_text }}</div>
+              {% endif %}
+              {% if field.errors %}
+                <div class="text-danger small">{{ field.errors|striptags }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">Líneas de la factura</h5>
+        <span class="text-muted small">Los datos de chasis, año y motor son los que figuran en el documento.</span>
+      </div>
+      <div class="card-body">
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}
+          <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+        {% endif %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle" id="tabla-items">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 22%;">Vehículo</th>
+                <th style="width: 20%;">Descripción</th>
+                <th style="width: 7%;">Cant.</th>
+                <th style="width: 11%;">P. unitario</th>
+                <th style="width: 12%;">Chasis</th>
+                <th style="width: 8%;">Año</th>
+                <th style="width: 12%;">Motor</th>
+                <th style="width: 8%;">Peso kg</th>
+                <th style="width: 8%;">Quitar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item_form in formset.forms %}
+                <tr>
+                  <td>{{ item_form.id }}{{ item_form.vehiculo }}{{ item_form.vehiculo.errors }}</td>
+                  <td>{{ item_form.descripcion }}{{ item_form.descripcion.errors }}</td>
+                  <td>{{ item_form.cantidad }}{{ item_form.cantidad.errors }}</td>
+                  <td>{{ item_form.precio_unitario }}{{ item_form.precio_unitario.errors }}</td>
+                  <td>{{ item_form.chasis }}{{ item_form.chasis.errors }}</td>
+                  <td>{{ item_form.anio }}{{ item_form.anio.errors }}</td>
+                  <td>{{ item_form.motor }}{{ item_form.motor.errors }}</td>
+                  <td>{{ item_form.peso_kg }}{{ item_form.peso_kg.errors }}</td>
+                  <td class="text-center">
+                    {% if item_form.instance.pk %}
+                      <label class="form-check-label small">
+                        {{ item_form.DELETE }} Eliminar
+                      </label>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="alert alert-info mb-0 mt-3" id="aviso-total">
+          El total declarado se contrasta con la suma de las líneas al <strong>confirmar</strong> la factura.
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <a href="{% url 'lista_facturas_comerciales' %}" class="btn btn-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-success">Guardar factura</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function () {
+    const tabla = document.getElementById('tabla-items');
+    const aviso = document.getElementById('aviso-total');
+    if (!tabla || !aviso) return;
+
+    const campoTotal = document.getElementById('id_total_declarado');
+
+    function calcular() {
+      let suma = 0;
+      let lineas = 0;
+      tabla.querySelectorAll('tbody tr').forEach(function (fila) {
+        const cantidad = fila.querySelector('input[name$="-cantidad"]');
+        const precio = fila.querySelector('input[name$="-precio_unitario"]');
+        const eliminar = fila.querySelector('input[name$="-DELETE"]');
+        if (!cantidad || !precio) return;
+        if (eliminar && eliminar.checked) return;
+        const cant = parseFloat(cantidad.value || '0') || 0;
+        const prec = parseFloat(precio.value || '0') || 0;
+        if (!cant && !prec) return;
+        suma += cant * prec;
+        lineas += 1;
+      });
+
+      let texto = 'Suma de las líneas: <strong>' + suma.toFixed(2) + '</strong> (' + lineas + ' línea' +
+        (lineas === 1 ? '' : 's') + '). El total declarado se contrasta al <strong>confirmar</strong> la factura.';
+      if (campoTotal && campoTotal.value !== '') {
+        const declarado = parseFloat(campoTotal.value || '0') || 0;
+        const diferencia = declarado - suma;
+        if (Math.abs(diferencia) > 0.005) {
+          texto = 'Suma de las líneas: <strong>' + suma.toFixed(2) + '</strong>. ' +
+            'El total declarado difiere en <strong class="text-danger">' + diferencia.toFixed(2) + '</strong>.';
+          aviso.classList.remove('alert-info');
+          aviso.classList.add('alert-warning');
+        } else {
+          aviso.classList.remove('alert-warning');
+          aviso.classList.add('alert-info');
+        }
+      }
+      aviso.innerHTML = texto;
+    }
+
+    tabla.addEventListener('input', calcular);
+    tabla.addEventListener('change', calcular);
+    if (campoTotal) campoTotal.addEventListener('input', calcular);
+    calcular();
+  })();
+</script>
+{% endblock %}

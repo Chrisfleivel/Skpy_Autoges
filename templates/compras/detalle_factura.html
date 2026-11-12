@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Factura {{ factura.numero }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h1 class="h4 fw-bold mb-1">
+        Factura {{ factura.numero }}
+        {% if factura.estado == 'PAGADA' %}
+          <span class="badge bg-success align-middle">Pagada</span>
+        {% elif factura.estado == 'ANULADA' %}
+          <span class="badge bg-secondary align-middle">Anulada</span>
+        {% elif factura.estado == 'BORRADOR' %}
+          <span class="badge bg-warning text-dark align-middle">Borrador</span>
+        {% else %}
+          <span class="badge bg-info text-dark align-middle">{{ factura.get_estado_display }}</span>
+        {% endif %}
+      </h1>
+      <p class="text-muted mb-0">
+        {{ factura.proveedor.razon_social|default:factura.proveedor.nombre }} · {{ factura.fecha|date:"d/m/Y" }}
+      </p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'lista_facturas_comerciales' %}" class="btn btn-outline-secondary">Volver</a>
+      {% if puede_editar %}
+        <a href="{% url 'editar_factura_comercial' factura.pk %}" class="btn btn-outline-primary">Editar</a>
+        <form method="post" action="{% url 'confirmar_factura_comercial' factura.pk %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success">Confirmar</button>
+        </form>
+        <a href="{% url 'eliminar_factura_comercial' factura.pk %}" class="btn btn-outline-danger">Eliminar</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if factura.estado == 'BORRADOR' and factura.diferencia_total != 0 %}
+    <div class="alert alert-warning">
+      El total declarado ({{ factura.total_declarado }} {{ factura.moneda }}) no coincide con la suma de las
+      líneas ({{ factura.total_items }} {{ factura.moneda }}). La factura no podrá confirmarse hasta corregirlas.
+    </div>
+  {% endif %}
+
+  {% if discrepancias %}
+    <div class="alert alert-warning">
+      <strong>Chasis que difieren del inventario:</strong>
+      <ul class="mb-0">
+        {% for d in discrepancias %}
+          <li>{{ d.item.descripcion }}: factura {{ d.chasis_factura }} vs inventario {{ d.chasis_inventario }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+          <h5 class="mb-0 fw-bold">Datos de la factura</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="text-muted small d-block mb-1">Proveedor</label>
+              <div class="fw-semibold">{{ factura.proveedor.razon_social|default:factura.proveedor.nombre }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="text-muted small d-block mb-1">Cliente / importador</label>
+              <div class="fw-semibold">
+                {% if factura.cliente_importador %}
+                  {{ factura.cliente_importador.razon_social|default:factura.cliente_importador.nombre }}
+                {% else %}
+                  <span class="text-muted">No informado</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="text-muted small d-block mb-1">Notify party</label>
+              <div class="fw-semibold">{{ factura.notify_party|default:"-" }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="text-muted small d-block mb-1">Puerto de carga</label>
+              <div class="fw-semibold">{{ factura.puerto_carga|default:"-" }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="text-muted small d-block mb-1">Moneda</label>
+              <div class="fw-semibold">{{ factura.moneda }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="text-muted small d-block mb-1">Incoterm</label>
+              <div class="fw-semibold">{{ factura.incoterm }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="text-muted small d-block mb-1">Condición de pago</label>
+              <div class="fw-semibold">{{ factura.condicion_pago|default:"-" }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="text-muted small d-block mb-1">Nº de L/C</label>
+              <div class="fw-semibold">
+                {{ factura.lc_numero|default:"-" }}
+                {% if factura.lc_banco %}<span class="text-muted">({{ factura.lc_banco.nombre }})</span>{% endif %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="text-muted small d-block mb-1">Observaciones</label>
+              <div class="fw-semibold">{{ factura.observaciones|default:"-" }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+          <h5 class="mb-0 fw-bold">Líneas facturadas ({{ items|length }})</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Descripción</th>
+                  <th class="text-end">Cant.</th>
+                  <th class="text-end">P. unitario</th>
+                  <th class="text-end">Subtotal</th>
+                  <th>Chasis</th>
+                  <th>Motor</th>
+                  <th>Año</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in items %}
+                  <tr>
+                    <td>
+                      {{ item.descripcion }}
+                      {% if item.vehiculo %}
+                        <div class="small text-muted">{{ item.vehiculo.nombre }}</div>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">{{ item.cantidad }}</td>
+                    <td class="text-end">{{ item.precio_unitario }}</td>
+                    <td class="text-end fw-semibold">{{ item.subtotal }}</td>
+                    <td class="small">{{ item.chasis|default:"-" }}</td>
+                    <td class="small">{{ item.motor|default:"-" }}</td>
+                    <td class="small">{{ item.anio|default:"-" }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="7" class="text-center text-muted py-4">Sin líneas cargadas.</td></tr>
+                {% endfor %}
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <th colspan="3" class="text-end">Total declarado</th>
+                  <th class="text-end">{{ factura.total_declarado }} {{ factura.moneda }}</th>
+                  <th colspan="3"></th>
+                </tr>
+                <tr>
+                  <th colspan="3" class="text-end">Pagado</th>
+                  <th class="text-end text-success">{{ factura.monto_pagado }} {{ factura.moneda }}</th>
+                  <th colspan="3"></th>
+                </tr>
+                <tr>
+                  <th colspan="3" class="text-end">Saldo pendiente</th>
+                  <th class="text-end {% if factura.saldo_pendiente > 0 %}text-danger{% else %}text-success{% endif %}">
+                    {{ factura.saldo_pendiente }} {{ factura.moneda }}
+                  </th>
+                  <th colspan="3"></th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+          <h5 class="mb-0 fw-bold">Documentos adjuntos</h5>
+        </div>
+        <div class="card-body">
+          {% if documentos %}
+            <ul class="list-group list-group-flush mb-3">
+              {% for documento in documentos %}
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                  <div>
+                    <div class="fw-semibold">{{ documento.get_tipo_display }}</div>
+                    <div class="small text-muted">{{ documento.descripcion|default:documento.archivo.name }}</div>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <a href="{{ documento.archivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">Ver</a>
+                    <form method="post" action="{% url 'eliminar_documento_factura_comercial' factura.pk documento.pk %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                    </form>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted small">Sin documentos adjuntos.</p>
+          {% endif %}
+
+          <form method="post" action="{% url 'agregar_documento_factura_comercial' factura.pk %}" enctype="multipart/form-data" class="border-top pt-3">
+            {% csrf_token %}
+            {% for field in documento_form %}
+              <div class="mb-2">
+                <label class="form-label small">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="text-danger small">{{ field.errors|striptags }}</div>{% endif %}
+              </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-sm w-100">Adjuntar documento</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+          <h5 class="mb-0 fw-bold">Pagos al exterior</h5>
+        </div>
+        <div class="card-body">
+          {% if pagos %}
+            <ul class="list-group list-group-flush">
+              {% for pago in pagos %}
+                <li class="list-group-item px-0">
+                  <div class="fw-semibold">{{ pago.referencia_op|default:"Sin referencia" }}</div>
+                  <div class="small text-muted">
+                    {{ pago.importe }} {{ pago.moneda }} · {{ pago.fecha_operacion|date:"d/m/Y" }} · {{ pago.get_estado_display }}
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted small mb-0">
+              Todavía no hay pagos registrados para esta factura. Se habilitan al confirmar la factura.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Facturas comerciales{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+      <h1 class="h3 fw-bold mb-1">Facturas comerciales</h1>
+      <p class="text-muted mb-0">Documentos de compra a proveedores (commercial invoice) y su estado de pago.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+      <a href="{% url 'agregar_factura_comercial' %}" class="btn btn-primary shadow-sm">
+        <i class="bi bi-plus-circle-fill me-2"></i>Nueva factura
+      </a>
+    </div>
+  </div>
+
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Total facturado</div>
+          <div class="fs-4 fw-bold">{{ resumen_total }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Total pagado</div>
+          <div class="fs-4 fw-bold text-success">{{ resumen_pagado }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Facturas registradas</div>
+          <div class="fs-4 fw-bold">{{ facturas|length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label small">Buscar</label>
+          <input type="text" name="q" value="{{ filtros.q }}" class="form-control" placeholder="Nº de factura, proveedor o cliente">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small">Estado</label>
+          <select name="estado" class="form-select">
+            <option value="">Todos</option>
+            {% for valor, texto in estados %}
+              <option value="{{ valor }}" {% if filtros.estado == valor %}selected{% endif %}>{{ texto }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small">Moneda</label>
+          <select name="moneda" class="form-select">
+            <option value="">Todas</option>
+            {% for valor, texto in monedas %}
+              <option value="{{ valor }}" {% if filtros.moneda == valor %}selected{% endif %}>{{ valor }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-outline-primary flex-grow-1">Filtrar</button>
+          <a href="{% url 'lista_facturas_comerciales' %}" class="btn btn-outline-secondary">Limpiar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Factura</th>
+              <th>Proveedor</th>
+              <th>Cliente</th>
+              <th>Fecha</th>
+              <th class="text-end">Total</th>
+              <th class="text-end">Pagado</th>
+              <th class="text-end">Saldo</th>
+              <th>Estado</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for factura in facturas %}
+              <tr>
+                <td class="fw-semibold">
+                  <a href="{% url 'detalle_factura_comercial' factura.pk %}" class="text-decoration-none">
+                    {{ factura.numero }}
+                  </a>
+                  <div class="small text-muted">{{ factura.unidades }} unidad{{ factura.unidades|pluralize:"es" }}</div>
+                </td>
+                <td>{{ factura.proveedor.razon_social|default:factura.proveedor.nombre }}</td>
+                <td>
+                  {% if factura.cliente_importador %}
+                    {{ factura.cliente_importador.razon_social|default:factura.cliente_importador.nombre }}
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+                <td>{{ factura.fecha|date:"d/m/Y" }}</td>
+                <td class="text-end">{{ factura.total_declarado }} {{ factura.moneda }}</td>
+                <td class="text-end">{{ factura.monto_pagado }} {{ factura.moneda }}</td>
+                <td class="text-end">
+                  {% if factura.saldo_pendiente > 0 %}
+                    <span class="text-danger fw-semibold">{{ factura.saldo_pendiente }}</span>
+                  {% else %}
+                    <span class="text-success">0.00</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if factura.estado == 'PAGADA' %}
+                    <span class="badge bg-success">{{ factura.get_estado_display }}</span>
+                  {% elif factura.estado == 'ANULADA' %}
+                    <span class="badge bg-secondary">{{ factura.get_estado_display }}</span>
+                  {% elif factura.estado == 'BORRADOR' %}
+                    <span class="badge bg-warning text-dark">{{ factura.get_estado_display }}</span>
+                  {% else %}
+                    <span class="badge bg-info text-dark">{{ factura.get_estado_display }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'detalle_factura_comercial' factura.pk %}" class="btn btn-sm btn-outline-primary">Ver</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="9" class="text-center text-muted py-5">
+                  {% if filtros.q or filtros.estado or filtros.moneda %}
+                    No hay facturas que coincidan con el filtro.
+                  {% else %}
+                    Todavía no hay facturas comerciales registradas.
+                    <a href="{% url 'agregar_factura_comercial' %}" class="d-block mt-2">Registrar la primera factura</a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

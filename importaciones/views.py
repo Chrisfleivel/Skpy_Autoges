@@ -2,6 +2,7 @@ import csv
 import io
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
+from compras.models import FacturaComercial
 from .models import (
     Importacion,
     DocumentoAduanero,
@@ -11,27 +12,33 @@ from .models import (
     ContenedorImportacion,
     PedidoProveedorImportacion,
     Embarque,
+    EmbarqueContenedor,
     EmbarqueItem,
     GastoImportacion,
 )
 from .forms import (
     DocumentoAduaneroForm,
+    DocumentoEmbarqueForm,
     ImportacionAduanaUpdateForm,
     ImportacionForm,
     FaseImportacionForm,
     DocumentoImportacionForm,
     ControlFaseImportacionForm,
     ContenedorImportacionForm,
+    EmbarqueContenedorForm,
+    EmbarqueContenedorFormSet,
     FacturaImportacionForm,
     EmbarqueForm,
     EmbarqueItemForm,
     GastoImportacionForm,
 )
 from .services import verificar_chasis, prorratear_costos
+from .conciliacion import EstadoConciliacion, conciliar_factura, conciliar_facturas
 from seguridad_usuarios.decorators import revisar_permiso
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from inventario.models import Vehiculo
@@ -339,7 +346,7 @@ def actualizar_estado_vehiculo_tras_importacion(sender, instance, **kwargs):
 
 @revisar_permiso('importaciones.listar_importaciones')
 def lista_embarques(request):
-    embarques = Embarque.objects.prefetch_related('items', 'gastos').order_by('-pk')
+    embarques = Embarque.objects.prefetch_related('items', 'gastos', 'contenedores').order_by('-pk')
     return render(request, 'importaciones/lista_embarques.html', {'embarques': embarques})
 
 
@@ -347,13 +354,22 @@ def lista_embarques(request):
 def crear_embarque(request):
     if request.method == 'POST':
         form = EmbarqueForm(request.POST)
-        if form.is_valid():
-            embarque = form.save()
+        formset = EmbarqueContenedorFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            with transaction.atomic():
+                embarque = form.save()
+                formset.instance = embarque
+                formset.save()
             messages.success(request, 'Embarque creado correctamente.')
             return redirect('detalle_embarque', pk=embarque.pk)
     else:
         form = EmbarqueForm()
-    return render(request, 'importaciones/formulario_embarque.html', {'form': form, 'titulo': 'Nuevo embarque'})
+        formset = EmbarqueContenedorFormSet()
+    return render(request, 'importaciones/formulario_embarque.html', {
+        'form': form,
+        'formset': formset,
+        'titulo': 'Nuevo embarque',
+    })
 
 
 @revisar_permiso('importaciones.editar_importacion')
@@ -361,28 +377,52 @@ def editar_embarque(request, pk):
     embarque = get_object_or_404(Embarque, pk=pk)
     if request.method == 'POST':
         form = EmbarqueForm(request.POST, instance=embarque)
-        if form.is_valid():
-            form.save()
+        formset = EmbarqueContenedorFormSet(request.POST, instance=embarque)
+        if form.is_valid() and formset.is_valid():
+            with transaction.atomic():
+                form.save()
+                formset.save()
             messages.success(request, 'Embarque actualizado.')
             return redirect('detalle_embarque', pk=embarque.pk)
     else:
         form = EmbarqueForm(instance=embarque)
-    return render(request, 'importaciones/formulario_embarque.html', {'form': form, 'titulo': 'Editar embarque', 'embarque': embarque})
+        formset = EmbarqueContenedorFormSet(instance=embarque)
+    return render(request, 'importaciones/formulario_embarque.html', {
+        'form': form,
+        'formset': formset,
+        'titulo': 'Editar embarque',
+        'embarque': embarque,
+    })
 
 
 @revisar_permiso('importaciones.detallar_importacion')
 def detalle_embarque(request, pk):
-    embarque = get_object_or_404(Embarque.objects.prefetch_related('items__factura_item__factura', 'gastos'), pk=pk)
-    item_form = EmbarqueItemForm()
+    embarque = get_object_or_404(
+        Embarque.objects.prefetch_related(
+            'items__factura_item__factura',
+            'items__contenedor',
+            'gastos',
+            'contenedores',
+            'documentos',
+        ),
+        pk=pk,
+    )
+    item_form = EmbarqueItemForm(embarque=embarque)
     gasto_form = GastoImportacionForm()
+    contenedor_form = EmbarqueContenedorForm()
+    documento_form = DocumentoEmbarqueForm()
     verificacion = verificar_chasis(embarque)
     flujo = embarque.flujo_operativo
     return render(request, 'importaciones/detalle_embarque.html', {
         'embarque': embarque,
-        'items': embarque.items.select_related('factura_item__factura').all(),
+        'items': embarque.items.select_related('factura_item__factura', 'contenedor').all(),
         'gastos': embarque.gastos.all(),
+        'contenedores': embarque.contenedores.all(),
+        'documentos': embarque.documentos.all(),
         'item_form': item_form,
         'gasto_form': gasto_form,
+        'contenedor_form': contenedor_form,
+        'documento_form': documento_form,
         'verificacion': verificacion,
         'flujo_operativo': flujo,
     })
@@ -392,13 +432,98 @@ def detalle_embarque(request, pk):
 def agregar_item_embarque(request, pk):
     embarque = get_object_or_404(Embarque, pk=pk)
     if request.method == 'POST':
-        form = EmbarqueItemForm(request.POST)
+        form = EmbarqueItemForm(request.POST, embarque=embarque)
         if form.is_valid():
             item = form.save(commit=False)
             item.embarque = embarque
             item.save()
             messages.success(request, 'Ítem asociado al embarque.')
             return redirect('detalle_embarque', pk=embarque.pk)
+        for error in form.errors.get('__all__', []):
+            messages.error(request, error)
+        for campo, errores in form.errors.items():
+            if campo == '__all__':
+                continue
+            for error in errores:
+                messages.error(request, f'{campo}: {error}')
+    return redirect('detalle_embarque', pk=embarque.pk)
+
+
+@revisar_permiso('importaciones.editar_importacion')
+def agregar_contenedor_embarque(request, pk):
+    """Agrega un contenedor al embarque desde la pantalla de detalle."""
+    embarque = get_object_or_404(Embarque, pk=pk)
+    if request.method == 'POST':
+        form = EmbarqueContenedorForm(request.POST)
+        if form.is_valid():
+            contenedor = form.save(commit=False)
+            contenedor.embarque = embarque
+            contenedor.save()
+            messages.success(request, f'Contenedor {contenedor.numero} agregado al embarque.')
+            return redirect('detalle_embarque', pk=embarque.pk)
+        for error in form.errors.get('__all__', []):
+            messages.error(request, error)
+        for campo, errores in form.errors.items():
+            if campo == '__all__':
+                continue
+            for error in errores:
+                messages.error(request, f'{campo}: {error}')
+    return redirect('detalle_embarque', pk=embarque.pk)
+
+
+@revisar_permiso('importaciones.eliminar_importacion')
+def eliminar_contenedor_embarque(request, pk, contenedor_pk):
+    """Elimina un contenedor vacío del embarque."""
+    embarque = get_object_or_404(Embarque, pk=pk)
+    contenedor = get_object_or_404(embarque.contenedores.all(), pk=contenedor_pk)
+
+    if contenedor.items.exists():
+        messages.error(request, 'El contenedor tiene ítems asignados: quitá los ítems antes de eliminarlo.')
+        return redirect('detalle_embarque', pk=embarque.pk)
+
+    if request.method == 'POST':
+        numero = contenedor.numero
+        contenedor.delete()
+        messages.success(request, f'Contenedor {numero} eliminado.')
+        return redirect('detalle_embarque', pk=embarque.pk)
+
+    return redirect('detalle_embarque', pk=embarque.pk)
+
+
+@revisar_permiso('importaciones.agregar_documento')
+def agregar_documento_embarque(request, pk):
+    """Adjunta un documento al embarque (B/L, packing list, despacho, póliza)."""
+    embarque = get_object_or_404(Embarque, pk=pk)
+
+    if request.method == 'POST':
+        form = DocumentoEmbarqueForm(request.POST, request.FILES)
+        if form.is_valid():
+            documento = form.save(commit=False)
+            documento.embarque = embarque
+            documento.save()
+            messages.success(request, 'Documento adjuntado al embarque.')
+            return redirect('detalle_embarque', pk=embarque.pk)
+        for error in form.errors.get('__all__', []):
+            messages.error(request, error)
+        for campo, errores in form.errors.items():
+            if campo == '__all__':
+                continue
+            for error in errores:
+                messages.error(request, f'{campo}: {error}')
+    return redirect('detalle_embarque', pk=embarque.pk)
+
+
+@revisar_permiso('importaciones.eliminar_importacion')
+def eliminar_documento_embarque(request, pk, documento_pk):
+    """Quita un documento adjunto del embarque."""
+    embarque = get_object_or_404(Embarque, pk=pk)
+    documento = get_object_or_404(embarque.documentos.all(), pk=documento_pk)
+
+    if request.method == 'POST':
+        documento.delete()
+        messages.success(request, 'Documento eliminado.')
+        return redirect('detalle_embarque', pk=embarque.pk)
+
     return redirect('detalle_embarque', pk=embarque.pk)
 
 
@@ -451,8 +576,11 @@ def cerrar_embarque(request, pk):
 
 @revisar_permiso('importaciones.detallar_importacion')
 def resumen_embarque(request, pk):
-    embarque = get_object_or_404(Embarque.objects.prefetch_related('items__factura_item', 'gastos'), pk=pk)
-    items = list(embarque.items.select_related('factura_item__factura').all())
+    embarque = get_object_or_404(
+        Embarque.objects.prefetch_related('items__factura_item', 'items__contenedor', 'gastos', 'contenedores'),
+        pk=pk,
+    )
+    items = list(embarque.items.select_related('factura_item__factura', 'contenedor').all())
     gastos = list(embarque.gastos.all())
     total_gastos = sum((gasto.monto_base for gasto in gastos), 0)
     total_prorrateado = sum((item.costo_prorrateado or 0 for item in items), 0)
@@ -463,6 +591,7 @@ def resumen_embarque(request, pk):
         'embarque': embarque,
         'items': items,
         'gastos': gastos,
+        'contenedores': embarque.contenedores.all(),
         'total_gastos': total_gastos,
         'total_prorrateado': total_prorrateado,
         'diferencia': diferencia,
@@ -473,8 +602,11 @@ def resumen_embarque(request, pk):
 
 @revisar_permiso('importaciones.detallar_importacion')
 def exportar_resumen_embarque(request, pk):
-    embarque = get_object_or_404(Embarque.objects.prefetch_related('items__factura_item', 'gastos'), pk=pk)
-    items = list(embarque.items.select_related('factura_item__factura').all())
+    embarque = get_object_or_404(
+        Embarque.objects.prefetch_related('items__factura_item', 'items__contenedor', 'gastos', 'contenedores'),
+        pk=pk,
+    )
+    items = list(embarque.items.select_related('factura_item__factura', 'contenedor').all())
     gastos = list(embarque.gastos.all())
     total_gastos = sum((gasto.monto_base for gasto in gastos), 0)
     total_prorrateado = sum((item.costo_prorrateado or 0 for item in items), 0)
@@ -487,6 +619,9 @@ def exportar_resumen_embarque(request, pk):
     writer.writerow(['ID', embarque.pk])
     writer.writerow(['REFERENCIA', embarque.referencia_interna or '-'])
     writer.writerow(['B/L', embarque.bl_numero or '-'])
+    writer.writerow(['SHIPPER', embarque.shipper or '-'])
+    writer.writerow(['CONSIGNEE', embarque.consignatario or '-'])
+    writer.writerow(['NOTIFY', embarque.notify or '-'])
     writer.writerow(['DESTINO', embarque.destino_final or '-'])
     writer.writerow(['ESTADO', embarque.get_estado_display()])
     writer.writerow(['TOTAL_GASTOS', str(total_gastos)])
@@ -494,11 +629,23 @@ def exportar_resumen_embarque(request, pk):
     writer.writerow(['DIFERENCIA', str(diferencia)])
     writer.writerow(['VERIFICACION_CHASIS', 'OK' if verificacion['ok'] else 'DISCREPANTE'])
     writer.writerow([])
-    writer.writerow(['ITEM', 'DESCRIPCION', 'CHASIS_BL', 'COSTO_PRORRATEADO'])
+    writer.writerow(['CONTENEDOR', 'TIPO', 'SELLO', 'PESO_BRUTO_KG', 'VOLUMEN_M3', 'UNIDADES'])
+    for contenedor in embarque.contenedores.all():
+        writer.writerow([
+            contenedor.numero,
+            contenedor.tipo or '-',
+            contenedor.sello or '-',
+            str(contenedor.peso_bruto_kg or ''),
+            str(contenedor.volumen_m3 or ''),
+            contenedor.unidades,
+        ])
+    writer.writerow([])
+    writer.writerow(['ITEM', 'DESCRIPCION', 'CONTENEDOR', 'CHASIS_BL', 'COSTO_PRORRATEADO'])
     for item in items:
         writer.writerow([
             item.pk,
             item.factura_item.descripcion if item.factura_item else '-',
+            item.contenedor.numero if item.contenedor else '-',
             item.chasis_bl or '-',
             str(item.costo_prorrateado or 0),
         ])
@@ -724,7 +871,106 @@ def registrar_control_fase(request, fase_id):
         'control': control,
     }
     return render(request, 'importaciones/registrar_control_fase.html', context)
-    
+
+
+# --------------------------------------------------------------------------
+# Conciliación informativa de los documentos de importación
+# --------------------------------------------------------------------------
+
+@revisar_permiso('importaciones.listar_conciliacion')
+def lista_conciliacion(request):
+    """
+    Conciliación informativa de los tres documentos de la operación.
+
+    Compara, para cada factura comercial, la factura, el B/L con sus
+    contenedores y la liquidación con su pago. No bloquea nada: solo informa.
+    """
+    conciliaciones = conciliar_facturas()
+
+    # Resumen por estado (sobre el total, antes de filtrar).
+    resumen = {estado: 0 for estado in EstadoConciliacion.SEMAFOROS}
+    for conciliacion in conciliaciones:
+        resumen[conciliacion.estado] = resumen.get(conciliacion.estado, 0) + 1
+
+    estado_filtro = (request.GET.get('estado') or '').strip().upper()
+    if estado_filtro in EstadoConciliacion.SEMAFOROS:
+        conciliaciones = [c for c in conciliaciones if c.estado == estado_filtro]
+
+    busqueda = (request.GET.get('q') or '').strip()
+    if busqueda:
+        busqueda = busqueda.lower()
+        conciliaciones = [
+            c for c in conciliaciones
+            if busqueda in (c.factura.numero or '').lower()
+            or busqueda in (c.factura.proveedor.nombre or '').lower()
+            or busqueda in (c.factura.proveedor.razon_social or '').lower()
+        ]
+
+    return render(request, 'importaciones/lista_conciliacion.html', {
+        'conciliaciones': conciliaciones,
+        'resumen': resumen,
+        'estado_filtro': estado_filtro,
+        'busqueda': busqueda,
+        'estados': EstadoConciliacion,
+    })
+
+
+@revisar_permiso('importaciones.listar_conciliacion')
+def detalle_conciliacion(request, pk):
+    """Detalle de la conciliación de los documentos de una factura."""
+    factura = get_object_or_404(
+        FacturaComercial.objects.select_related('proveedor').prefetch_related('items'),
+        pk=pk,
+    )
+    conciliacion = conciliar_factura(factura)
+
+    return render(request, 'importaciones/detalle_conciliacion.html', {
+        'conciliacion': conciliacion,
+        'factura': factura,
+        'estados': EstadoConciliacion,
+    })
+
+
+@revisar_permiso('importaciones.listar_conciliacion')
+def exportar_conciliacion(request):
+    """Exporta la conciliación a CSV (informe para el auditor)."""
+    conciliaciones = conciliar_facturas()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['CONCILIACION_DOCUMENTOS'])
+    writer.writerow(['FECHA', timezone.now().date()])
+    writer.writerow([])
+    writer.writerow([
+        'FACTURA', 'PROVEEDOR', 'FECHA', 'MONEDA', 'TOTAL',
+        'ESTADO', 'UNIDADES_FACTURADAS', 'UNIDADES_EMBARCADAS',
+        'EMBARCQUES', 'LIQUIDACION', 'PAGO', 'SALDO_PENDIENTE',
+        'HALLAZGOS',
+    ])
+    for conciliacion in conciliaciones:
+        factura = conciliacion.factura
+        writer.writerow([
+            factura.numero,
+            factura.proveedor.razon_social or factura.proveedor.nombre,
+            factura.fecha,
+            factura.moneda,
+            str(factura.total_declarado),
+            conciliacion.etiqueta,
+            conciliacion.unidades_facturadas,
+            conciliacion.unidades_embarcadas,
+            '; '.join(
+                f'#{e.pk} {e.referencia_interna or e.bl_numero or ""}'.strip()
+                for e in conciliacion.embarques
+            ),
+            conciliacion.orden.pk if conciliacion.orden else '',
+            conciliacion.pago.referencia_op if conciliacion.pago else '',
+            str(conciliacion.saldo_pendiente),
+            ' | '.join(f'{h.concepto}: {h.detalle}' for h in conciliacion.hallazgos),
+        ])
+
+    response = HttpResponse(output.getvalue(), content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="CONCILIACION_DOCUMENTOS.csv"'
+    return response
 
 
 permisos_iniciales_importaciones = [

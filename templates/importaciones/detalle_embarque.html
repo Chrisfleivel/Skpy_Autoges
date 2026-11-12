@@ -39,6 +39,12 @@
           </div>
         </div>
         <div class="col-md-4">
+          <div class="border rounded p-2 {% if flujo_operativo.contenedores_cargados %}border-success text-success{% else %}border-warning text-warning{% endif %}">
+            <strong>Contenedores cargados</strong>
+            <div>{{ flujo_operativo.contenedores_cargados|yesno:'Sí,No' }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
           <div class="border rounded p-2 {% if flujo_operativo.costos_cargados %}border-success text-success{% else %}border-warning text-warning{% endif %}">
             <strong>Costos cargados</strong>
             <div>{{ flujo_operativo.costos_cargados|yesno:'Sí,No' }}</div>
@@ -82,17 +88,91 @@
             <div class="col-md-6"><strong>B/L:</strong> {{ embarque.bl_numero|default:'-' }}</div>
             <div class="col-md-6"><strong>Booking:</strong> {{ embarque.booking|default:'-' }}</div>
             <div class="col-md-6"><strong>Naviera:</strong> {{ embarque.naviera|default:'-' }}</div>
+            <div class="col-md-6"><strong>Buque / viaje:</strong> {{ embarque.buque_viaje|default:'-' }}</div>
+            <div class="col-md-6"><strong>Shipper:</strong> {{ embarque.shipper|default:'-' }}</div>
+            <div class="col-md-6"><strong>Consignee:</strong> {{ embarque.consignatario|default:'-' }}</div>
+            <div class="col-md-6"><strong>Notify party:</strong> {{ embarque.notify|default:'-' }}</div>
+            <div class="col-md-6"><strong>Lugar de recepción:</strong> {{ embarque.lugar_recepcion|default:'-' }}</div>
             <div class="col-md-6"><strong>Puerto carga:</strong> {{ embarque.puerto_carga|default:'-' }}</div>
             <div class="col-md-6"><strong>Puerto descarga:</strong> {{ embarque.puerto_descarga|default:'-' }}</div>
             <div class="col-md-6"><strong>Destino final:</strong> {{ embarque.destino_final|default:'-' }}</div>
             <div class="col-md-6"><strong>Flete prepago:</strong> {% if embarque.flete_prepago %}Sí{% else %}No{% endif %}</div>
+            <div class="col-md-6"><strong>B/L liberado:</strong> {% if embarque.bl_liberado %}Sí{% else %}No{% endif %}</div>
+            <div class="col-md-6"><strong>Fecha emisión B/L:</strong> {{ embarque.fecha_emision|default:'-' }}</div>
             <div class="col-md-6"><strong>Fecha embarque:</strong> {{ embarque.fecha_embarque|default:'-' }}</div>
             <div class="col-md-6"><strong>ETA:</strong> {{ embarque.eta|default:'-' }}</div>
             <div class="col-md-6"><strong>Fecha arribo:</strong> {{ embarque.fecha_arribo|default:'-' }}</div>
             <div class="col-md-6"><strong>Fecha recepción:</strong> {{ embarque.fecha_recepcion|default:'-' }}</div>
             <div class="col-md-6"><strong>Peso bruto:</strong> {{ embarque.peso_bruto_kg|default:'-' }}</div>
             <div class="col-md-6"><strong>Volumen:</strong> {{ embarque.volumen_m3|default:'-' }}</div>
+            <div class="col-md-6"><strong>Bultos:</strong> {{ embarque.numero_bultos|default:'-' }}</div>
           </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Contenedores del embarque ({{ contenedores|length }})</span>
+        </div>
+        <div class="card-body">
+          {% if contenedores %}
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Nº de contenedor</th>
+                    <th>Tipo</th>
+                    <th>Sello</th>
+                    <th class="text-end">Peso bruto</th>
+                    <th class="text-end">Volumen</th>
+                    <th class="text-end">Bultos</th>
+                    <th class="text-end">Unidades</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for contenedor in contenedores %}
+                    <tr>
+                      <td class="fw-semibold">{{ contenedor.numero }}</td>
+                      <td>{{ contenedor.tipo|default:'-' }}</td>
+                      <td>{{ contenedor.sello|default:'-' }}</td>
+                      <td class="text-end">{{ contenedor.peso_bruto_kg|default:'-' }}</td>
+                      <td class="text-end">{{ contenedor.volumen_m3|default:'-' }}</td>
+                      <td class="text-end">{{ contenedor.bultos|default:'-' }}</td>
+                      <td class="text-end">{{ contenedor.unidades }}</td>
+                      <td class="text-end">
+                        <form method="post" action="{% url 'eliminar_contenedor_embarque' embarque.pk contenedor.pk %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                        </form>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">
+              Este embarque todavía no tiene contenedores cargados.
+            </p>
+          {% endif %}
+
+          <form method="post" action="{% url 'agregar_contenedor_embarque' embarque.pk %}" class="border-top pt-3 mt-3">
+            {% csrf_token %}
+            <p class="small text-muted mb-2">Agregar un contenedor al embarque</p>
+            <div class="row g-2 align-items-end">
+              {% for field in contenedor_form %}
+                <div class="col-md-2">
+                  <label class="form-label small">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.errors %}<div class="text-danger small">{{ field.errors|striptags }}</div>{% endif %}
+                </div>
+              {% endfor %}
+              <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -105,6 +185,7 @@
             <thead>
               <tr>
                 <th>Factura / ítem</th>
+                <th>Contenedor</th>
                 <th>Cantidad</th>
                 <th>Chasis B/L</th>
                 <th>Costo prorrateado</th>
@@ -114,12 +195,13 @@
               {% for item in items %}
               <tr>
                 <td>{{ item.factura_item.descripcion }}</td>
+                <td>{{ item.contenedor.numero|default:'-' }}</td>
                 <td>{{ item.cantidad }}</td>
                 <td>{{ item.chasis_bl|default:'-' }}</td>
                 <td>{{ item.costo_prorrateado|default:'-' }}</td>
               </tr>
               {% empty %}
-              <tr><td colspan="4" class="text-center">Sin ítems cargados.</td></tr>
+              <tr><td colspan="5" class="text-center">Sin ítems cargados.</td></tr>
               {% endfor %}
             </tbody>
           </table>
@@ -184,6 +266,45 @@
       </div>
 
       <div class="card mb-4">
+        <div class="card-header">Documentos del embarque</div>
+        <div class="card-body">
+          {% if documentos %}
+            <ul class="list-group list-group-flush mb-3">
+              {% for documento in documentos %}
+                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-semibold">{{ documento.get_tipo_display }}</div>
+                    <div class="small text-muted">{{ documento.descripcion|default:documento.archivo.name }}</div>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <a href="{{ documento.archivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">Ver</a>
+                    <form method="post" action="{% url 'eliminar_documento_embarque' embarque.pk documento.pk %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-danger">Quitar</button>
+                    </form>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted small">Sin documentos adjuntos. Subí el B/L escaneado o su PDF.</p>
+          {% endif %}
+
+          <form method="post" action="{% url 'agregar_documento_embarque' embarque.pk %}" enctype="multipart/form-data" class="border-top pt-3">
+            {% csrf_token %}
+            {% for field in documento_form %}
+              <div class="mb-2">
+                <label class="form-label small">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="text-danger small">{{ field.errors|striptags }}</div>{% endif %}
+              </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-sm w-100">Adjuntar documento</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card mb-4">
         <div class="card-header">Prorrateo y cierre</div>
         <div class="card-body d-grid gap-2">
           <form method="post" action="{% url 'prorratear_embarque' embarque.pk %}">
@@ -200,12 +321,18 @@
       <div class="card mb-4">
         <div class="card-header">Asignar ítem</div>
         <div class="card-body">
+          {% if not contenedores %}
+            <p class="text-muted small">
+              Cargá primero los contenedores del embarque para poder asignar los ítems.
+            </p>
+          {% endif %}
           <form method="post" action="{% url 'agregar_item_embarque' embarque.pk %}">
             {% csrf_token %}
             {% for field in item_form %}
               <div class="mb-3">
                 <label class="form-label">{{ field.label }}</label>
                 {{ field }}
+                {% if field.errors %}<div class="text-danger small">{{ field.errors|striptags }}</div>{% endif %}
               </div>
             {% endfor %}
             <button type="submit" class="btn btn-primary">Agregar ítem</button>

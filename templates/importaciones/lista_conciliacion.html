@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Conciliación de documentos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h3 class="mb-1">Conciliación de documentos</h3>
+      <p class="text-muted mb-0">
+        Compara la factura comercial, el B/L con sus contenedores y la liquidación con su pago.
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'exportar_conciliacion' %}" class="btn btn-outline-success">Exportar CSV</a>
+      <a href="{% url 'lista_embarques' %}" class="btn btn-outline-secondary">Embarques</a>
+    </div>
+  </div>
+
+  <div class="alert alert-info d-flex align-items-start gap-2" role="alert">
+    <i class="bi bi-info-circle-fill mt-1"></i>
+    <div>
+      La conciliación es <strong>informativa</strong>: no impide registrar ni corregir los documentos.
+      Cada documento se carga por separado; acá se señala qué falta y qué no cuadra.
+    </div>
+  </div>
+
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <a href="{% url 'lista_conciliacion' %}" class="text-decoration-none">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="text-muted small">Conciliadas</div>
+            <div class="fs-4 fw-bold text-success">{{ resumen.OK }}</div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{% url 'lista_conciliacion' %}?estado=DIFERENCIA" class="text-decoration-none">
+        <div class="card border-0 shadow-sm h-100 border-start border-4 border-danger">
+          <div class="card-body">
+            <div class="text-muted small">No cuadran</div>
+            <div class="fs-4 fw-bold text-danger">{{ resumen.DIFERENCIA }}</div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{% url 'lista_conciliacion' %}?estado=ATENCION" class="text-decoration-none">
+        <div class="card border-0 shadow-sm h-100 border-start border-4 border-warning">
+          <div class="card-body">
+            <div class="text-muted small">Para revisar</div>
+            <div class="fs-4 fw-bold text-warning">{{ resumen.ATENCION }}</div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{% url 'lista_conciliacion' %}?estado=PENDIENTE" class="text-decoration-none">
+        <div class="card border-0 shadow-sm h-100 border-start border-4 border-secondary">
+          <div class="card-body">
+            <div class="text-muted small">Sin cargar</div>
+            <div class="fs-4 fw-bold text-secondary">{{ resumen.PENDIENTE }}</div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 mb-3">
+    <div class="card-body">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label small">Buscar</label>
+          <input type="text" name="q" value="{{ busqueda }}" class="form-control"
+                 placeholder="Nº de factura o proveedor">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small">Estado</label>
+          <select name="estado" class="form-select">
+            <option value="">Todos</option>
+            <option value="DIFERENCIA" {% if estado_filtro == 'DIFERENCIA' %}selected{% endif %}>No cuadra</option>
+            <option value="ATENCION" {% if estado_filtro == 'ATENCION' %}selected{% endif %}>Revisar</option>
+            <option value="PENDIENTE" {% if estado_filtro == 'PENDIENTE' %}selected{% endif %}>Sin cargar</option>
+            <option value="OK" {% if estado_filtro == 'OK' %}selected{% endif %}>Cuadra</option>
+          </select>
+        </div>
+        <div class="col-md-5 d-flex gap-2">
+          <button type="submit" class="btn btn-primary">Filtrar</button>
+          {% if estado_filtro or busqueda %}
+            <a href="{% url 'lista_conciliacion' %}" class="btn btn-outline-secondary">Limpiar</a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Factura</th>
+              <th>Proveedor</th>
+              <th>Fecha</th>
+              <th class="text-end">Total</th>
+              <th class="text-center">Embarque</th>
+              <th class="text-center">Liquidación</th>
+              <th class="text-center">Pago</th>
+              <th>Estado</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for conciliacion in conciliaciones %}
+              <tr>
+                <td class="fw-semibold">{{ conciliacion.factura.numero }}</td>
+                <td>{{ conciliacion.factura.proveedor.razon_social|default:conciliacion.factura.proveedor.nombre }}</td>
+                <td>{{ conciliacion.factura.fecha }}</td>
+                <td class="text-end">{{ conciliacion.factura.total_declarado }} {{ conciliacion.factura.moneda }}</td>
+                <td class="text-center">
+                  {% if conciliacion.embarques %}
+                    {% for embarque in conciliacion.embarques %}
+                      <a href="{% url 'detalle_embarque' embarque.pk %}" class="badge bg-primary text-decoration-none">
+                        #{{ embarque.pk }}
+                      </a>
+                    {% endfor %}
+                  {% else %}
+                    <span class="text-muted small">-</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if conciliacion.orden %}
+                    <a href="{% url 'detalle_orden_pago_exterior' conciliacion.orden.pk %}" class="badge bg-info text-decoration-none">
+                      #{{ conciliacion.orden.pk }}
+                    </a>
+                  {% else %}
+                    <span class="text-muted small">-</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if conciliacion.pago %}
+                    <span class="badge bg-secondary">{{ conciliacion.pago.get_estado_display }}</span>
+                  {% else %}
+                    <span class="text-muted small">-</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-{{ conciliacion.semaforo }}">{{ conciliacion.etiqueta }}</span>
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'detalle_conciliacion' conciliacion.factura.pk %}" class="btn btn-sm btn-outline-primary">
+                    Ver detalle
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="9" class="text-center py-4 text-muted">
+                  {% if estado_filtro or busqueda %}
+                    No hay conciliaciones que coincidan con el filtro.
+                  {% else %}
+                    No hay facturas comerciales para conciliar.
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

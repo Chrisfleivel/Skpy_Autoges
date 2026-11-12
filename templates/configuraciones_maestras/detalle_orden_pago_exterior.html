@@ -4,34 +4,143 @@
 
 {% block content %}
 <div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-1">Liquidación de orden de pago al exterior</h4>
+      <p class="text-muted mb-0">
+        {% if orden.referencia_op %}Referencia {{ orden.referencia_op }}{% else %}Sin referencia{% endif %}
+        · {{ orden.fecha_operacion }}{% if orden.hora_operacion %} {{ orden.hora_operacion }}{% endif %}
+        · {{ orden.get_estado_display }}
+      </p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'lista_ordenes_pago_exterior' %}" class="btn btn-outline-secondary">Volver</a>
+      <a href="{% url 'editar_orden_pago_exterior' orden.pk %}" class="btn btn-outline-warning">Editar</a>
+      {% if not orden.pago_registrado %}
+        <a href="{% url 'registrar_pago_orden_pago_exterior' orden.pk %}" class="btn btn-primary">
+          Registrar pago
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   <div class="card shadow-sm border-0 mx-auto" style="max-width: 1000px;">
     <div class="card-header bg-dark text-white">
-      <h4 class="mb-0">Detalle de la orden</h4>
+      <h5 class="mb-0">Detalle de la orden</h5>
     </div>
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-6"><strong>Remitente:</strong> {{ orden.remitente_nombre }}</div>
-        <div class="col-md-6"><strong>Documento:</strong> {{ orden.numero_documento_remitente }}</div>
+        <div class="col-md-6"><strong>Documento:</strong> {{ orden.tipo_documento_remitente }} {{ orden.numero_documento_remitente }}</div>
         <div class="col-md-6"><strong>Beneficiario:</strong> {{ orden.beneficiario }}</div>
         <div class="col-md-6"><strong>Banco beneficiario:</strong> {{ orden.banco_beneficiario|default:'-' }}</div>
-        <div class="col-md-6"><strong>Moneda:</strong> {{ orden.moneda }}</div>
-        <div class="col-md-6"><strong>Estado:</strong> {{ orden.get_estado_display }}</div>
+        <div class="col-md-6"><strong>Banco corresponsal:</strong> {{ orden.banco_corresponsal|default:'-' }}</div>
+        <div class="col-md-6"><strong>Ordenante:</strong> {{ orden.ordenante|default:'-' }}</div>
+        <div class="col-md-6"><strong>País del beneficiario:</strong> {{ orden.pais_beneficiario|default:'-' }}</div>
+        <div class="col-md-6"><strong>Cuenta de débito:</strong> {{ orden.numero_cuenta|default:'-' }}</div>
+        <div class="col-md-6"><strong>Moneda:</strong> {{ orden.moneda.codigo }}</div>
+        <div class="col-md-6"><strong>Forma de pago:</strong> {{ orden.get_forma_pago_display }}</div>
         <div class="col-md-4"><strong>Importe:</strong> {{ orden.importe_orden }}</div>
         <div class="col-md-4"><strong>Comisión:</strong> {{ orden.comision_orden }}</div>
         <div class="col-md-4"><strong>Total:</strong> {{ orden.total_orden }}</div>
         <div class="col-md-6"><strong>Referencia OP:</strong> {{ orden.referencia_op|default:'-' }}</div>
         <div class="col-md-6"><strong>Lote:</strong> {{ orden.numero_lote|default:'-' }}</div>
         <div class="col-md-6"><strong>Fecha operación:</strong> {{ orden.fecha_operacion }}</div>
+        <div class="col-md-6"><strong>Hora operación:</strong> {{ orden.hora_operacion|default:'-' }}</div>
+        <div class="col-md-6"><strong>Usuario del banco:</strong> {{ orden.usuario_banco|default:'-' }}</div>
+        <div class="col-md-6"><strong>Firmante:</strong> {{ orden.firmante|default:'-' }}</div>
         <div class="col-md-6"><strong>Cuenta beneficiaria:</strong> {{ orden.cuenta_beneficiaria|default:'-' }}</div>
+        <div class="col-md-6"><strong>Cotización:</strong> {{ orden.cotizacion }}</div>
         <div class="col-md-6"><strong>Motivo:</strong> {{ orden.motivo_transferencia|default:'-' }}</div>
         <div class="col-md-6"><strong>Concepto:</strong> {{ orden.concepto|default:'-' }}</div>
         <div class="col-12"><strong>Observaciones:</strong> {{ orden.observaciones|default:'Sin observaciones' }}</div>
       </div>
-      <div class="mt-4 d-flex justify-content-between">
-        <a href="{% url 'lista_ordenes_pago_exterior' %}" class="btn btn-outline-secondary">Volver</a>
-        <a href="{% url 'editar_orden_pago_exterior' orden.pk %}" class="btn btn-warning">Editar</a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 mx-auto mt-3" style="max-width: 1000px;">
+    <div class="card-header bg-light">Documento capturado</div>
+    <div class="card-body">
+      {% if orden.archivo %}
+        <p class="mb-2">
+          <a href="{{ orden.archivo.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+            Ver liquidación ({{ orden.archivo.name }})
+          </a>
+        </p>
+      {% else %}
+        <p class="text-muted mb-0">No se adjuntó la imagen o PDF de la liquidación.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 mx-auto mt-3" style="max-width: 1000px;">
+    <div class="card-header bg-light">Vínculos de la operación</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="border rounded p-2 h-100">
+            <div class="text-muted small">Factura comercial</div>
+            {% if orden.factura %}
+              <a href="{% url 'detalle_factura_comercial' orden.factura.pk %}" class="fw-semibold">
+                {{ orden.factura.numero }}
+              </a>
+              <div class="small text-muted">
+                {{ orden.factura.proveedor }} · Saldo pendiente {{ orden.factura.saldo_pendiente }} {{ orden.factura.moneda }}
+              </div>
+            {% else %}
+              <div class="fw-semibold">Sin factura vinculada</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="border rounded p-2 h-100">
+            <div class="text-muted small">Embarque</div>
+            {% if orden.embarque %}
+              <a href="{% url 'detalle_embarque' orden.embarque.pk %}" class="fw-semibold">
+                {{ orden.embarque.referencia_interna|default:'Sin referencia' }}
+              </a>
+              <div class="small text-muted">
+                B/L {{ orden.embarque.bl_numero|default:'-' }} · {{ orden.embarque.get_estado_display }}
+              </div>
+            {% else %}
+              <div class="fw-semibold">Sin embarque vinculado</div>
+              <div class="small text-muted">La comisión queda solo en el pago.</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="border rounded p-2 h-100">
+            <div class="text-muted small">Pago al exterior</div>
+            {% if orden.pago_exterior %}
+              <div class="fw-semibold">{{ orden.pago_exterior.referencia_op|default:'Pago sin referencia' }}</div>
+              <div class="small text-muted">
+                {{ orden.pago_exterior.importe }} {{ orden.pago_exterior.moneda }}
+                + comisión {{ orden.pago_exterior.comision }}
+                · {{ orden.pago_exterior.get_estado_display }}
+              </div>
+            {% else %}
+              <div class="fw-semibold">Sin pago registrado</div>
+              <div class="small text-muted">La liquidación todavía no tiene asiento financiero.</div>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </div>
+  </div>
+
+  <div class="mt-4 d-flex justify-content-between mx-auto" style="max-width: 1000px;">
+    <a href="{% url 'lista_ordenes_pago_exterior' %}" class="btn btn-outline-secondary">Volver</a>
+    {% if not orden.pago_registrado %}
+      <a href="{% url 'registrar_pago_orden_pago_exterior' orden.pk %}" class="btn btn-primary">Registrar pago</a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

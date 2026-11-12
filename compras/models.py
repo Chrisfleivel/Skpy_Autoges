@@ -50,6 +50,33 @@ class FacturaComercial(EstadoMixin, TimeStampedModel):
     monto_pagado = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0'), editable=False)
     archivo = models.FileField(upload_to='compras/facturas/%Y/%m/', blank=True)
     observaciones = models.TextField(blank=True)
+
+    # ---- Datos del commercial invoice -------------------------------------
+    cliente_importador = models.ForeignKey(
+        'clientes_pedidos.Cliente',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='facturas_comerciales',
+        verbose_name='Cliente / Importador',
+        help_text='Para quién se emitió la factura (for account & risk of).',
+    )
+    notify_party = models.CharField(
+        'Notify party',
+        max_length=200,
+        blank=True,
+        help_text='A quién se notifica el envío (ej.: TO ORDER).',
+    )
+    puerto_carga = models.CharField('Puerto de carga', max_length=120, blank=True)
+    lc_numero = models.CharField('Nº de L/C', max_length=50, blank=True)
+    lc_banco = models.ForeignKey(
+        'configuraciones_maestras.Banco',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='facturas_comerciales',
+        verbose_name='Banco emisor de L/C',
+    )
     estado = models.CharField(
         max_length=20,
         choices=Estado.choices,
@@ -81,6 +108,21 @@ class FacturaComercial(EstadoMixin, TimeStampedModel):
     @property
     def saldo_pendiente(self):
         return self.total_declarado - self.monto_pagado
+
+    @property
+    def unidades(self):
+        """Cantidad total de unidades facturadas."""
+        return sum((item.cantidad for item in self.items.all()), 0)
+
+    @property
+    def chasis_declarados(self):
+        """Chasis informados en las líneas de la factura."""
+        return [item.chasis for item in self.items.all() if item.chasis]
+
+    @property
+    def editable(self):
+        """Solo las facturas en borrador admiten cambios en sus ítems."""
+        return self.estado == self.Estado.BORRADOR
 
     def validar_confirmada(self):
         if not self.items.exists():
@@ -134,6 +176,13 @@ class FacturaItem(TimeStampedModel):
     descripcion = models.CharField(max_length=255)
     cantidad = models.PositiveIntegerField(default=1)
     precio_unitario = models.DecimalField(max_digits=14, decimal_places=2)
+
+    # ---- Datos de la línea del commercial invoice --------------------------
+    anio = models.PositiveSmallIntegerField('Año', null=True, blank=True)
+    chasis = models.CharField('Chasis', max_length=30, blank=True)
+    motor = models.CharField('Motor', max_length=30, blank=True)
+    peso_kg = models.DecimalField('Peso (kg)', max_digits=10, decimal_places=2, null=True, blank=True)
+    cbm = models.DecimalField('Volumen (m³)', max_digits=10, decimal_places=3, null=True, blank=True)
 
     class Meta:
         ordering = ['factura', 'id']

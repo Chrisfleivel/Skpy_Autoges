@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de conciliación{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h3 class="mb-1">Conciliación · {{ conciliacion.factura.numero }}</h3>
+      <p class="text-muted mb-0">
+        {{ conciliacion.factura.proveedor.razon_social|default:conciliacion.factura.proveedor.nombre }}
+        · {{ conciliacion.factura.fecha }}
+        · {{ conciliacion.factura.total_declarado }} {{ conciliacion.factura.moneda }}
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <span class="badge bg-{{ conciliacion.semaforo }} fs-6 align-self-center">
+        {{ conciliacion.etiqueta }}
+      </span>
+      <a href="{% url 'lista_conciliacion' %}" class="btn btn-outline-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="alert alert-info d-flex align-items-start gap-2" role="alert">
+    <i class="bi bi-info-circle-fill mt-1"></i>
+    <div>
+      Conciliación informativa: los documentos se cargan por separado y esta pantalla
+      no bloquea la operación. Solo señala qué falta cargar y qué no cuadra.
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-light">1 · Factura comercial</div>
+        <div class="card-body">
+          <div class="row g-2 small">
+            <div class="col-5 text-muted">Nº</div>
+            <div class="col-7">{{ conciliacion.factura.numero }}</div>
+            <div class="col-5 text-muted">Proveedor</div>
+            <div class="col-7">{{ conciliacion.factura.proveedor.nombre }}</div>
+            <div class="col-5 text-muted">Fecha</div>
+            <div class="col-7">{{ conciliacion.factura.fecha }}</div>
+            <div class="col-5 text-muted">Moneda</div>
+            <div class="col-7">{{ conciliacion.factura.moneda }}</div>
+            <div class="col-5 text-muted">Total</div>
+            <div class="col-7">{{ conciliacion.factura.total_declarado }}</div>
+            <div class="col-5 text-muted">Pagado</div>
+            <div class="col-7">{{ conciliacion.monto_pagado }}</div>
+            <div class="col-5 text-muted">Saldo</div>
+            <div class="col-7">{{ conciliacion.saldo_pendiente }}</div>
+            <div class="col-5 text-muted">Estado</div>
+            <div class="col-7">{{ conciliacion.factura.get_estado_display }}</div>
+            <div class="col-5 text-muted">Unidades</div>
+            <div class="col-7">
+              {{ conciliacion.unidades_embarcadas }} embarcadas / {{ conciliacion.unidades_facturadas }} facturadas
+            </div>
+          </div>
+          <a href="{% url 'detalle_factura_comercial' conciliacion.factura.pk %}" class="btn btn-sm btn-outline-primary mt-3">
+            Ver factura
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-light">2 · B/L y contenedores</div>
+        <div class="card-body">
+          {% if conciliacion.embarques %}
+            {% for embarque in conciliacion.embarques %}
+              <div class="border rounded p-2 mb-2">
+                <div class="fw-semibold">
+                  #{{ embarque.pk }} · {{ embarque.referencia_interna|default:'Sin referencia' }}
+                </div>
+                <div class="small text-muted">
+                  B/L {{ embarque.bl_numero|default:'-' }}<br>
+                  {{ embarque.get_estado_display }} ·
+                  {{ embarque.contenedores.count }} contenedor(es) ·
+                  {{ embarque.cantidad_unidades }} unidad(es)
+                </div>
+              </div>
+            {% endfor %}
+            <a href="{% url 'detalle_embarque' conciliacion.embarques.0.pk %}" class="btn btn-sm btn-outline-primary">
+              Ver embarque
+            </a>
+          {% else %}
+            <p class="text-muted mb-0">La factura todavía no tiene embarque.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-light">3 · Liquidación y pago</div>
+        <div class="card-body">
+          {% if conciliacion.orden %}
+            <div class="row g-2 small">
+              <div class="col-5 text-muted">Liquidación</div>
+              <div class="col-7">
+                <a href="{% url 'detalle_orden_pago_exterior' conciliacion.orden.pk %}">
+                  #{{ conciliacion.orden.pk }} · {{ conciliacion.orden.referencia_op|default:'sin referencia' }}
+                </a>
+              </div>
+              <div class="col-5 text-muted">Importe</div>
+              <div class="col-7">{{ conciliacion.orden.importe_orden }}</div>
+              <div class="col-5 text-muted">Comisión</div>
+              <div class="col-7">{{ conciliacion.orden.comision_orden }}</div>
+              <div class="col-5 text-muted">Total</div>
+              <div class="col-7">{{ conciliacion.orden.total_orden }}</div>
+              <div class="col-5 text-muted">Estado</div>
+              <div class="col-7">{{ conciliacion.orden.get_estado_display }}</div>
+            </div>
+          {% else %}
+            <p class="text-muted mb-3">La factura todavía no tiene liquidación.</p>
+          {% endif %}
+
+          {% if conciliacion.pago %}
+            <hr>
+            <div class="row g-2 small">
+              <div class="col-5 text-muted">Pago</div>
+              <div class="col-7">{{ conciliacion.pago.referencia_op|default:'sin referencia' }}</div>
+              <div class="col-5 text-muted">Importe</div>
+              <div class="col-7">{{ conciliacion.pago.importe }} {{ conciliacion.pago.moneda }}</div>
+              <div class="col-5 text-muted">Comisión</div>
+              <div class="col-7">{{ conciliacion.pago.comision }}</div>
+              <div class="col-5 text-muted">Estado</div>
+              <div class="col-7">{{ conciliacion.pago.get_estado_display }}</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-light">Resultado de las verificaciones</div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 22%;">Concepto</th>
+              <th style="width: 14%;">Estado</th>
+              <th style="width: 14%;">Valor</th>
+              <th>Detalle</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for hallazgo in conciliacion.hallazgos %}
+              <tr>
+                <td class="fw-semibold">{{ hallazgo.concepto }}</td>
+                <td>
+                  <span class="badge bg-{{ hallazgo.semaforo }}">
+                    <i class="bi bi-circle-fill me-1" style="font-size: 0.55rem;"></i>{{ hallazgo.etiqueta }}
+                  </span>
+                </td>
+                <td>{{ hallazgo.valor|default:'-' }}</td>
+                <td class="small">{{ hallazgo.detalle }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -56,5 +56,11 @@ def generar_permisos_iniciales_importaciones():
             'nombre': 'Eliminar Importación',
             'descripcion': 'Permite eliminar una Importación existente.',
             'sector': 'Importaciones',
+        },
+        {
+            'codename': 'importaciones.listar_conciliacion',
+            'nombre': 'Ver Conciliación de Documentos',
+            'descripcion': 'Permite ver la conciliación informativa entre la factura, el B/L y la liquidación.',
+            'sector': 'Importaciones',
         }
 ]

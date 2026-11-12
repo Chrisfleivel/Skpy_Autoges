@@ -4,8 +4,11 @@
 
 {% block content %}
 <div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>{{ titulo }}</h3>
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h3 class="mb-1">{{ titulo }}</h3>
+      <p class="text-muted mb-0">Datos del B/L, ruta del embarque y contenedores.</p>
+    </div>
     {% if embarque %}
       <a href="{% url 'detalle_embarque' embarque.pk %}" class="btn btn-outline-secondary">Volver</a>
     {% else %}
@@ -13,22 +16,140 @@
     {% endif %}
   </div>
 
-  <div class="card">
-    <div class="card-body">
-      <form method="post">
-        {% csrf_token %}
-        {% for field in form %}
-          <div class="mb-3">
-            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-            {{ field }}
-            {% if field.errors %}
-              <div class="text-danger small">{{ field.errors|join:', ' }}</div>
-            {% endif %}
-          </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary">Guardar</button>
-      </form>
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">{{ message }}</div>
+      {% endfor %}
     </div>
-  </div>
+  {% endif %}
+
+  <form method="post" id="form-embarque">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="card mb-4">
+      <div class="card-header">Bill of Lading</div>
+      <div class="card-body">
+        <div class="row">
+          {% for field in form %}
+            {% if field.name == 'bl_numero' or field.name == 'bl_liberado' or field.name == 'flete_prepago' or field.name == 'booking' or field.name == 'naviera' or field.name == 'buque_viaje' or field.name == 'shipper' or field.name == 'consignatario' or field.name == 'notify' or field.name == 'fecha_emision' %}
+              <div class="col-md-4 mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">Ruta y transporte</div>
+      <div class="card-body">
+        <div class="row">
+          {% for field in form %}
+            {% if field.name == 'lugar_recepcion' or field.name == 'puerto_carga' or field.name == 'puerto_descarga' or field.name == 'destino_final' or field.name == 'peso_bruto_kg' or field.name == 'volumen_m3' or field.name == 'numero_bultos' or field.name == 'referencia_interna' %}
+              <div class="col-md-4 mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">Contenedores del embarque</div>
+      <div class="card-body">
+        <p class="text-muted small">
+          Un mismo B/L puede traer más de un contenedor. Cargá cada contenedor y luego asigná
+          los ítems a su contenedor desde la pantalla de detalle del embarque.
+        </p>
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}
+          <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+        {% endif %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle" id="tabla-contenedores">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 22%;">Nº de contenedor</th>
+                <th style="width: 12%;">Tipo</th>
+                <th style="width: 16%;">Sello</th>
+                <th style="width: 14%;">Peso bruto (kg)</th>
+                <th style="width: 14%;">Volumen (m³)</th>
+                <th style="width: 10%;">Bultos</th>
+                <th style="width: 12%;">Quitar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for contenedor_form in formset.forms %}
+                <tr>
+                  <td>{{ contenedor_form.id }}{{ contenedor_form.numero }}{{ contenedor_form.numero.errors }}</td>
+                  <td>{{ contenedor_form.tipo }}{{ contenedor_form.tipo.errors }}</td>
+                  <td>{{ contenedor_form.sello }}{{ contenedor_form.sello.errors }}</td>
+                  <td>{{ contenedor_form.peso_bruto_kg }}{{ contenedor_form.peso_bruto_kg.errors }}</td>
+                  <td>{{ contenedor_form.volumen_m3 }}{{ contenedor_form.volumen_m3.errors }}</td>
+                  <td>{{ contenedor_form.bultos }}{{ contenedor_form.bultos.errors }}</td>
+                  <td class="text-center">
+                    {% if contenedor_form.instance.pk %}
+                      <label class="form-check-label small">{{ contenedor_form.DELETE }} Quitar</label>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">Fechas y observaciones</div>
+      <div class="card-body">
+        <div class="row">
+          {% for field in form %}
+            {% if field.name == 'fecha_embarque' or field.name == 'eta' or field.name == 'fecha_arribo' or field.name == 'fecha_recepcion' %}
+              <div class="col-md-3 mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
+                {% endif %}
+              </div>
+            {% elif field.name == 'observaciones' %}
+              <div class="col-md-12 mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors|join:', ' }}</div>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+      {% if embarque %}
+        <a href="{% url 'detalle_embarque' embarque.pk %}" class="btn btn-secondary">Cancelar</a>
+      {% else %}
+        <a href="{% url 'lista_embarques' %}" class="btn btn-secondary">Cancelar</a>
+      {% endif %}
+      <button type="submit" class="btn btn-primary">Guardar embarque</button>
+    </div>
+  </form>
 </div>
 {% endblock %}

@@ -22,11 +22,14 @@
             <tr>
               <th>Referencia</th>
               <th>Beneficiario</th>
+              <th>Factura</th>
+              <th>Embarque</th>
               <th>Moneda</th>
               <th>Importe</th>
               <th>Comisión</th>
               <th>Total</th>
               <th>Estado</th>
+              <th>Pago</th>
               <th class="text-end">Acciones</th>
             </tr>
           </thead>
@@ -35,11 +38,36 @@
             <tr>
               <td>{{ orden.referencia_op|default:orden.id }}</td>
               <td>{{ orden.beneficiario }}</td>
+              <td>
+                {% if orden.factura %}
+                  <a href="{% url 'detalle_factura_comercial' orden.factura.pk %}">{{ orden.factura.numero }}</a>
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if orden.embarque %}
+                  <a href="{% url 'detalle_embarque' orden.embarque.pk %}">
+                    {{ orden.embarque.referencia_interna|default:orden.embarque.pk }}
+                  </a>
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
               <td>{{ orden.moneda.codigo }}</td>
               <td>{{ orden.importe_orden }}</td>
               <td>{{ orden.comision_orden }}</td>
               <td>{{ orden.total_orden }}</td>
               <td><span class="badge bg-secondary">{{ orden.get_estado_display }}</span></td>
+              <td>
+                {% if orden.pago_registrado %}
+                  <span class="badge bg-success">Registrado</span>
+                {% else %}
+                  <a href="{% url 'registrar_pago_orden_pago_exterior' orden.pk %}" class="btn btn-sm btn-outline-primary">
+                    Registrar pago
+                  </a>
+                {% endif %}
+              </td>
               <td class="text-end">
                 <a href="{% url 'detalle_orden_pago_exterior' orden.pk %}" class="btn btn-sm btn-outline-primary me-1" title="Ver detalles">
                   <i class="bi bi-eye"></i>
@@ -54,7 +82,7 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No hay órdenes de pago exterior registradas.</td>
+              <td colspan="11" class="text-center py-4 text-muted">No hay órdenes de pago exterior registradas.</td>
             </tr>
             {% endfor %}
           </tbody>
