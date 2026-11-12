@@ -104,6 +104,12 @@ def generar_permisos_iniciales_inventario():
         'sector': 'Inventario'
     },
     {
+        'codename': 'inventario.cambiar_estado_mantenimiento',
+        'nombre': 'Cambiar Estado del Mantenimiento',
+        'descripcion': 'Permite avanzar un mantenimiento de estado (iniciar, finalizar o cancelar).',
+        'sector': 'Inventario'
+    },
+    {
         'codename': 'inventario.agregar_deposito',
         'nombre': 'Agregar Depósito',
         'descripcion': 'Permite agregar un nuevo depósito al inventario.' ,

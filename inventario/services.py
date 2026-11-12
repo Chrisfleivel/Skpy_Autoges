@@ -144,6 +144,12 @@ def repuestos_bajo_minimo():
     return faltantes
 
 
+def disponible_en_deposito(repuesto, deposito):
+    """Disponible de un repuesto en un depósito concreto."""
+    stock = StockRepuesto.objects.filter(repuesto=repuesto, deposito=deposito).first()
+    return stock.disponible if stock is not None else 0
+
+
 @transaction.atomic
 def registrar_entrada(repuesto, *args, **kwargs):
     """

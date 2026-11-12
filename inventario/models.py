@@ -5,7 +5,7 @@ import uuid
 import re
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.db.models import F, Q
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -1049,27 +1049,58 @@ class CategoriaRepuesto(models.Model):
 # --------------------------------------------------------------------------
 # Modelo para registrar el mantenimiento de un vehículo
 # --------------------------------------------------------------------------
-class MantenimientoVehiculo(models.Model):
+class MantenimientoVehiculo(EstadoMixin, models.Model):
     """
-    Modelo para registrar las acciones de mantenimiento realizadas a un vehículo.
+    Registro de una orden de trabajo del taller.
+
+    El ciclo de vida va por `EstadoMixin`: `pendiente` → `en_proceso` →
+    `finalizado` (o `cancelado` desde los dos primeros).
+
+    El costo está **separado** entre mano de obra y repuestos, y el total
+    (`costo`) se calcula solo. Los repuestos utilizados tienen cantidad real
+    (tabla `MantenimientoRepuesto`) y, al finalizar el mantenimiento,
+    descuentan del stock del depósito.
     """
-    ESTADO_MANTENIMIENTO = (
-        ('pendiente', 'Pendiente'),
-        ('en_proceso', 'En Proceso'),
-        ('finalizado', 'Finalizado'),
-    )
+
+    class Estado(models.TextChoices):
+        PENDIENTE = 'pendiente', 'Pendiente'
+        EN_PROCESO = 'en_proceso', 'En proceso'
+        FINALIZADO = 'finalizado', 'Finalizado'
+        CANCELADO = 'cancelado', 'Cancelado'
+
+    TRANSICIONES = {
+        Estado.PENDIENTE: (Estado.EN_PROCESO, Estado.CANCELADO),
+        Estado.EN_PROCESO: (Estado.FINALIZADO, Estado.CANCELADO),
+        Estado.FINALIZADO: (),
+        Estado.CANCELADO: (),
+    }
+
+    # Alias por compatibilidad con las vistas y templates anteriores.
+    ESTADO_MANTENIMIENTO = Estado.choices
 
     vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE, related_name='mantenimientos')
     fecha_mantenimiento = models.DateField(verbose_name="Fecha de Mantenimiento")
     descripcion = models.TextField(verbose_name="Descripción del Mantenimiento")
-    costo = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Costo del Mantenimiento")
     observaciones = models.TextField(blank=True, null=True, verbose_name="Observaciones Adicionales")
-    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción Adicional")
-    estado = models.BooleanField(default=True, verbose_name="Estado")  # True para activo, False para inactivo
-    estado_mantenimiento = models.CharField(max_length=20, choices=ESTADO_MANTENIMIENTO, default='pendiente', verbose_name="Estado del Mantenimiento")
+    estado = models.CharField(
+        max_length=20, choices=Estado.choices, default=Estado.PENDIENTE, verbose_name="Estado")
     fecha_registro = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name="Fecha de Registro")
-    repuestos_utilizados = models.ManyToManyField(Repuesto, blank=True, verbose_name="Repuestos Utilizados")
 
+    # Costo del mantenimiento: la mano de obra y los repuestos van separados.
+    costo_mano_obra = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, verbose_name="Costo de Mano de Obra (Guaraníes)")
+    costo = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, verbose_name="Costo Total del Mantenimiento (Guaraníes)")
+
+    deposito = models.ForeignKey(
+        Deposito, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='mantenimientos', verbose_name="Depósito de los Repuestos")
+    stock_descontado = models.BooleanField(
+        default=False, editable=False, verbose_name="Stock ya descontado")
+
+    repuestos_utilizados = models.ManyToManyField(
+        Repuesto, through='MantenimientoRepuesto', blank=True,
+        related_name='mantenimientos', verbose_name="Repuestos Utilizados")
 
     class Meta:
         verbose_name = "Mantenimiento de Vehículo"
@@ -1078,6 +1109,143 @@ class MantenimientoVehiculo(models.Model):
 
     def __str__(self):
         return f"Mantenimiento de {self.vehiculo} - {self.fecha_mantenimiento}"
+
+    @property
+    def costo_repuestos(self):
+        """Costo total de los repuestos utilizados."""
+        if not self.pk:
+            # Todavía no está guardado: no hay líneas que sumar.
+            return Decimal('0.00')
+        return sum((linea.subtotal for linea in self.repuestos.all()), Decimal('0.00'))
+
+    def recalcular_costo(self):
+        """Recalcula el costo total (mano de obra + repuestos) y lo guarda."""
+        getattr(self, '_prefetched_objects_cache', {}).pop('repuestos', None)
+        self.costo = (self.costo_mano_obra or Decimal('0.00')) + self.costo_repuestos
+        MantenimientoVehiculo.objects.filter(pk=self.pk).update(costo=self.costo)
+        return self.costo
+
+    def save(self, *args, **kwargs):
+        # El costo total es la suma de mano de obra y repuestos.
+        if self.pk:
+            self.recalcular_costo()
+        super().save(*args, **kwargs)
+
+    def validar_finalizado(self):
+        """Antes de finalizar tiene que haber stock suficiente para los repuestos."""
+        from inventario.services import deposito_principal, disponible_en_deposito
+
+        if self.stock_descontado:
+            raise TransicionInvalida('El stock de este mantenimiento ya fue descontado.')
+
+        deposito = self.deposito or deposito_principal()
+        faltantes = []
+        for linea in self.repuestos.select_related('repuesto'):
+            disponible = disponible_en_deposito(linea.repuesto, deposito)
+            if linea.cantidad > disponible:
+                faltantes.append(
+                    f'{linea.repuesto.codigo_repuesto} '
+                    f'(disponible {disponible}, se necesitan {linea.cantidad})'
+                )
+        if faltantes:
+            raise TransicionInvalida(
+                'No hay stock suficiente para: ' + ', '.join(faltantes) + '.'
+            )
+
+    def despues_de_cambiar_estado(self, anterior, nuevo):
+        if str(nuevo) == str(self.Estado.FINALIZADO):
+            self.descontar_stock()
+
+    @transaction.atomic
+    def descontar_stock(self):
+        """
+        Descuenta del stock los repuestos utilizados en este mantenimiento.
+
+        Solo corre una vez: si el stock ya fue descontado, no vuelve a
+        descontar (el movimiento de stock es inmutable por diseño).
+        """
+        from inventario.services import deposito_principal, registrar_salida
+
+        if self.stock_descontado:
+            return []
+
+        deposito = self.deposito or deposito_principal()
+        movimientos = []
+        for linea in self.repuestos.select_related('repuesto'):
+            movimiento = registrar_salida(
+                linea.repuesto,
+                linea.cantidad,
+                deposito=deposito,
+                motivo=f'Mantenimiento #{self.pk} · {self.descripcion[:80]}',
+                referencia=f'MANT-{self.pk}',
+            )
+            linea.movimiento = movimiento
+            linea.save(update_fields=['movimiento'])
+            movimientos.append(movimiento)
+
+        self.stock_descontado = True
+        self.save(update_fields=['stock_descontado'])
+        return movimientos
+
+
+class MantenimientoRepuesto(models.Model):
+    """
+    Repuesto utilizado en un mantenimiento, con su cantidad y su costo.
+
+    `costo_unitario` es una foto del costo del repuesto al momento de
+    registrar el mantenimiento: los costos del stock pueden cambiar después
+    y el histórico del taller no debe moverse.
+    """
+
+    mantenimiento = models.ForeignKey(
+        MantenimientoVehiculo, on_delete=models.CASCADE, related_name='repuestos')
+    repuesto = models.ForeignKey(
+        Repuesto, on_delete=models.PROTECT, related_name='usos_en_mantenimientos')
+    cantidad = models.PositiveIntegerField(default=1, verbose_name="Cantidad Utilizada")
+    costo_unitario = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, verbose_name="Costo Unitario (Guaraníes)")
+    movimiento = models.ForeignKey(
+        'inventario.MovimientoStock', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='+', verbose_name="Movimiento de Stock")
+
+    class Meta:
+        verbose_name = "repuesto de mantenimiento"
+        verbose_name_plural = "repuestos de mantenimiento"
+        ordering = ['id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['mantenimiento', 'repuesto'], name='uniq_repuesto_por_mantenimiento'),
+            models.CheckConstraint(
+                condition=Q(cantidad__gte=1), name='mantenimiento_repuesto_cantidad_positiva'),
+        ]
+
+    def __str__(self):
+        return f'{self.cantidad} x {self.repuesto}'
+
+    @property
+    def subtotal(self):
+        return (self.cantidad or 0) * (self.costo_unitario or Decimal('0.00'))
+
+    def save(self, *args, **kwargs):
+        if not self.costo_unitario:
+            self.costo_unitario = (
+                self.repuesto.costo_unitario or self.repuesto.costo_compra or Decimal('0.00')
+            )
+        super().save(*args, **kwargs)
+        # El costo total del mantenimiento se mantiene al día.
+        if self.mantenimiento_id:
+            mantenimiento = MantenimientoVehiculo.objects.filter(pk=self.mantenimiento_id).first()
+            if mantenimiento is not None:
+                mantenimiento.recalcular_costo()
+
+    def delete(self, *args, **kwargs):
+        mantenimiento_id = self.mantenimiento_id
+        super().delete(*args, **kwargs)
+        if mantenimiento_id:
+            mantenimiento = MantenimientoVehiculo.objects.filter(pk=mantenimiento_id).first()
+            if mantenimiento is not None:
+                mantenimiento.recalcular_costo()
+
 
 # --------------------------------------------------------------------------
 # Modelo para registrar la salida de un repuesto del inventario

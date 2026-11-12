@@ -317,12 +317,14 @@
                                         <small class="text-muted">{{ mantenimiento.vehiculo.nombre }} | {{ mantenimiento.fecha_mantenimiento|date:"d/m/Y" }}</small>
                                     </div>
                                     <div class="text-end">
-                                        {% if mantenimiento.estado_mantenimiento == 'finalizado' %}
+                                        {% if mantenimiento.estado == 'finalizado' %}
                                             <span class="badge bg-success bg-opacity-10 text-success me-2">Finalizado</span>
-                                        {% elif mantenimiento.estado_mantenimiento == 'en_proceso' %}
+                                        {% elif mantenimiento.estado == 'en_proceso' %}
                                             <span class="badge bg-warning bg-opacity-10 text-warning me-2">En Proceso</span>
+                                        {% elif mantenimiento.estado == 'cancelado' %}
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary me-2">Cancelado</span>
                                         {% else %}
-                                            <span class="badge bg-secondary bg-opacity-10 text-secondary me-2">Pendiente</span>
+                                            <span class="badge bg-info bg-opacity-10 text-info me-2">Pendiente</span>
                                         {% endif %}
                                         <a href="{% url 'detalle_mantenimiento' mantenimiento.id %}" class="btn btn-sm btn-outline-warning">
                                             <i class="bi bi-eye"></i>

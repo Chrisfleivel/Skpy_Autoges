@@ -31,6 +31,7 @@ urlpatterns = [
     path('mantenimientos/<int:mantenimiento_id>/', views.detalle_mantenimiento, name='detalle_mantenimiento'),
     path('mantenimientos/<int:mantenimiento_id>/editar/', views.editar_mantenimiento, name='editar_mantenimiento'),
     path('mantenimientos/<int:mantenimiento_id>/eliminar/', views.eliminar_mantenimiento, name='eliminar_mantenimiento'),
+    path('mantenimientos/<int:mantenimiento_id>/estado/', views.cambiar_estado_mantenimiento, name='cambiar_estado_mantenimiento'),
 
     # Vistas para la gestión de Depósitos
     path('depositos/', views.lista_depositos, name='lista_depositos'),

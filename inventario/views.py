@@ -1,9 +1,21 @@
 # inventario/views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Vehiculo, Repuesto, MantenimientoVehiculo, Deposito, UnidadMedida, MarcaVehiculo, TipoVehiculo, ModeloVehiculo, TipoTransmision, CategoriaRepuesto
 from configuraciones_maestras.models import Moneda
 from django.contrib import messages
-from .forms import VehiculoForm, RepuestoForm, RepuestoProveedorForm, MantenimientoForm, DepositoForm, UnidadMedidaForm, MarcaVehiculoForm, TipoVehiculoForm, ModeloVehiculoForm, TipoTransmisionForm
+from .forms import (
+    VehiculoForm,
+    RepuestoForm,
+    RepuestoProveedorForm,
+    MantenimientoForm,
+    MantenimientoRepuestoFormSet,
+    DepositoForm,
+    UnidadMedidaForm,
+    MarcaVehiculoForm,
+    TipoVehiculoForm,
+    ModeloVehiculoForm,
+    TipoTransmisionForm,
+)
 from django import forms
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -13,6 +25,9 @@ from decimal import Decimal, InvalidOperation
 # Importar el decorador revisar_permiso
 from seguridad_usuarios.decorators import revisar_permiso
 from django.db import models
+from django.db.models import Avg
+from django.core.exceptions import ValidationError
+from core.models import TransicionInvalida
 
 # --------------------------------------------------------------------------
 # Vistas para la gestión de Inventario
@@ -463,12 +478,22 @@ def editar_repuesto(request, repuesto_id):
 def agregar_mantenimiento(request):
     if request.method == 'POST':
         form = MantenimientoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('lista_mantenimientos')  # Redirige a la lista de mantenimientos (debes crear esta vista y url)
+        formset = MantenimientoRepuestoFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            mantenimiento = form.save()
+            formset.instance = mantenimiento
+            formset.save()
+            # El costo total se recalcula con las líneas ya guardadas.
+            mantenimiento.save()
+            messages.success(request, 'Mantenimiento registrado correctamente.')
+            return redirect('detalle_mantenimiento', mantenimiento_id=mantenimiento.id)
     else:
         form = MantenimientoForm()
-    return render(request, 'inventario/agregar_mantenimiento.html', {'form': form})
+        formset = MantenimientoRepuestoFormSet()
+    return render(request, 'inventario/agregar_mantenimiento.html', {
+        'form': form,
+        'formset': formset,
+    })
 
 @revisar_permiso('inventario.listar_mantenimientos')
 def lista_mantenimientos(request):
@@ -497,7 +522,7 @@ def lista_mantenimientos(request):
 
     # Filtro por Estado del Mantenimiento
     if estado:
-        mantenimientos = mantenimientos.filter(estado_mantenimiento=estado)
+        mantenimientos = mantenimientos.filter(estado=estado)
 
     # Filtros de Fecha
     if fecha_desde:
@@ -513,7 +538,7 @@ def lista_mantenimientos(request):
 
     # Obtener listas para los filtros
     vehiculos_disponibles = Vehiculo.objects.all()
-    estados_disponibles = MantenimientoVehiculo.ESTADO_MANTENIMIENTO
+    estados_disponibles = MantenimientoVehiculo.Estado.choices
 
     return render(request, 'inventario/lista_mantenimientos.html', {
         'mantenimientos': mantenimientos,
@@ -525,31 +550,89 @@ def lista_mantenimientos(request):
         'fecha_desde': fecha_desde,
         'fecha_hasta': fecha_hasta,
         'costo_min': costo_min,
-        'costo_max': costo_max
+        'costo_max': costo_max,
+        'total_en_proceso': MantenimientoVehiculo.objects.filter(
+            estado=MantenimientoVehiculo.Estado.EN_PROCESO).count(),
+        'total_finalizados': MantenimientoVehiculo.objects.filter(
+            estado=MantenimientoVehiculo.Estado.FINALIZADO).count(),
+        'costo_promedio': MantenimientoVehiculo.objects.aggregate(
+            promedio=Avg('costo'))['promedio'] or 0,
     })
 
 @revisar_permiso('inventario.detallar_mantenimiento')
 def detalle_mantenimiento(request, mantenimiento_id):
-    mantenimiento = MantenimientoVehiculo.objects.get(id=mantenimiento_id)
-    return render(request, 'inventario/detalle_mantenimiento.html', {'mantenimiento': mantenimiento})
+    mantenimiento = get_object_or_404(
+        MantenimientoVehiculo.objects.select_related('vehiculo', 'deposito'),
+        pk=mantenimiento_id,
+    )
+    lineas = mantenimiento.repuestos.select_related('repuesto').all()
+    return render(request, 'inventario/detalle_mantenimiento.html', {
+        'mantenimiento': mantenimiento,
+        'lineas': lineas,
+        'transiciones': mantenimiento.transiciones_posibles(),
+        'estados': MantenimientoVehiculo.Estado.choices,
+    })
 
 @revisar_permiso('inventario.eliminar_mantenimiento')
 def eliminar_mantenimiento(request, mantenimiento_id):
-    mantenimiento = MantenimientoVehiculo.objects.get(id=mantenimiento_id)
+    mantenimiento = get_object_or_404(MantenimientoVehiculo, pk=mantenimiento_id)
+
+    if mantenimiento.stock_descontado:
+        # Los movimientos de stock son inmutables: borrar el mantenimiento
+        # dejaría el inventario descontado sin trazabilidad.
+        messages.error(
+            request,
+            'Este mantenimiento ya descontó stock del inventario: no se puede eliminar.',
+        )
+        return redirect('detalle_mantenimiento', mantenimiento_id=mantenimiento.id)
+
     mantenimiento.delete()
+    messages.success(request, 'Mantenimiento eliminado.')
     return redirect('lista_mantenimientos')
 
 @revisar_permiso('inventario.editar_mantenimiento')
 def editar_mantenimiento(request, mantenimiento_id):
-    mantenimiento = MantenimientoVehiculo.objects.get(id=mantenimiento_id)
+    mantenimiento = get_object_or_404(MantenimientoVehiculo, pk=mantenimiento_id)
+
     if request.method == 'POST':
         form = MantenimientoForm(request.POST, instance=mantenimiento)
-        if form.is_valid():
+        formset = MantenimientoRepuestoFormSet(request.POST, instance=mantenimiento)
+        if form.is_valid() and formset.is_valid():
             form.save()
+            formset.save()
+            # El costo total se recalcula con las líneas ya guardadas.
+            mantenimiento.save()
+            messages.success(request, 'Mantenimiento actualizado correctamente.')
             return redirect('detalle_mantenimiento', mantenimiento_id=mantenimiento.id)
     else:
         form = MantenimientoForm(instance=mantenimiento)
-    return render(request, 'inventario/editar_mantenimiento.html', {'form': form, 'mantenimiento': mantenimiento})  
+        formset = MantenimientoRepuestoFormSet(instance=mantenimiento)
+
+    return render(request, 'inventario/editar_mantenimiento.html', {
+        'form': form,
+        'formset': formset,
+        'mantenimiento': mantenimiento,
+    })
+
+
+@revisar_permiso('inventario.cambiar_estado_mantenimiento')
+def cambiar_estado_mantenimiento(request, mantenimiento_id):
+    """Cambia el estado del mantenimiento siguiendo las transiciones."""
+    mantenimiento = get_object_or_404(MantenimientoVehiculo, pk=mantenimiento_id)
+
+    if request.method != 'POST':
+        return redirect('detalle_mantenimiento', mantenimiento_id=mantenimiento.id)
+
+    nuevo_estado = (request.POST.get('estado') or '').strip()
+    try:
+        mantenimiento.cambiar_estado(nuevo_estado, usuario=request.user, nota='Taller')
+        messages.success(
+            request,
+            f'El mantenimiento pasó a {mantenimiento.get_estado_display().lower()}.'
+        )
+    except (ValidationError, TransicionInvalida) as exc:
+        messages.error(request, ' '.join(getattr(exc, 'messages', [str(exc)])))
+    return redirect('detalle_mantenimiento', mantenimiento_id=mantenimiento.id)
 
 # --------------------------------------------------------------------------
 # Vistas para la gestión de Depósitos

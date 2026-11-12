@@ -1,8 +1,21 @@
 # inventario/forms.py
 from django import forms
+from django.forms import inlineformset_factory
 from core.models import Moneda as MonedaFacade
 from configuraciones_maestras.models import Moneda as MonedaCatalogo
-from .models import Vehiculo, Repuesto, MantenimientoVehiculo, Deposito, UnidadMedida, MarcaVehiculo, ModeloVehiculo, TipoVehiculo, TipoTransmision, CategoriaRepuesto
+from .models import (
+    Vehiculo,
+    Repuesto,
+    MantenimientoVehiculo,
+    MantenimientoRepuesto,
+    Deposito,
+    UnidadMedida,
+    MarcaVehiculo,
+    ModeloVehiculo,
+    TipoVehiculo,
+    TipoTransmision,
+    CategoriaRepuesto,
+)
 
 
 def _aplicar_moneda_choices(form, *field_names):
@@ -202,19 +215,55 @@ class RepuestoProveedorForm(forms.ModelForm):
         }
 
 class MantenimientoForm(forms.ModelForm):
+    """
+    Datos del mantenimiento.
+
+    El estado no se edita: se cambia con las transiciones (`EstadoMixin`).
+    El costo total se calcula solo (mano de obra + repuestos).
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.update({'class': 'form-control'})
+        self.fields['deposito'].empty_label = 'Depósito principal'
 
     class Meta:
         model = MantenimientoVehiculo
-        exclude = ['fecha_registro']
+        exclude = [
+            'fecha_registro',
+            'estado',
+            'stock_descontado',
+            'costo',
+            'repuestos_utilizados',
+        ]
         widgets = {
             'fecha_mantenimiento': forms.DateInput(attrs={'type': 'date'}),
             'descripcion': forms.Textarea(attrs={'rows': 3}),
             'observaciones': forms.Textarea(attrs={'rows': 3}),
+            'costo_mano_obra': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
         }
+
+
+class MantenimientoRepuestoForm(forms.ModelForm):
+    """Línea de repuesto utilizado en un mantenimiento."""
+
+    class Meta:
+        model = MantenimientoRepuesto
+        fields = ['repuesto', 'cantidad', 'costo_unitario']
+        widgets = {
+            'cantidad': forms.NumberInput(attrs={'min': '1'}),
+            'costo_unitario': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
+        }
+
+
+MantenimientoRepuestoFormSet = inlineformset_factory(
+    MantenimientoVehiculo,
+    MantenimientoRepuesto,
+    form=MantenimientoRepuestoForm,
+    extra=1,
+    can_delete=True,
+)
 
 class DepositoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):

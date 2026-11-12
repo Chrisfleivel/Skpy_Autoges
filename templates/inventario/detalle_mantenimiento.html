@@ -3,12 +3,179 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Detalle del Mantenimiento</h2>
-  <p><strong>Vehículo:</strong> {{ mantenimiento.vehiculo.marca }} {{ mantenimiento.vehiculo.modelo }} ({{ mantenimiento.vehiculo.año }})</p>
-  <p><strong>Fecha de Mantenimiento:</strong> {{ mantenimiento.fecha_mantenimiento }}</p>
-  <p><strong>Descripción:</strong> {{ mantenimiento.descripcion }}</p>
-  <p><strong>Costo:</strong> ${{ mantenimiento.costo }}</p>
-  <a href="{% url 'lista_mantenimientos' %}">Volver a la lista de mantenimientos</a>
-  <a href="{% url 'editar_mantenimiento' mantenimiento.id %}">Editar Mantenimiento</a>
-  <a href="{% url 'eliminar_mantenimiento' mantenimiento.id %}" onclick="return confirm('¿Está seguro de que desea eliminar este mantenimiento?');">Eliminar Mantenimiento</a>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h3 class="mb-1">Mantenimiento #{{ mantenimiento.id }}</h3>
+      <p class="text-muted mb-0">
+        {{ mantenimiento.vehiculo }} · {{ mantenimiento.fecha_mantenimiento|date:"d/m/Y" }}
+      </p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'lista_mantenimientos' %}" class="btn btn-outline-secondary">Volver</a>
+      <a href="{% url 'editar_mantenimiento' mantenimiento.id %}" class="btn btn-outline-primary">Editar</a>
+    </div>
+  </div>
+
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header">Datos del mantenimiento</div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Estado</dt>
+            <dd class="col-sm-8">
+              {% if mantenimiento.estado == 'finalizado' %}
+                <span class="badge bg-success">Finalizado</span>
+              {% elif mantenimiento.estado == 'en_proceso' %}
+                <span class="badge bg-warning">En proceso</span>
+              {% elif mantenimiento.estado == 'cancelado' %}
+                <span class="badge bg-secondary">Cancelado</span>
+              {% else %}
+                <span class="badge bg-info">Pendiente</span>
+              {% endif %}
+            </dd>
+
+            <dt class="col-sm-4">Vehículo</dt>
+            <dd class="col-sm-8">{{ mantenimiento.vehiculo }}</dd>
+
+            <dt class="col-sm-4">Fecha</dt>
+            <dd class="col-sm-8">{{ mantenimiento.fecha_mantenimiento|date:"d/m/Y" }}</dd>
+
+            <dt class="col-sm-4">Descripción</dt>
+            <dd class="col-sm-8">{{ mantenimiento.descripcion|linebreaksbr }}</dd>
+
+            {% if mantenimiento.observaciones %}
+              <dt class="col-sm-4">Observaciones</dt>
+              <dd class="col-sm-8">{{ mantenimiento.observaciones|linebreaksbr }}</dd>
+            {% endif %}
+
+            <dt class="col-sm-4">Depósito de repuestos</dt>
+            <dd class="col-sm-8">{{ mantenimiento.deposito|default:"Depósito principal" }}</dd>
+
+            <dt class="col-sm-4">Stock</dt>
+            <dd class="col-sm-8">
+              {% if mantenimiento.stock_descontado %}
+                <span class="badge bg-success">Descontado del inventario</span>
+              {% else %}
+                <span class="badge bg-secondary">Todavía no descontado</span>
+              {% endif %}
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header">Repuestos utilizados</div>
+        <div class="card-body">
+          {% if lineas %}
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Repuesto</th>
+                    <th class="text-end">Cantidad</th>
+                    <th class="text-end">Costo unitario</th>
+                    <th class="text-end">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for linea in lineas %}
+                    <tr>
+                      <td>{{ linea.repuesto }}</td>
+                      <td class="text-end">{{ linea.cantidad }}</td>
+                      <td class="text-end">{{ linea.costo_unitario }}</td>
+                      <td class="text-end">{{ linea.subtotal }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                  <tr>
+                    <th colspan="3">Costo de repuestos</th>
+                    <th class="text-end">{{ mantenimiento.costo_repuestos }}</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">No se registraron repuestos en este mantenimiento.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-header">Costos</div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Mano de obra</span>
+            <strong>Gs. {{ mantenimiento.costo_mano_obra|floatformat:0 }}</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Repuestos</span>
+            <strong>Gs. {{ mantenimiento.costo_repuestos|floatformat:0 }}</strong>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between">
+            <span class="fw-semibold">Total</span>
+            <span class="fs-5 fw-bold text-success">Gs. {{ mantenimiento.costo|floatformat:0 }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header">Avanzar el mantenimiento</div>
+        <div class="card-body">
+          {% if transiciones %}
+            {% for estado in transiciones %}
+              <form method="post" action="{% url 'cambiar_estado_mantenimiento' mantenimiento.id %}" class="mb-2">
+                {% csrf_token %}
+                <input type="hidden" name="estado" value="{{ estado }}">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                  {% if estado == 'finalizado' %}
+                    <i class="bi bi-check-circle me-1"></i>Finalizar
+                  {% elif estado == 'en_proceso' %}
+                    <i class="bi bi-play-circle me-1"></i>Iniciar trabajo
+                  {% else %}
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                  {% endif %}
+                </button>
+              </form>
+            {% endfor %}
+            <p class="form-text text-muted mb-0">
+              Al finalizar se descuentan del stock los repuestos utilizados.
+            </p>
+          {% else %}
+            <p class="text-muted mb-0">
+              Este mantenimiento ya no admite más transiciones.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Acciones</div>
+        <div class="card-body d-grid gap-2">
+          <a href="{% url 'editar_mantenimiento' mantenimiento.id %}" class="btn btn-outline-secondary">
+            <i class="bi bi-pencil me-1"></i>Editar
+          </a>
+          <a href="{% url 'eliminar_mantenimiento' mantenimiento.id %}"
+             class="btn btn-outline-danger"
+             onclick="return confirm('¿Está seguro de que desea eliminar este mantenimiento?');">
+            <i class="bi bi-trash me-1"></i>Eliminar
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

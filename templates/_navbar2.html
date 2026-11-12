@@ -43,7 +43,7 @@
                 </li>
                 {% endif %}
 
-                {% if 'listar_marcas_vehiculos' in user.perfil.permisos_simplificados or 'listar_modelos_vehiculos' in user.perfil.permisos_simplificados or 'listar_tipos_transmision' in user.perfil.permisos_simplificados or 'listar_tipos_vehiculos' in user.perfil.permisos_simplificados or 'listar_tipos_combustible' in user.perfil.permisos_simplificados or 'listar_vehiculos' in user.perfil.permisos_simplificados or 'listar_repuestos' in user.perfil.permisos_simplificados or user.is_staff %}
+                {% if 'listar_marcas_vehiculos' in user.perfil.permisos_simplificados or 'listar_modelos_vehiculos' in user.perfil.permisos_simplificados or 'listar_tipos_transmision' in user.perfil.permisos_simplificados or 'listar_tipos_vehiculos' in user.perfil.permisos_simplificados or 'listar_tipos_combustible' in user.perfil.permisos_simplificados or 'listar_vehiculos' in user.perfil.permisos_simplificados or 'listar_repuestos' in user.perfil.permisos_simplificados or 'listar_mantenimientos' in user.perfil.permisos_simplificados or user.is_staff %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownInventario" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Inventario
@@ -71,6 +71,10 @@
                         {% endif %}
                         {% if 'listar_repuestos' in user.perfil.permisos_simplificados or user.is_staff %}
                         <li><a class="dropdown-item" href="{% url 'lista_repuestos' %}">Repuestos</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        {% if 'listar_mantenimientos' in user.perfil.permisos_simplificados or user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'lista_mantenimientos' %}">Taller (Mantenimientos)</a></li>
                         {% endif %}
                     </ul>
                 </li>
@@ -233,8 +237,10 @@
                                 <option value="theme-sunset" {% if theme_class == 'theme-sunset' %}selected{% endif %}>Sunset</option>
                             </select>
                         </li>
+                        {% if user.perfil and user.perfil.empleado %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'perfil' user.id %}">Ver Perfil</a></li>
+                        {% endif %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
                     </ul>

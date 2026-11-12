@@ -42,14 +42,16 @@
 
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
-                                    <label class="form-label">Estado del Mantenimiento</label>
-                                    {{ form.estado_mantenimiento }}
-                                    {% if form.estado_mantenimiento.errors %}<div class="text-danger small">{{ form.estado_mantenimiento.errors }}</div>{% endif %}
+                                    <label class="form-label">Costo de Mano de Obra (Gs.)</label>
+                                    {{ form.costo_mano_obra }}
+                                    {% if form.costo_mano_obra.errors %}<div class="text-danger small">{{ form.costo_mano_obra.errors }}</div>{% endif %}
+                                    <div class="form-text text-muted">Solo la mano de obra. Los repuestos se cargan abajo.</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Costo del Mantenimiento (Gs.)</label>
-                                    {{ form.costo }}
-                                    {% if form.costo.errors %}<div class="text-danger small">{{ form.costo.errors }}</div>{% endif %}
+                                    <label class="form-label">Depósito de los Repuestos</label>
+                                    {{ form.deposito }}
+                                    {% if form.deposito.errors %}<div class="text-danger small">{{ form.deposito.errors }}</div>{% endif %}
+                                    <div class="form-text text-muted">Dejalo vacío para usar el depósito principal.</div>
                                 </div>
                             </div>
 
@@ -73,21 +75,49 @@
                             </div>
 
                             <div class="form-section-title">Repuestos Utilizados</div>
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-12">
-                                    <label class="form-label">Repuestos</label>
-                                    {{ form.repuestos_utilizados }}
-                                    {% if form.repuestos_utilizados.errors %}<div class="text-danger small">{{ form.repuestos_utilizados.errors }}</div>{% endif %}
-                                    <div class="form-text text-muted">Seleccione los repuestos utilizados en este mantenimiento (opcional)</div>
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-6">
-                                    <label class="form-label">Estado del Registro</label>
-                                    {{ form.estado }}
-                                    {% if form.estado.errors %}<div class="text-danger small">{{ form.estado.errors }}</div>{% endif %}
-                                </div>
+                            <p class="form-text text-muted">
+                                Cargá los repuestos con su cantidad. Al <strong>finalizar</strong> el mantenimiento
+                                se descuentan del stock del depósito.
+                            </p>
+                            {{ formset.management_form }}
+                            {% if formset.non_form_errors %}
+                                <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+                            {% endif %}
+                            <div class="table-responsive mb-3">
+                                <table class="table table-sm align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 45%;">Repuesto</th>
+                                            <th style="width: 20%;">Cantidad</th>
+                                            <th style="width: 25%;">Costo unitario (Gs.)</th>
+                                            <th style="width: 10%;">Quitar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for linea_form in formset.forms %}
+                                            <tr>
+                                                <td>
+                                                    {{ linea_form.id }}
+                                                    {{ linea_form.repuesto }}
+                                                    {% if linea_form.repuesto.errors %}<div class="text-danger small">{{ linea_form.repuesto.errors }}</div>{% endif %}
+                                                </td>
+                                                <td>
+                                                    {{ linea_form.cantidad }}
+                                                    {% if linea_form.cantidad.errors %}<div class="text-danger small">{{ linea_form.cantidad.errors }}</div>{% endif %}
+                                                </td>
+                                                <td>
+                                                    {{ linea_form.costo_unitario }}
+                                                    {% if linea_form.costo_unitario.errors %}<div class="text-danger small">{{ linea_form.costo_unitario.errors }}</div>{% endif %}
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if linea_form.instance.pk %}
+                                                        <label class="form-check-label small">{{ linea_form.DELETE }} Quitar</label>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
 
                             <div class="d-flex flex-column flex-md-row gap-3 pt-3 border-top">
@@ -127,8 +157,8 @@
         })
     })()
 
-    // Auto-formateo del campo de costo
-    document.getElementById('id_costo').addEventListener('input', function(e) {
+    // Auto-formateo del campo de mano de obra
+    document.getElementById('id_costo_mano_obra').addEventListener('input', function(e) {
         let value = e.target.value.replace(/[^\d.]/g, '');
         if (value) {
             e.target.value = parseFloat(value).toLocaleString('es-PY', {
